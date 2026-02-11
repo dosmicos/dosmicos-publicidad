@@ -1,14 +1,14 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import UgcUploadPage from './pages/UgcUploadPage'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import UploadFlowPage from './pages/UploadFlowPage'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/upload/:token" element={<UgcUploadPage />} />
+        <Route path="/upload/:token" element={<UploadFlowPage />} />
         {/* Cualquier otra ruta redirige a una página genérica */}
         <Route path="*" element={
           <div className="min-h-screen bg-white flex items-center justify-center">

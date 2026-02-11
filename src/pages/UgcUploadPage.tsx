@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -23,33 +21,11 @@ import {
   FileVideo,
   Plus,
 } from "lucide-react";
+import type { TokenValidation } from "./UploadFlowPage";
 
 // ============================================================
 // Types
 // ============================================================
-
-interface CreatorInfo {
-  id: string;
-  name: string;
-  instagram_handle: string;
-  avatar_url: string;
-}
-
-interface CampaignInfo {
-  id: string;
-  name: string;
-  status: string;
-  agreed_videos: number;
-}
-
-interface TokenValidation {
-  valid: boolean;
-  error?: string;
-  creator?: CreatorInfo;
-  campaigns?: CampaignInfo[];
-  token_id?: string;
-  organization_id?: string;
-}
 
 interface VideoQueueItem {
   id: string;
@@ -98,45 +74,22 @@ function generateId(): string {
 // Component
 // ============================================================
 
-export default function UgcUploadPage() {
-  const { token } = useParams<{ token: string }>();
+interface Props {
+  token: string;
+  validation: TokenValidation;
+}
+
+export default function UgcUploadPage({ token, validation }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [validation, setValidation] = useState<TokenValidation | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedCampaign, setSelectedCampaign] = useState<string>("");
+  const [selectedCampaign, setSelectedCampaign] = useState<string>(() => {
+    const campaigns = validation.campaigns || [];
+    return campaigns.length === 1 ? campaigns[0].id : "";
+  });
   const [videoQueue, setVideoQueue] = useState<VideoQueueItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [completedVideos, setCompletedVideos] = useState<string[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
-
-  // Validate token on mount
-  useEffect(() => {
-    async function validateToken() {
-      if (!token) {
-        setValidation({ valid: false, error: "No se proporcionó un token" });
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase.rpc("validate_ugc_upload_token", {
-        p_token: token,
-      });
-
-      if (error) {
-        setValidation({ valid: false, error: "Error al validar el enlace" });
-      } else {
-        setValidation(data as unknown as TokenValidation);
-        const campaigns = (data as unknown as TokenValidation).campaigns;
-        if (campaigns && campaigns.length === 1) {
-          setSelectedCampaign(campaigns[0].id);
-        }
-      }
-      setLoading(false);
-    }
-
-    validateToken();
-  }, [token]);
 
   // File handling — multiple files
   const addFiles = useCallback((files: FileList | File[]) => {
@@ -325,48 +278,6 @@ export default function UgcUploadPage() {
   const totalSize = videoQueue
     .filter((v) => v.status !== "success")
     .reduce((acc, v) => acc + v.file.size, 0);
-
-  // ============================================================
-  // Render: Loading
-  // ============================================================
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <img
-            src="/logo-dosmicos.png"
-            alt="Dosmicos"
-            className="h-10 opacity-60"
-          />
-          <Loader2 className="h-6 w-6 animate-spin text-black/40" />
-        </div>
-      </div>
-    );
-  }
-
-  // ============================================================
-  // Render: Invalid token
-  // ============================================================
-  if (!validation?.valid) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-0 shadow-none">
-          <CardContent className="pt-6 text-center space-y-4">
-            <img
-              src="/logo-dosmicos.png"
-              alt="Dosmicos"
-              className="h-8 mx-auto opacity-60"
-            />
-            <AlertCircle className="h-12 w-12 text-red-400 mx-auto" />
-            <h2 className="text-xl font-semibold">Enlace no válido</h2>
-            <p className="text-gray-500">
-              {validation?.error || "Este enlace no es válido o ha expirado."}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const creator = validation.creator!;
   const campaigns = validation.campaigns || [];
