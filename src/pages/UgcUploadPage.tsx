@@ -84,7 +84,7 @@ export default function UgcUploadPage({ token, validation }: Props) {
 
   const [selectedCampaign, setSelectedCampaign] = useState<string>(() => {
     const campaigns = validation.campaigns || [];
-    return campaigns.length === 1 ? campaigns[0].id : "";
+    return campaigns.length === 1 ? campaigns[0].id : "none";
   });
   const [videoQueue, setVideoQueue] = useState<VideoQueueItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -172,12 +172,14 @@ export default function UgcUploadPage({ token, validation }: Props) {
 
   // Upload all videos sequentially
   const handleUploadAll = async () => {
-    if (!token || !validation?.creator || !selectedCampaign) return;
+    if (!token || !validation?.creator) return;
 
     const pendingVideos = videoQueue.filter((v) => v.status === "pending");
     if (pendingVideos.length === 0) return;
 
     setIsUploading(true);
+
+    const campaignId = selectedCampaign && selectedCampaign !== "none" ? selectedCampaign : null;
 
     for (const video of pendingVideos) {
       setVideoQueue((prev) =>
@@ -190,7 +192,8 @@ export default function UgcUploadPage({ token, validation }: Props) {
 
       try {
         const fileExt = video.file.name.split(".").pop() || "mp4";
-        const fileName = `${validation.organization_id}/${validation.creator!.id}/${selectedCampaign}/${Date.now()}_${video.id}.${fileExt}`;
+        const folderCampaign = campaignId || "sin-campana";
+        const fileName = `${validation.organization_id}/${validation.creator!.id}/${folderCampaign}/${Date.now()}_${video.id}.${fileExt}`;
 
         let currentProgress = 0;
         const progressInterval = setInterval(() => {
@@ -228,7 +231,7 @@ export default function UgcUploadPage({ token, validation }: Props) {
           "ugc_submit_video",
           {
             p_token: token,
-            p_campaign_id: selectedCampaign,
+            p_campaign_id: campaignId,
             p_video_url: urlData.publicUrl,
             p_platform: video.platform,
             p_notes: video.notes || null,
@@ -314,11 +317,11 @@ export default function UgcUploadPage({ token, validation }: Props) {
           </div>
         </div>
 
-        {/* Selector de campaña */}
-        {campaigns.length > 0 ? (
+        {/* Selector de campaña (opcional) */}
+        {campaigns.length > 0 && (
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-700">
-              Campaña
+              Campaña <span className="text-gray-400 font-normal">(opcional)</span>
             </Label>
             <Select
               value={selectedCampaign}
@@ -328,6 +331,7 @@ export default function UgcUploadPage({ token, validation }: Props) {
                 <SelectValue placeholder="Selecciona una campaña" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="none">Sin campaña específica</SelectItem>
                 {campaigns.map((campaign) => (
                   <SelectItem key={campaign.id} value={campaign.id}>
                     {campaign.name}
@@ -338,10 +342,6 @@ export default function UgcUploadPage({ token, validation }: Props) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        ) : (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-            No tienes campañas activas. Contacta al equipo para más información.
           </div>
         )}
 
@@ -533,7 +533,7 @@ export default function UgcUploadPage({ token, validation }: Props) {
         )}
 
         {/* Botón de subir todos */}
-        {pendingCount > 0 && selectedCampaign && (
+        {pendingCount > 0 && (
           <Button
             onClick={handleUploadAll}
             disabled={isUploading || pendingCount === 0}
