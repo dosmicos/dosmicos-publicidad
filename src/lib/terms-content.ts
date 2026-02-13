@@ -12,23 +12,23 @@
 export const TERMS_SECTIONS = [
   {
     title: "1. ¿Qué estás autorizando?",
-    content: `Al subir tus videos a través de esta plataforma, nos otorgas una licencia no exclusiva para usar, publicar, editar y promocionar tu contenido en nuestros canales. Tú sigues siendo la dueña de tus videos y puedes usarlos donde quieras.`,
+    content: `Al subir tus videos y fotos a través de esta plataforma, nos otorgas una licencia no exclusiva para usar, publicar, editar y promocionar tu contenido en nuestros canales. Tú sigues siendo la dueña de tu contenido y puedes usarlo donde quieras.`,
   },
   {
     title: "2. Licencia de contenido",
     content: `Otorgas a DOSMICOS S.A.S. una licencia no exclusiva, gratuita, mundial y por tiempo indefinido para:
 
-• Reproducir y distribuir tus videos en redes sociales (Instagram, TikTok, Facebook, YouTube, Pinterest y cualquier plataforma futura).
-• Usar tus videos en publicidad digital pagada (pauta en redes sociales, Google Ads, etc.).
-• Publicar tus videos en el sitio web, tienda online y materiales de marketing de Dosmicos.
+• Reproducir y distribuir tus videos y fotos en redes sociales (Instagram, TikTok, Facebook, YouTube, Pinterest y cualquier plataforma futura).
+• Usar tus videos y fotos en publicidad digital pagada (pauta en redes sociales, Google Ads, etc.).
+• Publicar tus videos y fotos en el sitio web, tienda online y materiales de marketing de Dosmicos.
 • Editar, recortar, agregar texto, música o subtítulos, y combinar tu contenido con otros materiales para fines promocionales.
 • Sublicenciar el contenido a agencias de publicidad o socios comerciales que actúen en nombre de Dosmicos.
 
-Tú conservas todos tus derechos de autor y puedes seguir usando tus videos libremente en tus propias redes y para otros fines.`,
+Tú conservas todos tus derechos de autor y puedes seguir usando tu contenido libremente en tus propias redes y para otros fines.`,
   },
   {
     title: "3. Uso de imagen de menores de edad",
-    content: `Si en tus videos aparecen menores de edad (tus hijos/as), al aceptar estos términos declaras y autorizas lo siguiente:
+    content: `Si en tus videos o fotos aparecen menores de edad (tus hijos/as), al aceptar estos términos declaras y autorizas lo siguiente:
 
 • Eres la madre, padre o representante legal del menor que aparece en el contenido.
 • Autorizas expresamente a Dosmicos a utilizar la imagen del menor en los medios y plataformas descritos en la sección 2.
@@ -41,9 +41,9 @@ Esta autorización se otorga conforme a la Ley 1098 de 2006 (Código de Infancia
     title: "4. Tus declaraciones",
     content: `Al subir contenido, declaras que:
 
-• Eres la autora original del video.
+• Eres la autora original del contenido.
 • El contenido no infringe derechos de propiedad intelectual de terceros.
-• Tienes los permisos necesarios de todas las personas que aparecen en el video.
+• Tienes los permisos necesarios de todas las personas que aparecen en el contenido.
 • El contenido no contiene material ilegal, difamatorio u ofensivo.
 • Cualquier música o audio incluido es original, libre de derechos, o cuentas con la autorización correspondiente.`,
   },
@@ -90,7 +90,7 @@ La licencia sobre el contenido audiovisual en sí puede ser revocada con un avis
 ];
 
 export const TERMS_SUMMARY_POINTS = [
-  "Tú sigues siendo la dueña de tus videos",
+  "Tú sigues siendo la dueña de tu contenido",
   "Dosmicos puede publicarlos en redes sociales y publicidad",
   "Podemos editarlos (recortar, agregar texto o subtítulos)",
   "Si aparecen tus hijos, confirmas que eres su representante legal",

@@ -63,7 +63,7 @@ export default function TermsConsentPage({ creatorName, onAccept }: Props) {
             <Shield className="h-6 w-6 text-gray-600" />
           </div>
           <h1 className="text-xl font-bold text-gray-900">
-            Antes de subir tus videos
+            Antes de subir tu contenido
           </h1>
           <p className="text-sm text-gray-500">
             {creatorName}, necesitamos tu autorización para poder usar tu
@@ -181,7 +181,7 @@ export default function TermsConsentPage({ creatorName, onAccept }: Props) {
             <span className="text-sm text-gray-700">
               Acepto la{" "}
               <strong>licencia de contenido</strong> y autorizo a Dosmicos a
-              usar, publicar, editar y promocionar mis videos en sus canales y
+              usar, publicar, editar y promocionar mis videos y fotos en sus canales y
               publicidad.
             </span>
           </label>
@@ -223,7 +223,7 @@ export default function TermsConsentPage({ creatorName, onAccept }: Props) {
               </div>
             </div>
             <span className="text-sm text-gray-700">
-              Si aparecen menores de edad en los videos, confirmo que soy su{" "}
+              Si aparecen menores de edad en los videos o fotos, confirmo que soy su{" "}
               <strong>madre, padre o representante legal</strong> y autorizo el
               uso de su imagen.
             </span>
@@ -288,7 +288,7 @@ export default function TermsConsentPage({ creatorName, onAccept }: Props) {
           size="lg"
         >
           <Heart className="h-4 w-4" />
-          Acepto y quiero subir mis videos
+          Acepto y quiero subir mi contenido
         </Button>
 
         {!allChecked && (

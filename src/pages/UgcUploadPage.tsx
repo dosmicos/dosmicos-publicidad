@@ -19,6 +19,7 @@ import {
   Loader2,
   X,
   FileVideo,
+  FileImage,
   Plus,
 } from "lucide-react";
 import type { TokenValidation } from "./UploadFlowPage";
@@ -35,13 +36,14 @@ interface VideoQueueItem {
   status: "pending" | "uploading" | "success" | "error";
   progress: number;
   errorMessage?: string;
+  mediaType: "video" | "photo";
 }
 
 // ============================================================
 // Constants
 // ============================================================
 
-const ALLOWED_VIDEO_TYPES = [
+const ALLOWED_MEDIA_TYPES = [
   "video/mp4",
   "video/quicktime",
   "video/webm",
@@ -49,6 +51,11 @@ const ALLOWED_VIDEO_TYPES = [
   "video/x-matroska",
   "video/3gpp",
   "video/x-m4v",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
 ];
 
 const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1GB
@@ -68,6 +75,10 @@ function formatFileSize(bytes: number): string {
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 10);
+}
+
+function getMediaType(file: File): "video" | "photo" {
+  return file.type.startsWith("image/") ? "photo" : "video";
 }
 
 // ============================================================
@@ -96,9 +107,9 @@ export default function UgcUploadPage({ token, validation }: Props) {
     const newItems: VideoQueueItem[] = [];
 
     Array.from(files).forEach((file) => {
-      if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+      if (!ALLOWED_MEDIA_TYPES.includes(file.type)) {
         const ext = file.name.split(".").pop()?.toLowerCase();
-        const allowedExts = ["mp4", "mov", "webm", "avi", "mkv", "3gp", "m4v"];
+        const allowedExts = ["mp4", "mov", "webm", "avi", "mkv", "3gp", "m4v", "jpg", "jpeg", "png", "webp", "heic", "heif"];
         if (!ext || !allowedExts.includes(ext)) {
           return;
         }
@@ -115,6 +126,7 @@ export default function UgcUploadPage({ token, validation }: Props) {
         notes: "",
         status: "pending",
         progress: 0,
+        mediaType: getMediaType(file),
       });
     });
 
@@ -312,7 +324,7 @@ export default function UgcUploadPage({ token, validation }: Props) {
               Hola, {creator.name} 👋
             </h1>
             <p className="text-sm text-gray-500">
-              Sube tus videos en la mejor calidad posible
+              Sube tus videos y fotos en la mejor calidad posible
             </p>
           </div>
         </div>
@@ -367,20 +379,20 @@ export default function UgcUploadPage({ token, validation }: Props) {
               <Upload className="h-5 w-5 text-gray-500" />
             </div>
             <p className="text-sm font-medium text-gray-700">
-              Toca para seleccionar videos
+              Toca para seleccionar videos o fotos
             </p>
             <p className="text-xs text-gray-400 mt-1">
               Puedes seleccionar varios a la vez
             </p>
             <p className="text-xs text-gray-400">
-              MP4, MOV, WebM, AVI — Hasta 1 GB por video
+              MP4, MOV, JPG, PNG, WebP — Hasta 1 GB
             </p>
           </div>
 
           <input
             ref={fileInputRef}
             type="file"
-            accept="video/*"
+            accept="video/*,image/*"
             multiple
             className="hidden"
             onChange={handleFileInputChange}
@@ -392,7 +404,7 @@ export default function UgcUploadPage({ token, validation }: Props) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-700">
-                Videos ({totalInQueue})
+                Archivos ({totalInQueue})
               </h3>
               {totalSize > 0 && (
                 <span className="text-xs text-gray-400">
@@ -427,6 +439,8 @@ export default function UgcUploadPage({ token, validation }: Props) {
                         <AlertCircle className="h-4 w-4 text-red-500" />
                       ) : video.status === "uploading" ? (
                         <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                      ) : video.mediaType === "photo" ? (
+                        <FileImage className="h-4 w-4 text-gray-400" />
                       ) : (
                         <FileVideo className="h-4 w-4 text-gray-400" />
                       )}
@@ -506,7 +520,7 @@ export default function UgcUploadPage({ token, validation }: Props) {
                       </div>
 
                       <Textarea
-                        placeholder="Notas sobre este video (opcional)"
+                        placeholder="Notas sobre este archivo (opcional)"
                         value={video.notes}
                         onChange={(e) => updateNotes(video.id, e.target.value)}
                         rows={2}
@@ -526,7 +540,7 @@ export default function UgcUploadPage({ token, validation }: Props) {
                 className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:border-gray-300 hover:text-gray-600 transition-colors"
               >
                 <Plus className="h-4 w-4" />
-                Agregar más videos
+                Agregar más archivos
               </button>
             )}
           </div>
@@ -543,12 +557,12 @@ export default function UgcUploadPage({ token, validation }: Props) {
             {isUploading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Subiendo videos...
+                Subiendo archivos...
               </>
             ) : (
               <>
                 <Upload className="h-4 w-4" />
-                Subir {pendingCount} video{pendingCount > 1 ? "s" : ""}
+                Subir {pendingCount} archivo{pendingCount > 1 ? "s" : ""}
               </>
             )}
           </Button>
@@ -560,8 +574,8 @@ export default function UgcUploadPage({ token, validation }: Props) {
             <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto" />
             <p className="text-sm font-medium text-green-800">
               {successCount === 1
-                ? "¡Video subido exitosamente!"
-                : `¡${successCount} videos subidos exitosamente!`}
+                ? "¡Archivo subido exitosamente!"
+                : `¡${successCount} archivos subidos exitosamente!`}
             </p>
             <p className="text-sm text-green-700 font-medium">
               Gracias por ser parte de las mamás Dosmicos 🐒💚
@@ -580,7 +594,7 @@ export default function UgcUploadPage({ token, validation }: Props) {
               className="mt-2 gap-2"
             >
               <Plus className="h-3.5 w-3.5" />
-              Subir más videos
+              Subir más archivos
             </Button>
           </div>
         )}
@@ -589,7 +603,7 @@ export default function UgcUploadPage({ token, validation }: Props) {
         {completedVideos.length > 0 &&
           videoQueue.some((v) => v.status === "pending") && (
             <div className="text-xs text-gray-400 text-center">
-              {completedVideos.length} video
+              {completedVideos.length} archivo
               {completedVideos.length > 1 ? "s" : ""} subido
               {completedVideos.length > 1 ? "s" : ""} en esta sesión
             </div>

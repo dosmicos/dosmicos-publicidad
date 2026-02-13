@@ -14,7 +14,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <div className="min-h-screen bg-white flex items-center justify-center">
             <div className="text-center space-y-4">
               <img src="/logo-dosmicos.png" alt="Dosmicos" className="h-8 mx-auto" />
-              <p className="text-gray-400 text-sm">Portal de upload de videos</p>
+              <p className="text-gray-400 text-sm">Portal de upload de contenido</p>
             </div>
           </div>
         } />
