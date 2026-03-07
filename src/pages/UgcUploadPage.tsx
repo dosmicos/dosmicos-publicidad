@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import * as tus from "tus-js-client";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -206,28 +207,54 @@ export default function UgcUploadPage({ token, validation }: Props) {
         const fileExt = video.file.name.split(".").pop() || "mp4";
         const folderCampaign = campaignId || "sin-campana";
         const fileName = `${validation.organization_id}/${validation.creator!.id}/${folderCampaign}/${Date.now()}_${video.id}.${fileExt}`;
+        const bucketName = "ugc-videos";
 
-        let currentProgress = 0;
-        const progressInterval = setInterval(() => {
-          currentProgress = Math.min(currentProgress + 2, 85);
-          setVideoQueue((prev) =>
-            prev.map((v) =>
-              v.id === video.id ? { ...v, progress: currentProgress } : v
-            )
-          );
-        }, 300);
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-        const { data: uploadData, error: uploadError } =
-          await supabase.storage.from("ugc-videos").upload(fileName, video.file, {
-            cacheControl: "3600",
-            upsert: false,
+        // Upload file using TUS resumable protocol
+        await new Promise<void>((resolve, reject) => {
+          const upload = new tus.Upload(video.file, {
+            endpoint: `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/upload/resumable`,
+            retryDelays: [0, 1000, 3000, 5000],
+            headers: {
+              authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+            },
+            uploadDataDuringCreation: true,
+            removeFingerprintOnSuccess: true,
+            metadata: {
+              bucketName,
+              objectName: fileName,
+              contentType: video.file.type,
+              cacheControl: "3600",
+            },
+            chunkSize: 6 * 1024 * 1024, // 6MB chunks
+            onError: (error) => {
+              reject(error);
+            },
+            onProgress: (bytesUploaded, bytesTotal) => {
+              const pct = Math.round((bytesUploaded / bytesTotal) * 90);
+              setVideoQueue((prev) =>
+                prev.map((v) =>
+                  v.id === video.id ? { ...v, progress: pct } : v
+                )
+              );
+            },
+            onSuccess: () => {
+              resolve();
+            },
           });
 
-        clearInterval(progressInterval);
-
-        if (uploadError) {
-          throw new Error(uploadError.message);
-        }
+          // Check for previous uploads to resume
+          upload.findPreviousUploads().then((previousUploads) => {
+            if (previousUploads.length > 0) {
+              upload.resumeFromPreviousUpload(previousUploads[0]);
+            }
+            upload.start();
+          });
+        });
 
         setVideoQueue((prev) =>
           prev.map((v) =>
@@ -236,8 +263,8 @@ export default function UgcUploadPage({ token, validation }: Props) {
         );
 
         const { data: urlData } = supabase.storage
-          .from("ugc-videos")
-          .getPublicUrl(uploadData.path);
+          .from(bucketName)
+          .getPublicUrl(fileName);
 
         const { data: submitResult, error: submitError } = await supabase.rpc(
           "ugc_submit_video",
