@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Wand2, Sparkles, LayoutTemplate, PenLine, Pencil, CheckCircle2, Zap, RectangleHorizontal, Square, RectangleVertical, Monitor, Smartphone } from 'lucide-react';
+import { Wand2, Sparkles, LayoutTemplate, PenLine, Pencil, CheckCircle2, Zap, RectangleHorizontal, Square, RectangleVertical, Monitor, Smartphone, Ruler } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAiGeneration } from '@/hooks/useAiGeneration';
 import { useAiSkills } from '@/hooks/useAiSkills';
@@ -153,6 +153,22 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
 
   const selectedRatio = ASPECT_RATIOS.find(r => r.id === aspectRatio) || ASPECT_RATIOS[0];
 
+  // Calculate actual output dimensions
+  const getOutputDimensions = () => {
+    const basePx = resolution === '4K' ? 4096 : resolution === '2K' ? 2048 : 1024;
+    const { w, h } = selectedRatio;
+    if (w >= h) {
+      const width = basePx;
+      const height = Math.round((basePx * h) / w);
+      return { width, height };
+    } else {
+      const height = basePx;
+      const width = Math.round((basePx * w) / h);
+      return { width, height };
+    }
+  };
+  const outputDim = getOutputDimensions();
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left column - Controls */}
@@ -234,72 +250,94 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
         </Card>
 
         {/* Aspect Ratio + Resolution - shared across all modes */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Aspect Ratio Selector */}
-          <div className="space-y-2.5">
-            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Formato</Label>
-            <div className="grid grid-cols-4 gap-1.5">
-              {ASPECT_RATIOS.map((ratio) => {
-                const isActive = aspectRatio === ratio.id;
-                const Icon = ratio.icon;
-                // Visual preview proportions (max 32px)
-                const maxDim = 24;
-                const scale = maxDim / Math.max(ratio.w, ratio.h);
-                const pw = Math.round(ratio.w * scale);
-                const ph = Math.round(ratio.h * scale);
-                return (
-                  <button
-                    key={ratio.id}
-                    onClick={() => setAspectRatio(ratio.id)}
-                    className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg transition-all duration-150 border ${
-                      isActive
-                        ? 'bg-[#ff5c02]/5 dark:bg-[#ff5c02]/10 border-[#ff5c02]/40 text-[#ff5c02]'
-                        : 'bg-white dark:bg-[#1a1a1f] border-gray-200 dark:border-white/10 text-gray-500 hover:border-gray-300 dark:hover:border-white/15 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
-                    title={`${ratio.label} - ${ratio.use}`}
-                  >
-                    {/* Mini aspect ratio preview */}
-                    <div
-                      className={`rounded-sm transition-colors ${
-                        isActive ? 'bg-[#ff5c02]/20 border border-[#ff5c02]/30' : 'bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600'
-                      }`}
-                      style={{ width: pw, height: ph }}
-                    />
-                    <span className="text-[10px] font-bold leading-none">{ratio.label}</span>
-                  </button>
-                );
-              })}
+        <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none rounded-2xl p-5 space-y-4">
+          {/* Output dimensions preview */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Ruler className="w-4 h-4 text-[#ff5c02]" />
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Tamano de salida</span>
             </div>
-            <p className="text-[11px] text-gray-400 dark:text-gray-600">
-              {selectedRatio.desc} · {selectedRatio.use}
-            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-mono font-bold text-[#ff5c02]">
+                {outputDim.width} x {outputDim.height}px
+              </span>
+              {/* Mini visual preview */}
+              <div className="relative flex items-center justify-center w-10 h-10">
+                <div
+                  className="bg-[#ff5c02]/15 border border-[#ff5c02]/30 rounded-sm"
+                  style={{
+                    width: Math.round((selectedRatio.w / Math.max(selectedRatio.w, selectedRatio.h)) * 32),
+                    height: Math.round((selectedRatio.h / Math.max(selectedRatio.w, selectedRatio.h)) * 32),
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Resolution Selector */}
-          <div className="space-y-2.5">
-            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Calidad</Label>
-            <div className="flex gap-2">
-              {RESOLUTIONS.map((res) => {
-                const isActive = resolution === res.id;
-                return (
-                  <button
-                    key={res.id}
-                    onClick={() => setResolution(res.id)}
-                    className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 px-2 rounded-lg transition-all duration-150 border ${
-                      isActive
-                        ? 'bg-[#ff5c02]/5 dark:bg-[#ff5c02]/10 border-[#ff5c02]/40 text-[#ff5c02]'
-                        : 'bg-white dark:bg-[#1a1a1f] border-gray-200 dark:border-white/10 text-gray-500 hover:border-gray-300 dark:hover:border-white/15'
-                    }`}
-                  >
-                    <span className="text-sm font-bold">{res.label}</span>
-                    <span className="text-[10px] opacity-60">{res.px}</span>
-                    <span className="text-[9px] opacity-40">{res.desc}</span>
-                  </button>
-                );
-              })}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Aspect Ratio Selector */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wide">Formato</Label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {ASPECT_RATIOS.map((ratio) => {
+                  const isActive = aspectRatio === ratio.id;
+                  const maxDim = 22;
+                  const scale = maxDim / Math.max(ratio.w, ratio.h);
+                  const pw = Math.max(Math.round(ratio.w * scale), 6);
+                  const ph = Math.max(Math.round(ratio.h * scale), 6);
+                  return (
+                    <button
+                      key={ratio.id}
+                      onClick={() => setAspectRatio(ratio.id)}
+                      className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg transition-all duration-150 border ${
+                        isActive
+                          ? 'bg-[#ff5c02]/5 dark:bg-[#ff5c02]/10 border-[#ff5c02]/40 text-[#ff5c02]'
+                          : 'bg-white dark:bg-[#1a1a1f] border-gray-200 dark:border-white/10 text-gray-500 hover:border-gray-300 dark:hover:border-white/15 hover:text-gray-700 dark:hover:text-gray-300'
+                      }`}
+                      title={`${ratio.label} - ${ratio.use}`}
+                    >
+                      <div
+                        className={`rounded-[2px] transition-colors ${
+                          isActive ? 'bg-[#ff5c02]/25 border border-[#ff5c02]/40' : 'bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600'
+                        }`}
+                        style={{ width: pw, height: ph }}
+                      />
+                      <span className="text-[10px] font-bold leading-none">{ratio.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-gray-400 dark:text-gray-600">
+                {selectedRatio.desc} · {selectedRatio.use}
+              </p>
+            </div>
+
+            {/* Resolution Selector */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-gray-500 dark:text-gray-500 uppercase tracking-wide">Calidad</Label>
+              <div className="flex gap-2">
+                {RESOLUTIONS.map((res) => {
+                  const isActive = resolution === res.id;
+                  return (
+                    <button
+                      key={res.id}
+                      onClick={() => setResolution(res.id)}
+                      className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 px-2 rounded-lg transition-all duration-150 border ${
+                        isActive
+                          ? 'bg-[#ff5c02]/5 dark:bg-[#ff5c02]/10 border-[#ff5c02]/40 text-[#ff5c02]'
+                          : 'bg-white dark:bg-[#1a1a1f] border-gray-200 dark:border-white/10 text-gray-500 hover:border-gray-300 dark:hover:border-white/15'
+                      }`}
+                    >
+                      <span className="text-sm font-bold">{res.label}</span>
+                      <span className="text-[10px] opacity-60">{res.px}</span>
+                      <span className="text-[9px] opacity-40">{res.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Generate button + brand status */}
         <div className="space-y-2">
