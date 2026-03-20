@@ -121,6 +121,12 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
 
     try {
       let finalPrompt = mode === 'product' ? selectedPresetPrompt : prompt;
+
+      // For product mode, wrap with clear instructions for the AI
+      if (mode === 'product') {
+        finalPrompt = `IMPORTANT INSTRUCTIONS: You are receiving a reference image of a product. Your task is to use this exact product (preserving its exact appearance, colors, shape, branding, and every detail) and place it into a new scene as described below. The product in the output must be visually identical to the product in the reference image. Do NOT alter, redesign, or reimagine the product itself.\n\nSCENE DESCRIPTION:\n${finalPrompt}`;
+      }
+
       const brandPrefix = getPromptPrefix();
       if (brandPrefix) {
         finalPrompt = `${brandPrefix}\n\n${finalPrompt}`;

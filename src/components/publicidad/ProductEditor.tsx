@@ -16,37 +16,37 @@ export const DEFAULT_PRODUCT_PRESETS: ProductPreset[] = [
     id: 'solo-product',
     name: 'Solo producto',
     icon: 'product',
-    prompt: 'Professional product photo on a clean white background, studio lighting, centered composition, high detail, commercial photography style, soft shadows, crisp focus on product',
+    prompt: 'Transform this into a premium e-commerce product photo. Remove the existing background completely and replace it with a pure clean white seamless studio backdrop. Keep the product exactly as it is with every detail, texture, color and shape perfectly preserved. Add professional studio lighting with a soft key light from the upper left, fill light from the right, and a subtle rim light to separate the product from the background. Add a very soft natural shadow beneath the product on the white surface. The product must be perfectly centered, sharp, and in crisp focus. Ultra high quality, 8K commercial product photography, no text, no watermarks, no logos added.',
   },
   {
     id: 'child-product',
     name: 'Nino/nina con producto',
     icon: 'baby',
-    prompt: 'Adorable child happily using the product, natural lifestyle setting, warm soft lighting, joyful expression, family-friendly commercial photography, bokeh background',
+    prompt: 'Create a heartwarming commercial lifestyle photograph featuring an adorable happy child (3-5 years old) naturally interacting with and using the exact product shown in the uploaded image. The product must look identical to the original - same colors, shape, design, and all details preserved perfectly. Place them in a bright, warm, naturally lit playroom or living room environment with soft bokeh background. The child should have a genuine joyful expression, looking natural and not posed. Soft golden hour window lighting, shallow depth of field with the child and product in sharp focus. Professional family brand advertising photography style, warm color tones, high-end commercial quality. No text, no watermarks.',
   },
   {
     id: 'adult-product',
     name: 'Adulto con producto',
     icon: 'adult',
-    prompt: 'Attractive adult model naturally using the product, modern lifestyle setting, professional commercial photography, natural lighting, confident expression, aspirational feel',
+    prompt: 'Create a high-end commercial photograph featuring an attractive adult model (25-35 years old) confidently and naturally using or holding the exact product shown in the uploaded image. The product must be perfectly preserved with all its original details, colors, textures and design intact. Place the scene in a modern, aspirational lifestyle environment - a stylish apartment, trendy cafe, or contemporary workspace with soft natural lighting. The model should look authentic and relatable with a natural confident expression. Professional fashion-commercial hybrid photography style, shallow depth of field, product clearly visible and in sharp focus alongside the model. Warm natural tones, magazine-quality advertising photo. No text, no watermarks.',
   },
   {
     id: 'mother-child',
     name: 'Madre e hijo',
     icon: 'family',
-    prompt: 'Loving mother and child together with the product, warm family moment, natural home setting, soft golden hour lighting, genuine smiles, emotional connection, lifestyle photography',
+    prompt: 'Create an emotionally compelling commercial photograph showing a beautiful young mother and her small child (2-4 years old) sharing a tender moment together while naturally interacting with the exact product from the uploaded image. The product must retain all its original details, colors, and design perfectly. Set the scene in a cozy, warm home environment - a sunlit living room or bedroom with soft furnishings. Both should have genuine, loving expressions showing real emotional connection. Soft golden hour lighting streaming through windows, warm color palette, shallow depth of field. The product should be naturally integrated into their interaction, clearly visible. High-end family lifestyle brand photography, emotionally resonant, advertisement quality. No text, no watermarks.',
   },
   {
     id: 'lifestyle',
     name: 'Lifestyle',
     icon: 'lifestyle',
-    prompt: 'Product in a beautiful lifestyle setting, styled flat lay or in-context scene, aesthetic composition, natural textures, warm tones, Instagram-worthy commercial photography',
+    prompt: 'Create a stunning Instagram-worthy lifestyle flat lay or styled product scene featuring the exact product from the uploaded image as the hero centerpiece. The product must be perfectly preserved with all original details, colors, textures and branding intact. Arrange it in a beautifully curated aesthetic composition surrounded by complementary lifestyle props (fresh flowers, textured fabrics, artisanal items, natural elements like eucalyptus or dried flowers) on a premium surface - marble, light wood, or linen. Shot from directly above (flat lay) or at a 45-degree angle. Soft diffused natural lighting, warm earthy and neutral tones with subtle pops of color. Professional content creator photography style, editorial quality, highly aesthetic. No text, no watermarks.',
   },
   {
     id: 'couple',
     name: 'Pareja',
     icon: 'couple',
-    prompt: 'Happy couple using the product together, romantic lifestyle setting, natural light, warm atmosphere, genuine interaction, aspirational commercial photography',
+    prompt: 'Create a romantic and aspirational commercial photograph featuring a happy young couple (25-35 years old) naturally enjoying and using the exact product shown in the uploaded image together. The product must retain all its original details, colors, and design perfectly. Set the scene in a beautiful romantic setting - a cozy home evening, scenic outdoor location, or stylish restaurant with warm ambient lighting. The couple should show genuine chemistry and natural interaction, laughing or sharing a tender moment with the product integrated naturally into the scene. Golden hour or warm artificial lighting, cinematic shallow depth of field, the product clearly visible and in focus. High-end lifestyle brand advertising photography, warm inviting tones, aspirational feel. No text, no watermarks.',
   },
 ];
 
