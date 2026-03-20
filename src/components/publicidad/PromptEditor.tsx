@@ -8,14 +8,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { MessageSquare, BookOpen } from 'lucide-react';
 import { useSavedPrompts } from '@/hooks/useSavedPrompts';
 import { useSeedImages } from '@/hooks/useSeedImages';
 
 interface PromptEditorProps {
   prompt: string;
   onPromptChange: (value: string) => void;
-  resolution: string;
-  onResolutionChange: (value: string) => void;
   selectedSeedIds: string[];
   onSeedIdsChange: (ids: string[]) => void;
 }
@@ -23,8 +22,6 @@ interface PromptEditorProps {
 const PromptEditor = ({
   prompt,
   onPromptChange,
-  resolution,
-  onResolutionChange,
   selectedSeedIds,
   onSeedIdsChange,
 }: PromptEditorProps) => {
@@ -46,32 +43,18 @@ const PromptEditor = ({
     }
   };
 
-  const resolutionDescriptions: Record<string, string> = {
-    '1K': '1024px',
-    '2K': '2048px',
-    '4K': '4096px',
-  };
-
   return (
     <div className="space-y-5">
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Prompt</Label>
-        <Textarea
-          value={prompt}
-          onChange={(e) => onPromptChange(e.target.value)}
-          placeholder="Describe la imagen que quieres generar..."
-          rows={4}
-          className="resize-none"
-        />
-        <p className="text-xs text-gray-400">{prompt.length} caracteres</p>
-      </div>
-
-      <div className="flex items-end gap-4">
-        <div className="flex-1 space-y-2">
-          <Label className="text-sm font-medium">Prompt guardado</Label>
+      {/* Saved prompts quick load */}
+      {savedPrompts.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-3.5 h-3.5 text-gray-400" />
+            <Label className="text-xs font-medium text-gray-500 dark:text-gray-500">Cargar prompt guardado</Label>
+          </div>
           <Select onValueChange={handleSavedPromptSelect}>
-            <SelectTrigger className="h-10">
-              <SelectValue placeholder="Usar un prompt guardado..." />
+            <SelectTrigger className="h-9 text-sm border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0f0f11]">
+              <SelectValue placeholder="Seleccionar prompt..." />
             </SelectTrigger>
             <SelectContent>
               {savedPrompts.map((p) => (
@@ -82,27 +65,28 @@ const PromptEditor = ({
             </SelectContent>
           </Select>
         </div>
+      )}
 
-        <div className="w-40 space-y-2">
-          <Label className="text-sm font-medium">Resolucion</Label>
-          <Select value={resolution} onValueChange={onResolutionChange}>
-            <SelectTrigger className="h-10">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {['1K', '2K', '4K'].map((res) => (
-                <SelectItem key={res} value={res}>
-                  <span className="flex items-center gap-2">
-                    <span className="font-medium">{res}</span>
-                    <span className="text-xs text-gray-400">{resolutionDescriptions[res]}</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Prompt textarea */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-3.5 h-3.5 text-[#ff5c02]" />
+          <Label className="text-sm font-medium">Describe tu imagen</Label>
+        </div>
+        <Textarea
+          value={prompt}
+          onChange={(e) => onPromptChange(e.target.value)}
+          placeholder="Ej: Producto de skincare sobre una mesa de marmol blanco, luz natural suave lateral, fondo minimalista beige, fotografia editorial de alta calidad..."
+          rows={5}
+          className="resize-none text-sm leading-relaxed"
+        />
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] text-gray-400">Se mas especifico para mejores resultados</p>
+          <p className="text-[11px] text-gray-400">{prompt.length} caracteres</p>
         </div>
       </div>
 
+      {/* Reference images */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Imagenes de referencia</Label>
@@ -113,18 +97,15 @@ const PromptEditor = ({
           )}
         </div>
         {seedImages.length === 0 ? (
-          <div className="text-center py-4 bg-gray-50 dark:bg-[#0f0f11] rounded-lg">
-            <p className="text-sm text-gray-500">No hay imagenes semilla disponibles.</p>
+          <div className="text-center py-4 bg-gray-50 dark:bg-[#0f0f11] rounded-lg border border-dashed border-gray-200 dark:border-white/10">
+            <p className="text-xs text-gray-400">No hay imagenes semilla. Agregalas en Ajustes.</p>
           </div>
         ) : (
           <div className="grid grid-cols-5 md:grid-cols-8 gap-2">
             {seedImages.map((seed) => {
               const isSelected = selectedSeedIds.includes(seed.id);
               return (
-                <div
-                  key={seed.id}
-                  className="relative group"
-                >
+                <div key={seed.id} className="relative group">
                   <div
                     className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-150 ${
                       isSelected
@@ -144,10 +125,8 @@ const PromptEditor = ({
                       </div>
                     )}
                   </div>
-                  {/* Tooltip on hover */}
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                     {seed.name}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
                   </div>
                 </div>
               );
