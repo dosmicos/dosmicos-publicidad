@@ -31,10 +31,10 @@ const ImagePreview = ({ images, generating, onDownload, onClear }: ImagePreviewP
 
   if (generating) {
     return (
-      <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6">
+      <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none rounded-2xl p-6">
         <div className="flex flex-col items-center justify-center py-12 space-y-5">
           {/* Animated skeleton that looks like an image loading */}
-          <div className="w-full max-w-[280px] aspect-square rounded-xl bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100 animate-pulse relative overflow-hidden">
+          <div className="w-full max-w-[280px] aspect-square rounded-xl bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100 dark:from-[#252529] dark:via-[#2a2a2f] dark:to-[#252529] animate-pulse relative overflow-hidden">
             <div
               className="absolute inset-0"
               style={{
@@ -44,12 +44,12 @@ const ImagePreview = ({ images, generating, onDownload, onClear }: ImagePreviewP
               }}
             />
             <div className="absolute inset-0 flex items-center justify-center">
-              <ImageIcon className="w-12 h-12 text-gray-300 animate-pulse" />
+              <ImageIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 animate-pulse" />
             </div>
           </div>
           <div className="text-center space-y-1.5">
-            <p className="text-sm font-medium text-gray-700">Generando imagenes...</p>
-            <p className="text-xs text-gray-400">Esto puede tomar unos segundos</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Generando imagenes...</p>
+            <p className="text-xs text-gray-400 dark:text-gray-600">Esto puede tomar unos segundos</p>
           </div>
           {/* Animated dots */}
           <div className="flex gap-1.5">
@@ -87,16 +87,16 @@ const ImagePreview = ({ images, generating, onDownload, onClear }: ImagePreviewP
     return (
       <div className="space-y-3">
         {/* Main selected image */}
-        <Card className="bg-white border border-gray-200 shadow-md rounded-2xl overflow-hidden">
+        <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-md dark:shadow-none rounded-2xl overflow-hidden">
           <div className="p-3 space-y-3">
             <div
-              className="relative rounded-xl overflow-hidden bg-gray-50"
+              className="relative rounded-xl overflow-hidden bg-gray-50 dark:bg-[#0f0f11]"
               onMouseEnter={() => setHovering(true)}
               onMouseLeave={() => setHovering(false)}
             >
               {hasError ? (
-                <div className="flex flex-col items-center justify-center py-16 text-gray-400 space-y-3">
-                  <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-600 space-y-3">
+                  <div className="w-14 h-14 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center">
                     <AlertCircle className="w-7 h-7 text-red-400" />
                   </div>
                   <div className="text-center">
@@ -108,8 +108,8 @@ const ImagePreview = ({ images, generating, onDownload, onClear }: ImagePreviewP
                 <>
                   {/* Loading skeleton shown until image loads */}
                   {!imageLoaded[currentIndex] && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse flex items-center justify-center z-10">
-                      <ImageIcon className="w-10 h-10 text-gray-300" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-[#252529] dark:to-[#2a2a2f] animate-pulse flex items-center justify-center z-10">
+                      <ImageIcon className="w-10 h-10 text-gray-300 dark:text-gray-600" />
                     </div>
                   )}
                   <img
@@ -176,11 +176,11 @@ const ImagePreview = ({ images, generating, onDownload, onClear }: ImagePreviewP
                   className={`cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-200 ${
                     index === selectedIndex
                       ? 'border-[#ff5c02] ring-2 ring-[#ff5c02]/20 shadow-md scale-[1.03]'
-                      : 'border-gray-200 hover:border-gray-400 hover:shadow-sm hover:scale-[1.02]'
+                      : 'border-gray-200 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20 hover:shadow-sm hover:scale-[1.02]'
                   }`}
                 >
                   {thumbError ? (
-                    <div className="w-full aspect-square bg-gray-100 flex items-center justify-center">
+                    <div className="w-full aspect-square bg-gray-100 dark:bg-[#252529] flex items-center justify-center">
                       <AlertCircle className="w-5 h-5 text-red-300" />
                     </div>
                   ) : (
@@ -202,9 +202,9 @@ const ImagePreview = ({ images, generating, onDownload, onClear }: ImagePreviewP
   }
 
   return (
-    <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6">
+    <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none rounded-2xl p-6">
       <div className="flex flex-col items-center justify-center py-14 space-y-4">
-        <div className="w-16 h-16 bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl flex items-center justify-center">
+        <div className="w-16 h-16 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20 rounded-2xl flex items-center justify-center">
           <ImageIcon className="w-8 h-8 text-[#ff5c02]/60" />
         </div>
         <div className="text-center space-y-1">

@@ -90,7 +90,7 @@ const ImageEditor = ({
             <img
               src={baseImage}
               alt="Base"
-              className="w-full h-48 object-cover rounded-xl border border-gray-200 shadow-sm"
+              className="w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none"
             />
             <Button
               type="button"
@@ -107,7 +107,7 @@ const ImageEditor = ({
             className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer ${
               dragActive
                 ? 'border-[#ff5c02] bg-[#ff5c02]/5 scale-[1.01]'
-                : 'border-gray-300 hover:border-[#ff5c02]/50 hover:bg-gray-50'
+                : 'border-gray-300 dark:border-white/15 hover:border-[#ff5c02]/50 hover:bg-gray-50 dark:hover:bg-white/5'
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -129,7 +129,7 @@ const ImageEditor = ({
                 <Upload className="w-6 h-6 text-[#ff5c02]" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-700">Arrastra una imagen o haz clic para seleccionar</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Arrastra una imagen o haz clic para seleccionar</p>
                 <p className="text-xs text-gray-400 mt-1">JPG, PNG o WEBP (max. 5MB)</p>
               </div>
             </div>
@@ -150,7 +150,7 @@ const ImageEditor = ({
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium text-gray-700">Fondos de referencia</Label>
+          <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Fondos de referencia</Label>
           {selectedAdSeedIds.length > 0 && (
             <span className="text-xs text-[#ff5c02] font-medium">
               {selectedAdSeedIds.length} seleccionados
@@ -158,7 +158,7 @@ const ImageEditor = ({
           )}
         </div>
         {seedImages.length === 0 ? (
-          <div className="text-center py-4 bg-gray-50 rounded-lg">
+          <div className="text-center py-4 bg-gray-50 dark:bg-[#0f0f11] rounded-lg">
             <p className="text-sm text-gray-500">No hay imagenes de publicidad disponibles.</p>
           </div>
         ) : (
@@ -174,7 +174,7 @@ const ImageEditor = ({
                     className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-150 ${
                       isSelected
                         ? 'border-[#ff5c02] ring-2 ring-[#ff5c02]/20 scale-95'
-                        : 'border-gray-200 hover:border-gray-300'
+                        : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/15'
                     }`}
                     onClick={() => toggleAdSeed(seed.id)}
                   >

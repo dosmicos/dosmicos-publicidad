@@ -138,9 +138,9 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
         {/* Skill selector - less prominent */}
         {skills.length > 0 && (
           <div className="flex items-center gap-3">
-            <Label className="text-xs text-gray-400 whitespace-nowrap">Skill</Label>
+            <Label className="text-xs text-gray-400 dark:text-gray-600 whitespace-nowrap">Skill</Label>
             <Select value={selectedSkillId} onValueChange={handleSkillSelect}>
-              <SelectTrigger className="h-8 text-xs border-gray-200 bg-gray-50 max-w-[220px]">
+              <SelectTrigger className="h-8 text-xs border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0f0f11] max-w-[220px]">
                 <SelectValue placeholder="Seleccionar skill..." />
               </SelectTrigger>
               <SelectContent>
@@ -155,15 +155,15 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
         )}
 
         {/* Mode toggle - segmented control */}
-        <div className="bg-gray-100 p-1 rounded-xl inline-flex gap-0.5">
+        <div className="bg-gray-100 dark:bg-[#252529] p-1 rounded-xl inline-flex gap-0.5">
           {modes.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setMode(key)}
               className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 mode === key
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-white dark:bg-[#1a1a1f] text-gray-900 dark:text-white shadow-sm dark:shadow-none'
+                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -173,17 +173,17 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
         </div>
 
         {/* Mode-specific content */}
-        <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6">
+        <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none rounded-2xl p-6">
           {mode === 'template' && (
             <div className="space-y-4">
               <TemplateSelector onSelect={handleTemplateSelect} selectedTemplateId={selectedTemplateId} />
               <div className="space-y-2">
-                <Label className="text-sm text-gray-600">Personalizacion (opcional)</Label>
+                <Label className="text-sm text-gray-600 dark:text-gray-400">Personalizacion (opcional)</Label>
                 <Input
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Ajustes al template seleccionado..."
-                  className="border-gray-200"
+                  className="border-gray-200 dark:border-white/10"
                 />
               </div>
             </div>
@@ -220,7 +220,7 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
             className={`w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white font-semibold text-base transition-all duration-200 ${
               canGenerate()
                 ? 'bg-gradient-to-r from-[#ff5c02] to-[#ff8534] hover:from-[#e55200] hover:to-[#ff5c02] shadow-md hover:shadow-lg hover:shadow-orange-200/50 active:scale-[0.98]'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-200 dark:bg-[#2a2a2f] text-gray-400 dark:text-gray-600 cursor-not-allowed'
             }`}
           >
             {generating ? (
@@ -253,17 +253,17 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
       {/* Right column - Preview & Rate limit */}
       <div className="space-y-4">
         {/* Rate limit as progress bar */}
-        <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+        <div className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 rounded-xl p-3 shadow-sm dark:shadow-none">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 text-[#ff5c02]" />
-              <span className="text-xs font-medium text-gray-600">Generaciones hoy</span>
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Generaciones hoy</span>
             </div>
-            <span className="text-xs font-semibold text-gray-800">
+            <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">
               {used} / {max}
             </span>
           </div>
-          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-gray-100 dark:bg-[#252529] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500 ease-out"
               style={{

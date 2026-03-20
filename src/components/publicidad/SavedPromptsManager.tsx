@@ -141,9 +141,9 @@ const SavedPromptsManager = () => {
   const categoryBadgeColor = (cat: string) => {
     switch (cat) {
       case 'producto':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/30';
       case 'publicidad':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
+        return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/30';
       default:
         return '';
     }
@@ -165,7 +165,7 @@ const SavedPromptsManager = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Prompts Guardados</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Prompts Guardados</h3>
             <p className="text-sm text-gray-500 mt-0.5">Prompts reutilizables para agilizar la generacion</p>
           </div>
         </div>
@@ -181,9 +181,9 @@ const SavedPromptsManager = () => {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h3 className="text-lg font-semibold text-gray-900">Prompts Guardados</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Prompts Guardados</h3>
             {prompts.length > 0 && (
-              <Badge variant="secondary" className="bg-gray-100 text-gray-600 font-medium">
+              <Badge variant="secondary" className="bg-gray-100 dark:bg-[#252529] text-gray-600 dark:text-gray-400 font-medium">
                 {prompts.length} {prompts.length === 1 ? 'prompt' : 'prompts'}
               </Badge>
             )}
@@ -197,12 +197,12 @@ const SavedPromptsManager = () => {
       </div>
 
       {prompts.length === 0 ? (
-        <Card className="bg-white border border-dashed border-gray-300 rounded-2xl">
+        <Card className="bg-white dark:bg-[#1a1a1f] border border-dashed border-gray-300 dark:border-white/15 rounded-2xl">
           <div className="text-center py-16 px-6">
             <div className="w-16 h-16 bg-[#ff5c02]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <FileText className="w-8 h-8 text-[#ff5c02]/60" />
             </div>
-            <h3 className="text-lg font-semibold mb-1 text-gray-900">No hay prompts guardados</h3>
+            <h3 className="text-lg font-semibold mb-1 text-gray-900 dark:text-gray-100">No hay prompts guardados</h3>
             <p className="text-gray-500 text-sm max-w-sm mx-auto">
               Crea prompts reutilizables para agilizar la generacion de imagenes.
             </p>
@@ -221,13 +221,13 @@ const SavedPromptsManager = () => {
           {prompts.map((prompt) => (
             <Card
               key={prompt.id}
-              className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
+              className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 rounded-xl shadow-sm dark:shadow-none hover:shadow-md dark:hover:shadow-none transition-shadow duration-200 overflow-hidden"
             >
               <div className="p-4 space-y-3">
                 {/* Header row: name + actions */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1 space-y-1.5">
-                    <h4 className="font-semibold text-gray-900 truncate">{prompt.name}</h4>
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{prompt.name}</h4>
                     <Badge variant="outline" className={`text-xs ${categoryBadgeColor(prompt.category)}`}>
                       <span className="mr-1">{categoryIcon(prompt.category)}</span>
                       {prompt.category}
@@ -265,8 +265,8 @@ const SavedPromptsManager = () => {
                 </div>
 
                 {/* Prompt text preview */}
-                <div className="bg-gray-50 rounded-lg px-3 py-2">
-                  <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                <div className="bg-gray-50 dark:bg-[#0f0f11] rounded-lg px-3 py-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 leading-relaxed">
                     {prompt.prompt}
                   </p>
                 </div>

@@ -105,7 +105,7 @@ const PromptEditor = ({
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium text-gray-700">Imagenes de referencia</Label>
+          <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Imagenes de referencia</Label>
           {selectedSeedIds.length > 0 && (
             <span className="text-xs text-[#ff5c02] font-medium">
               {selectedSeedIds.length} seleccionadas
@@ -113,7 +113,7 @@ const PromptEditor = ({
           )}
         </div>
         {seedImages.length === 0 ? (
-          <div className="text-center py-4 bg-gray-50 rounded-lg">
+          <div className="text-center py-4 bg-gray-50 dark:bg-[#0f0f11] rounded-lg">
             <p className="text-sm text-gray-500">No hay imagenes semilla disponibles.</p>
           </div>
         ) : (
@@ -129,7 +129,7 @@ const PromptEditor = ({
                     className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-150 ${
                       isSelected
                         ? 'border-[#ff5c02] ring-2 ring-[#ff5c02]/20 scale-95'
-                        : 'border-gray-200 hover:border-gray-300'
+                        : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/15'
                     }`}
                     onClick={() => toggleSeedImage(seed.id)}
                   >

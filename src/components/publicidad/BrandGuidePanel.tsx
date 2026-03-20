@@ -87,9 +87,9 @@ const BrandGuidePanel = () => {
         {[1, 2, 3].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-6">
-              <div className="h-6 bg-gray-200 rounded w-1/3 mb-4" />
-              <div className="h-4 bg-gray-200 rounded w-2/3 mb-2" />
-              <div className="h-4 bg-gray-200 rounded w-1/2" />
+              <div className="h-6 bg-gray-200 dark:bg-[#2a2a2f] rounded w-1/3 mb-4" />
+              <div className="h-4 bg-gray-200 dark:bg-[#2a2a2f] rounded w-2/3 mb-2" />
+              <div className="h-4 bg-gray-200 dark:bg-[#2a2a2f] rounded w-1/2" />
             </CardContent>
           </Card>
         ))}
@@ -101,13 +101,13 @@ const BrandGuidePanel = () => {
   if (extracting) {
     return (
       <div className="space-y-6">
-        <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200">
+        <Card className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-orange-200 dark:border-orange-800/30">
           <CardContent className="p-8 text-center space-y-6">
-            <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto">
-              <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
+            <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center mx-auto">
+              <Loader2 className="w-8 h-8 text-orange-600 dark:text-orange-400 animate-spin" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-1">Analizando tu marca...</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-1">Analizando tu marca...</h3>
               <p className="text-gray-500 text-sm max-w-md mx-auto">
                 Estamos revisando tus productos, colores y estilo. Esto puede tomar hasta 30 segundos.
               </p>
@@ -126,7 +126,7 @@ const BrandGuidePanel = () => {
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
                       i === 0
                         ? 'bg-orange-500 text-white'
-                        : 'bg-orange-100 text-orange-400'
+                        : 'bg-orange-100 dark:bg-orange-900/30 text-orange-400'
                     }`}>
                       {i === 0 ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -135,7 +135,7 @@ const BrandGuidePanel = () => {
                       )}
                     </div>
                     <span className={`text-sm ${
-                      i === 0 ? 'text-gray-900 font-medium' : 'text-gray-400'
+                      i === 0 ? 'text-gray-900 dark:text-gray-100 font-medium' : 'text-gray-400 dark:text-gray-600'
                     }`}>
                       {step.label}
                     </span>
@@ -150,10 +150,10 @@ const BrandGuidePanel = () => {
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
-                <div className="h-5 bg-gray-200 rounded w-1/3 mb-4" />
+                <div className="h-5 bg-gray-200 dark:bg-[#2a2a2f] rounded w-1/3 mb-4" />
                 <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-full" />
-                  <div className="h-4 bg-gray-200 rounded w-2/3" />
+                  <div className="h-4 bg-gray-200 dark:bg-[#2a2a2f] rounded w-full" />
+                  <div className="h-4 bg-gray-200 dark:bg-[#2a2a2f] rounded w-2/3" />
                 </div>
               </CardContent>
             </Card>
@@ -168,12 +168,12 @@ const BrandGuidePanel = () => {
     return (
       <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200">
         <CardContent className="p-8 text-center space-y-6">
-          <div className="w-20 h-20 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto">
+          <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center mx-auto">
             <Sparkles className="w-10 h-10 text-orange-600" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-2xl font-semibold text-gray-900">Extrae tu Identidad de Marca</h3>
-            <p className="text-gray-600 max-w-lg mx-auto">
+            <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Extrae tu Identidad de Marca</h3>
+            <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
               Ingresa la URL de tu tienda y analizaremos automaticamente tus productos, colores,
               estilo visual, voz de marca y mas.
             </p>
@@ -217,7 +217,7 @@ const BrandGuidePanel = () => {
   return (
     <div className="space-y-4">
       {/* Brand Identity */}
-      <Card className="bg-white border border-gray-200 shadow-sm">
+      <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-orange-500" />
@@ -280,7 +280,7 @@ const BrandGuidePanel = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Color Palette */}
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <Palette className="w-5 h-5 text-orange-500" /> Paleta de Colores
@@ -294,11 +294,11 @@ const BrandGuidePanel = () => {
                     key={hex + label}
                     type="button"
                     onClick={() => copyColor(hex)}
-                    className="group flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all duration-200 cursor-pointer"
+                    className="group flex flex-col items-center gap-2 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:border-gray-200 dark:hover:border-white/15 hover:shadow-sm dark:hover:shadow-none transition-all duration-200 cursor-pointer"
                     title={`Copiar ${hex}`}
                   >
                     <div
-                      className="w-14 h-14 rounded-xl border border-gray-200 shadow-inner transition-transform duration-200 group-hover:scale-105"
+                      className="w-14 h-14 rounded-xl border border-gray-200 dark:border-white/10 shadow-inner transition-transform duration-200 group-hover:scale-105"
                       style={{ backgroundColor: hex }}
                     />
                     <span className="text-xs text-gray-500">{label}</span>
@@ -325,7 +325,7 @@ const BrandGuidePanel = () => {
         </Card>
 
         {/* Typography */}
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <Type className="w-5 h-5 text-orange-500" /> Tipografia
@@ -341,10 +341,10 @@ const BrandGuidePanel = () => {
               />
               {headingFont && (
                 <div
-                  className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-100"
+                  className="mt-2 p-3 bg-gray-50 dark:bg-[#0f0f11] rounded-lg border border-gray-100 dark:border-white/10"
                   style={{ fontFamily: `"${headingFont}", sans-serif` }}
                 >
-                  <p className="text-lg font-bold text-gray-800">Aa Bb Cc 123</p>
+                  <p className="text-lg font-bold text-gray-800 dark:text-gray-200">Aa Bb Cc 123</p>
                   <p className="text-xs text-gray-400 mt-1 font-sans">Vista previa: {headingFont}</p>
                 </div>
               )}
@@ -358,10 +358,10 @@ const BrandGuidePanel = () => {
               />
               {bodyFont && (
                 <div
-                  className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-100"
+                  className="mt-2 p-3 bg-gray-50 dark:bg-[#0f0f11] rounded-lg border border-gray-100 dark:border-white/10"
                   style={{ fontFamily: `"${bodyFont}", sans-serif` }}
                 >
-                  <p className="text-sm text-gray-800">
+                  <p className="text-sm text-gray-800 dark:text-gray-200">
                     El rapido zorro marron salta sobre el perro perezoso.
                   </p>
                   <p className="text-xs text-gray-400 mt-1 font-sans">Vista previa: {bodyFont}</p>
@@ -372,7 +372,7 @@ const BrandGuidePanel = () => {
         </Card>
 
         {/* Visual Style */}
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <Eye className="w-5 h-5 text-orange-500" /> Estilo Visual
@@ -391,7 +391,7 @@ const BrandGuidePanel = () => {
                   <Badge
                     key={i}
                     variant="secondary"
-                    className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 transition-colors"
+                    className="bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800/30 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors"
                   >
                     {kw}
                   </Badge>
@@ -402,7 +402,7 @@ const BrandGuidePanel = () => {
         </Card>
 
         {/* Guidelines */}
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <Shield className="w-5 h-5 text-orange-500" /> Lineamientos
@@ -413,17 +413,17 @@ const BrandGuidePanel = () => {
               {/* Do */}
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
                     <Check className="w-3 h-3 text-green-600" />
                   </div>
-                  <p className="text-sm font-medium text-green-700">Hacer</p>
+                  <p className="text-sm font-medium text-green-700 dark:text-green-400">Hacer</p>
                 </div>
                 {doList.length > 0 ? (
                   <ul className="space-y-1.5">
                     {doList.map((item, i) => (
                       <li
                         key={i}
-                        className="flex items-start gap-2 text-sm text-gray-700 bg-green-50/60 rounded-lg px-3 py-2 border border-green-100"
+                        className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300 bg-green-50/60 dark:bg-green-900/10 rounded-lg px-3 py-2 border border-green-100 dark:border-green-800/30"
                       >
                         <Check className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
                         <span>{item}</span>
@@ -438,17 +438,17 @@ const BrandGuidePanel = () => {
               {/* Don't */}
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
                     <X className="w-3 h-3 text-red-600" />
                   </div>
-                  <p className="text-sm font-medium text-red-700">Evitar</p>
+                  <p className="text-sm font-medium text-red-700 dark:text-red-400">Evitar</p>
                 </div>
                 {dontList.length > 0 ? (
                   <ul className="space-y-1.5">
                     {dontList.map((item, i) => (
                       <li
                         key={i}
-                        className="flex items-start gap-2 text-sm text-gray-700 bg-red-50/60 rounded-lg px-3 py-2 border border-red-100"
+                        className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300 bg-red-50/60 dark:bg-red-900/10 rounded-lg px-3 py-2 border border-red-100 dark:border-red-800/30"
                       >
                         <X className="w-3.5 h-3.5 text-red-500 mt-0.5 flex-shrink-0" />
                         <span>{item}</span>
@@ -465,7 +465,7 @@ const BrandGuidePanel = () => {
       </div>
 
       {/* Prompt Prefix */}
-      <Card className="bg-white border border-gray-200 shadow-sm">
+      <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -475,7 +475,7 @@ const BrandGuidePanel = () => {
               variant={brandGuide.extraction_status === 'complete' ? 'default' : 'secondary'}
               className={
                 brandGuide.extraction_status === 'complete'
-                  ? 'bg-green-100 text-green-700 hover:bg-green-100'
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100'
                   : ''
               }
             >

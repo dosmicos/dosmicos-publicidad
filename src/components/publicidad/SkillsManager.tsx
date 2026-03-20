@@ -146,11 +146,11 @@ const SkillsManager = () => {
   const modeBadgeColor = (m: string) => {
     switch (m) {
       case 'template':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/30';
       case 'free':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/30';
       case 'edit':
-        return 'bg-orange-50 text-orange-700 border-orange-200';
+        return 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800/30';
       default:
         return '';
     }
@@ -187,7 +187,7 @@ const SkillsManager = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Skills</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Skills</h3>
             <p className="text-sm text-gray-500 mt-0.5">Combinaciones preconfiguradas de templates, prompts y semillas</p>
           </div>
         </div>
@@ -203,9 +203,9 @@ const SkillsManager = () => {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h3 className="text-lg font-semibold text-gray-900">Skills</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Skills</h3>
             {skills.length > 0 && (
-              <Badge variant="secondary" className="bg-gray-100 text-gray-600 font-medium">
+              <Badge variant="secondary" className="bg-gray-100 dark:bg-[#252529] text-gray-600 dark:text-gray-400 font-medium">
                 {skills.length} {skills.length === 1 ? 'skill' : 'skills'}
               </Badge>
             )}
@@ -219,12 +219,12 @@ const SkillsManager = () => {
       </div>
 
       {skills.length === 0 ? (
-        <Card className="bg-white border border-dashed border-gray-300 rounded-2xl">
+        <Card className="bg-white dark:bg-[#1a1a1f] border border-dashed border-gray-300 dark:border-white/15 rounded-2xl">
           <div className="text-center py-16 px-6">
             <div className="w-16 h-16 bg-[#ff5c02]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Zap className="w-8 h-8 text-[#ff5c02]/60" />
             </div>
-            <h3 className="text-lg font-semibold mb-1 text-gray-900">No hay skills configurados</h3>
+            <h3 className="text-lg font-semibold mb-1 text-gray-900 dark:text-gray-100">No hay skills configurados</h3>
             <p className="text-gray-500 text-sm max-w-sm mx-auto">
               Crea skills para combinar templates, prompts e imagenes semilla en un solo flujo.
             </p>
@@ -243,7 +243,7 @@ const SkillsManager = () => {
           {skills.map((skill) => (
             <Card
               key={skill.id}
-              className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 group hover:border-[#ff5c02]/30"
+              className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 rounded-xl shadow-sm dark:shadow-none overflow-hidden hover:shadow-md dark:hover:shadow-none transition-all duration-200 group hover:border-[#ff5c02]/30"
             >
               <div className="p-4 space-y-3">
                 <div className="flex items-start justify-between">
@@ -252,14 +252,14 @@ const SkillsManager = () => {
                       <div className="w-8 h-8 rounded-lg bg-[#ff5c02]/10 flex items-center justify-center flex-shrink-0">
                         <Zap className="w-4 h-4 text-[#ff5c02]" />
                       </div>
-                      <h4 className="font-bold text-gray-900 truncate">{skill.name}</h4>
+                      <h4 className="font-bold text-gray-900 dark:text-gray-100 truncate">{skill.name}</h4>
                     </div>
                     <div className="flex items-center gap-2 pl-10">
                       <Badge variant="outline" className={`text-xs ${modeBadgeColor(skill.mode)}`}>
                         <span className="mr-1">{modeIcon(skill.mode)}</span>
                         {modeLabel(skill.mode)}
                       </Badge>
-                      <Badge variant="outline" className="text-xs bg-gray-50 text-gray-600">
+                      <Badge variant="outline" className="text-xs bg-gray-50 dark:bg-[#0f0f11] text-gray-600 dark:text-gray-400">
                         {skill.resolution || '1K'}
                       </Badge>
                     </div>
@@ -285,8 +285,8 @@ const SkillsManager = () => {
                 </div>
 
                 {skill.prompt && (
-                  <div className="bg-gray-50 rounded-lg px-3 py-2 ml-10">
-                    <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                  <div className="bg-gray-50 dark:bg-[#0f0f11] rounded-lg px-3 py-2 ml-10">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
                       {skill.prompt}
                     </p>
                   </div>
@@ -302,7 +302,7 @@ const SkillsManager = () => {
                             key={seedId}
                             src={seed.image_url}
                             alt={seed.name}
-                            className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
+                            className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-[#1a1a1f] shadow-sm dark:shadow-none"
                             style={{ zIndex: 5 - index }}
                             title={seed.name}
                           />
@@ -310,7 +310,7 @@ const SkillsManager = () => {
                       })}
                     </div>
                     {skill.seed_image_ids.length > 5 && (
-                      <span className="ml-2 text-xs text-gray-500 font-medium bg-gray-100 rounded-full px-2 py-0.5">
+                      <span className="ml-2 text-xs text-gray-500 font-medium bg-gray-100 dark:bg-[#252529] rounded-full px-2 py-0.5">
                         +{skill.seed_image_ids.length - 5}
                       </span>
                     )}
@@ -413,7 +413,7 @@ const SkillsManager = () => {
                 )}
               </Label>
               {seedImages.length === 0 ? (
-                <div className="text-center py-4 bg-gray-50 rounded-lg">
+                <div className="text-center py-4 bg-gray-50 dark:bg-[#0f0f11] rounded-lg">
                   <p className="text-sm text-gray-500">No hay imagenes semilla disponibles.</p>
                 </div>
               ) : (
@@ -424,7 +424,7 @@ const SkillsManager = () => {
                       className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-150 ${
                         selectedSeedIds.includes(seed.id)
                           ? 'border-[#ff5c02] ring-2 ring-[#ff5c02]/20 scale-95'
-                          : 'border-gray-200 hover:border-gray-300'
+                          : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/15'
                       }`}
                       onClick={() => toggleSeedImage(seed.id)}
                       title={seed.name}

@@ -12,11 +12,27 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const { signIn } = useAuth();
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(t);
+
+    // Detect dark mode from <html> class
+    const checkDark = () =>
+      setIsDark(document.documentElement.classList.contains('dark'));
+    checkDark();
+
+    const observer = new MutationObserver(checkDark);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => {
+      clearTimeout(t);
+      observer.disconnect();
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,91 +42,177 @@ const LoginPage = () => {
     try {
       await signIn(email, password);
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión');
+      setError(err.message || 'Error al iniciar sesion');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Animated gradient background */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(135deg, #fff5ee 0%, #ffe8d6 25%, #ffd4b8 50%, #ffe0cc 75%, #fff8f2 100%)',
-          backgroundSize: '400% 400%',
-          animation: 'gradientShift 12s ease infinite',
-        }}
-      />
+    <div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ background: isDark ? '#0a0a0c' : undefined }}
+    >
+      {/* ── Light mode: mesh gradient background ── */}
+      {!isDark && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 80% 60% at 20% 30%, rgba(255,92,2,0.06) 0%, transparent 60%),' +
+              'radial-gradient(ellipse 60% 80% at 80% 70%, rgba(255,138,61,0.05) 0%, transparent 60%),' +
+              'radial-gradient(ellipse 100% 100% at 50% 50%, #fff8f2 0%, #ffffff 100%)',
+          }}
+        />
+      )}
 
-      {/* Subtle floating shapes */}
-      <div
-        className="absolute top-1/4 -left-20 w-72 h-72 rounded-full opacity-20"
-        style={{
-          background: 'radial-gradient(circle, #ff5c02 0%, transparent 70%)',
-          animation: 'floatA 8s ease-in-out infinite',
-        }}
-      />
-      <div
-        className="absolute bottom-1/4 -right-20 w-96 h-96 rounded-full opacity-15"
-        style={{
-          background: 'radial-gradient(circle, #ff5c02 0%, transparent 70%)',
-          animation: 'floatB 10s ease-in-out infinite',
-        }}
-      />
+      {/* ── Dark mode: glowing aurora orbs ── */}
+      {isDark && (
+        <>
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'radial-gradient(ellipse 50% 40% at 25% 20%, rgba(255,92,2,0.07) 0%, transparent 70%),' +
+                'radial-gradient(ellipse 40% 50% at 75% 75%, rgba(255,92,2,0.05) 0%, transparent 70%),' +
+                'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(255,138,61,0.03) 0%, transparent 80%)',
+            }}
+          />
+          <div
+            className="absolute top-[15%] left-[10%] w-[500px] h-[500px] rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(255,92,2,0.08) 0%, transparent 60%)',
+              filter: 'blur(80px)',
+              animation: 'floatA 14s ease-in-out infinite',
+            }}
+          />
+          <div
+            className="absolute bottom-[10%] right-[5%] w-[600px] h-[600px] rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(255,92,2,0.06) 0%, transparent 60%)',
+              filter: 'blur(100px)',
+              animation: 'floatB 18s ease-in-out infinite',
+            }}
+          />
+          <div
+            className="absolute top-[60%] left-[50%] w-[300px] h-[300px] rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(255,138,61,0.05) 0%, transparent 60%)',
+              filter: 'blur(60px)',
+              animation: 'floatA 10s ease-in-out infinite reverse',
+            }}
+          />
+        </>
+      )}
 
-      {/* Card */}
+      {/* ── Light mode floating shapes ── */}
+      {!isDark && (
+        <>
+          <div
+            className="absolute top-1/4 -left-20 w-72 h-72 rounded-full opacity-[0.12]"
+            style={{
+              background: 'radial-gradient(circle, #ff5c02 0%, transparent 70%)',
+              filter: 'blur(40px)',
+              animation: 'floatA 8s ease-in-out infinite',
+            }}
+          />
+          <div
+            className="absolute bottom-1/4 -right-20 w-96 h-96 rounded-full opacity-[0.08]"
+            style={{
+              background: 'radial-gradient(circle, #ff5c02 0%, transparent 70%)',
+              filter: 'blur(50px)',
+              animation: 'floatB 10s ease-in-out infinite',
+            }}
+          />
+        </>
+      )}
+
+      {/* ── Card container ── */}
       <div
         className="relative z-10 w-full max-w-md px-4"
         style={{
           opacity: mounted ? 1 : 0,
           transform: mounted ? 'translateY(0)' : 'translateY(24px)',
-          transition: 'opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1)',
+          transition:
+            'opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1)',
         }}
       >
         <Card
           className="border-0 overflow-hidden"
           style={{
-            background: 'rgba(255,255,255,0.7)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            boxShadow:
-              '0 8px 32px rgba(255,92,2,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)',
+            background: isDark
+              ? 'rgba(26,26,31,0.8)'
+              : 'rgba(255,255,255,0.75)',
+            backdropFilter: 'blur(24px) saturate(1.2)',
+            WebkitBackdropFilter: 'blur(24px) saturate(1.2)',
+            boxShadow: isDark
+              ? '0 0 0 1px rgba(255,255,255,0.06), 0 8px 40px rgba(0,0,0,0.5), 0 0 80px rgba(255,92,2,0.04)'
+              : '0 8px 40px rgba(255,92,2,0.08), 0 2px 8px rgba(0,0,0,0.04), 0 0 0 1px rgba(255,255,255,0.6), inset 0 1px 0 rgba(255,255,255,0.7)',
+            borderRadius: '20px',
           }}
         >
-          <CardHeader className="text-center pb-2 pt-8">
-            {/* Logo container */}
-            <div className="flex justify-center mb-4">
+          <CardHeader className="text-center pb-2 pt-10">
+            {/* Logo with glow */}
+            <div className="flex justify-center mb-5">
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                className="w-[72px] h-[72px] rounded-2xl flex items-center justify-center relative"
                 style={{
                   background: 'linear-gradient(135deg, #ff5c02 0%, #ff8a3d 100%)',
-                  boxShadow: '0 8px 24px rgba(255,92,2,0.3)',
+                  boxShadow: isDark
+                    ? '0 8px 32px rgba(255,92,2,0.4), 0 0 60px rgba(255,92,2,0.15)'
+                    : '0 8px 32px rgba(255,92,2,0.3), 0 0 40px rgba(255,92,2,0.08)',
                 }}
               >
-                <Wand2 className="w-8 h-8 text-white" />
+                <Wand2 className="w-9 h-9 text-white" strokeWidth={2} />
               </div>
             </div>
 
-            <CardTitle className="text-2xl font-bold tracking-tight text-gray-900">
+            {/* Title with gradient text */}
+            <CardTitle
+              className="text-3xl font-extrabold tracking-tight"
+              style={{
+                background: isDark
+                  ? 'linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%)'
+                  : 'linear-gradient(135deg, #1a1a1a 0%, #ff5c02 120%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
               DosmiAds
             </CardTitle>
-            <p className="text-sm text-gray-500 mt-1.5">
+
+            {/* Tagline with delayed fade-in */}
+            <p
+              className="text-sm mt-2"
+              style={{
+                color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+                opacity: mounted ? 1 : 0,
+                transform: mounted ? 'translateY(0)' : 'translateY(8px)',
+                transition:
+                  'opacity 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s, transform 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s',
+              }}
+            >
               Genera imagenes con IA para productos y publicidad
             </p>
           </CardHeader>
 
-          <CardContent className="px-8 pb-8 pt-4">
+          <CardContent className="px-8 pb-8 pt-5">
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email field */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-700 text-sm font-medium">
+                <Label
+                  htmlFor="email"
+                  className="text-sm font-medium"
+                  style={{ color: isDark ? 'rgba(255,255,255,0.65)' : '#374151' }}
+                >
                   Correo electronico
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Mail
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                    style={{ color: isDark ? 'rgba(255,255,255,0.3)' : '#9ca3af' }}
+                  />
                   <Input
                     id="email"
                     type="email"
@@ -118,18 +220,33 @@ const LoginPage = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="pl-10 h-11 bg-white/60 border-gray-200 focus:border-[#ff5c02] focus:ring-[#ff5c02]/20 transition-colors"
+                    className="pl-10 h-11 transition-colors"
+                    style={{
+                      background: isDark ? '#1f1f24' : 'rgba(255,255,255,0.8)',
+                      border: isDark
+                        ? '1px solid rgba(255,255,255,0.08)'
+                        : '1px solid #e5e7eb',
+                      color: isDark ? '#ffffff' : '#111827',
+                      borderRadius: '10px',
+                    }}
                   />
                 </div>
               </div>
 
               {/* Password field */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-700 text-sm font-medium">
+                <Label
+                  htmlFor="password"
+                  className="text-sm font-medium"
+                  style={{ color: isDark ? 'rgba(255,255,255,0.65)' : '#374151' }}
+                >
                   Contrasena
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Lock
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                    style={{ color: isDark ? 'rgba(255,255,255,0.3)' : '#9ca3af' }}
+                  />
                   <Input
                     id="password"
                     type="password"
@@ -137,7 +254,15 @@ const LoginPage = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="pl-10 h-11 bg-white/60 border-gray-200 focus:border-[#ff5c02] focus:ring-[#ff5c02]/20 transition-colors"
+                    className="pl-10 h-11 transition-colors"
+                    style={{
+                      background: isDark ? '#1f1f24' : 'rgba(255,255,255,0.8)',
+                      border: isDark
+                        ? '1px solid rgba(255,255,255,0.08)'
+                        : '1px solid #e5e7eb',
+                      color: isDark ? '#ffffff' : '#111827',
+                      borderRadius: '10px',
+                    }}
                   />
                 </div>
               </div>
@@ -147,24 +272,33 @@ const LoginPage = () => {
                 <div
                   className="flex items-center gap-2.5 px-4 py-3 rounded-lg text-sm"
                   style={{
-                    background: 'rgba(239,68,68,0.08)',
-                    border: '1px solid rgba(239,68,68,0.15)',
+                    background: isDark
+                      ? 'rgba(239,68,68,0.12)'
+                      : 'rgba(239,68,68,0.08)',
+                    border: isDark
+                      ? '1px solid rgba(239,68,68,0.2)'
+                      : '1px solid rgba(239,68,68,0.15)',
                   }}
                 >
                   <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-                  <span className="text-red-700">{error}</span>
+                  <span style={{ color: isDark ? '#fca5a5' : '#b91c1c' }}>
+                    {error}
+                  </span>
                 </div>
               )}
 
               {/* Submit button */}
               <Button
                 type="submit"
-                className="w-full h-11 text-sm font-semibold text-white border-0 cursor-pointer"
+                className="w-full h-12 text-sm font-semibold text-white border-0 cursor-pointer"
                 style={{
                   background: loading
                     ? '#cc4a02'
                     : 'linear-gradient(135deg, #ff5c02 0%, #ff7a2e 100%)',
-                  boxShadow: '0 4px 12px rgba(255,92,2,0.25)',
+                  boxShadow: isDark
+                    ? '0 4px 20px rgba(255,92,2,0.35), 0 0 40px rgba(255,92,2,0.1)'
+                    : '0 4px 16px rgba(255,92,2,0.25)',
+                  borderRadius: '10px',
                   transition: 'all 0.2s ease',
                 }}
                 disabled={loading}
@@ -174,21 +308,15 @@ const LoginPage = () => {
                 ) : null}
                 Iniciar Sesion
               </Button>
-
-              {/* Keyboard hint */}
-              <p className="text-center text-xs text-gray-400">
-                Presiona{' '}
-                <kbd className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200 text-gray-500 font-mono text-[11px]">
-                  Enter
-                </kbd>{' '}
-                para iniciar sesion
-              </p>
             </form>
           </CardContent>
         </Card>
 
         {/* Powered by AI */}
-        <div className="flex items-center justify-center gap-1.5 mt-6 text-xs text-gray-400">
+        <div
+          className="flex items-center justify-center gap-1.5 mt-6 text-xs"
+          style={{ color: isDark ? 'rgba(255,255,255,0.25)' : '#9ca3af' }}
+        >
           <Sparkles className="w-3.5 h-3.5" />
           <span>Powered by AI</span>
         </div>
@@ -196,10 +324,6 @@ const LoginPage = () => {
 
       {/* Keyframe animations */}
       <style>{`
-        @keyframes gradientShift {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
         @keyframes floatA {
           0%, 100% { transform: translate(0, 0) scale(1); }
           50% { transform: translate(30px, -30px) scale(1.05); }

@@ -157,7 +157,7 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
             <p className="text-sm text-gray-500 mt-0.5">{description}</p>
           </div>
         </div>
@@ -173,9 +173,9 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
             {seedImages.length > 0 && (
-              <Badge variant="secondary" className="bg-gray-100 text-gray-600 font-medium">
+              <Badge variant="secondary" className="bg-gray-100 dark:bg-[#252529] text-gray-600 dark:text-gray-400 font-medium">
                 {seedImages.length} {seedImages.length === 1 ? 'imagen' : 'imagenes'}
               </Badge>
             )}
@@ -195,12 +195,12 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
       </div>
 
       {seedImages.length === 0 ? (
-        <Card className="bg-white border border-dashed border-gray-300 rounded-2xl">
+        <Card className="bg-white dark:bg-[#1a1a1f] border border-dashed border-gray-300 dark:border-white/15 rounded-2xl">
           <div className="text-center py-16 px-6">
             <div className="w-16 h-16 bg-[#ff5c02]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <ImageIcon className="w-8 h-8 text-[#ff5c02]/60" />
             </div>
-            <h3 className="text-lg font-semibold mb-1 text-gray-900">No hay semillas configuradas</h3>
+            <h3 className="text-lg font-semibold mb-1 text-gray-900 dark:text-gray-100">No hay semillas configuradas</h3>
             <p className="text-gray-500 text-sm max-w-sm mx-auto">
               Agrega imagenes semilla para usar como referencia en la generacion de contenido.
             </p>
@@ -222,7 +222,7 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
           {seedImages.map((seed) => (
             <div
               key={seed.id}
-              className="group relative bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
+              className="group relative bg-white dark:bg-[#1a1a1f] rounded-xl border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none overflow-hidden hover:shadow-md dark:hover:shadow-none transition-shadow duration-200"
             >
               <div className="aspect-square overflow-hidden">
                 <img
@@ -252,9 +252,9 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
               </div>
               {/* Always-visible info below image */}
               <div className="p-3 space-y-1">
-                <p className="text-sm font-medium text-gray-900 truncate">{seed.name}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{seed.name}</p>
                 {seed.category && (
-                  <Badge variant="outline" className="text-xs bg-gray-50">
+                  <Badge variant="outline" className="text-xs bg-gray-50 dark:bg-[#0f0f11]">
                     {seed.category}
                   </Badge>
                 )}
@@ -276,7 +276,7 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
               className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer ${
                 dragActive
                   ? 'border-[#ff5c02] bg-[#ff5c02]/5 scale-[1.01]'
-                  : 'border-gray-300 hover:border-[#ff5c02]/50 hover:bg-gray-50'
+                  : 'border-gray-300 dark:border-white/15 hover:border-[#ff5c02]/50 hover:bg-gray-50 dark:hover:bg-white/5'
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -301,7 +301,7 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
                     <Upload className="w-6 h-6 text-[#ff5c02]" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Arrastra una imagen o haz clic para seleccionar</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Arrastra una imagen o haz clic para seleccionar</p>
                     <p className="text-xs text-gray-400 mt-1">JPG, PNG o WEBP (max. 5MB)</p>
                   </div>
                 </div>

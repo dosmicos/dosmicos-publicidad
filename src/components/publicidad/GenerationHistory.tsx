@@ -63,19 +63,19 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
         return {
           label: 'Template',
           icon: <Wand2 className="w-3 h-3" />,
-          className: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+          className: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/30 hover:bg-blue-100 dark:hover:bg-blue-900/40',
         };
       case 'free':
         return {
           label: 'Libre',
           icon: <MessageSquare className="w-3 h-3" />,
-          className: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100',
+          className: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40',
         };
       case 'edit':
         return {
           label: 'Edicion',
           icon: <Pencil className="w-3 h-3" />,
-          className: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
+          className: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/30 hover:bg-amber-100 dark:hover:bg-amber-900/40',
         };
       default:
         return { label: mode, icon: null, className: '' };
@@ -95,10 +95,10 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
 
   if (loading) {
     return (
-      <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6">
+      <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none rounded-2xl p-6">
         <div className="text-center py-16">
           <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">Cargando historial...</p>
+          <p className="text-gray-500 dark:text-gray-500 text-sm">Cargando historial...</p>
         </div>
       </Card>
     );
@@ -107,11 +107,11 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
   return (
     <div className="space-y-4">
       {/* Filter bar */}
-      <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl p-4">
+      <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none rounded-2xl p-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
           {/* Search */}
           <div className="flex-1 min-w-0 space-y-1.5">
-            <Label className="text-xs text-gray-500">Buscar</Label>
+            <Label className="text-xs text-gray-500 dark:text-gray-500">Buscar</Label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
@@ -128,7 +128,7 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
 
           {/* Mode */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500">Modo</Label>
+            <Label className="text-xs text-gray-500 dark:text-gray-500">Modo</Label>
             <Select
               value={modeFilter}
               onValueChange={(v) => {
@@ -150,7 +150,7 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
 
           {/* Date from */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500">Desde</Label>
+            <Label className="text-xs text-gray-500 dark:text-gray-500">Desde</Label>
             <Input
               type="date"
               value={dateFrom}
@@ -164,7 +164,7 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
 
           {/* Date to */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-gray-500">Hasta</Label>
+            <Label className="text-xs text-gray-500 dark:text-gray-500">Hasta</Label>
             <Input
               type="date"
               value={dateTo}
@@ -180,9 +180,9 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
 
       {/* Content */}
       {filteredRecords.length === 0 ? (
-        <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6">
+        <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none rounded-2xl p-6">
           <div className="text-center py-16 space-y-4">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto">
+            <div className="w-20 h-20 bg-gray-50 dark:bg-[#0f0f11] rounded-full flex items-center justify-center mx-auto">
               {searchQuery ? (
                 <Search className="w-9 h-9 text-gray-300" />
               ) : (
@@ -190,7 +190,7 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
               )}
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-1">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">
                 {searchQuery
                   ? 'Sin resultados'
                   : 'No hay generaciones registradas'}
@@ -206,10 +206,10 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
       ) : (
         <>
           {/* Desktop table */}
-          <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden hidden md:block">
+          <Card className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none rounded-2xl overflow-hidden hidden md:block">
             <div className="overflow-x-auto">
               {/* Header */}
-              <div className="border-b border-gray-100 bg-gray-50/70 px-6 py-3">
+              <div className="border-b border-gray-100 dark:border-white/5 bg-gray-50/70 dark:bg-[#1a1a1f] px-6 py-3">
                 <div className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="w-[180px] flex-shrink-0">Fecha</div>
                   <div className="w-[110px] flex-shrink-0">Modo</div>
@@ -220,17 +220,17 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
               </div>
 
               {/* Rows */}
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-gray-50 dark:divide-white/5">
                 {paginatedRecords.map((record) => {
                   const badge = modeBadge(record.mode);
                   return (
                     <div
                       key={record.id}
-                      className="px-6 py-3.5 hover:bg-orange-50/40 transition-colors duration-150 group"
+                      className="px-6 py-3.5 hover:bg-orange-50/40 dark:hover:bg-white/5 transition-colors duration-150 group"
                     >
                       <div className="flex items-center">
                         <div className="w-[180px] flex-shrink-0">
-                          <p className="text-sm text-gray-700">
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
                             {formatDate(record.created_at)}
                           </p>
                         </div>
@@ -244,7 +244,7 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
                           </Badge>
                         </div>
                         <div className="flex-1 min-w-0 pr-4">
-                          <p className="text-sm text-gray-600 truncate">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                             {record.prompt || '-'}
                           </p>
                         </div>
@@ -279,7 +279,7 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
               return (
                 <Card
                   key={record.id}
-                  className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 space-y-3 active:bg-gray-50 transition-colors"
+                  className="bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/10 shadow-sm dark:shadow-none rounded-xl p-4 space-y-3 active:bg-gray-50 dark:active:bg-white/5 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <Badge
@@ -294,7 +294,7 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
                     </Badge>
                   </div>
 
-                  <p className="text-sm text-gray-700 line-clamp-2 leading-relaxed">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 leading-relaxed">
                     {record.prompt || '-'}
                   </p>
 
@@ -333,7 +333,7 @@ const GenerationHistory = ({ onReuse }: GenerationHistoryProps) => {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <span className="text-sm text-gray-600 tabular-nums min-w-[80px] text-center">
+                <span className="text-sm text-gray-600 dark:text-gray-400 tabular-nums min-w-[80px] text-center">
                   {safeCurrentPage} / {totalPages}
                 </span>
                 <Button

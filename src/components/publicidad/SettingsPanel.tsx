@@ -15,38 +15,38 @@ const SettingsPanel = () => {
             <Settings className="w-5 h-5 text-[#ff5c02]" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Configuracion</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Configuracion</h1>
             <p className="text-sm text-gray-500">Gestiona tus semillas, prompts y skills de generacion</p>
           </div>
         </div>
       </div>
 
       <Tabs defaultValue="product-seeds" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-gray-100/80 rounded-xl">
+        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-gray-100/80 dark:bg-[#252529] rounded-xl">
           <TabsTrigger
             value="product-seeds"
-            className="flex items-center gap-2 py-2.5 px-3 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#ff5c02] transition-all"
+            className="flex items-center gap-2 py-2.5 px-3 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1f] data-[state=active]:shadow-sm dark:data-[state=active]:shadow-none data-[state=active]:text-[#ff5c02] transition-all"
           >
             <ImageIcon className="w-5 h-5 flex-shrink-0" />
             <span className="hidden sm:inline text-sm font-medium">Producto</span>
           </TabsTrigger>
           <TabsTrigger
             value="ad-seeds"
-            className="flex items-center gap-2 py-2.5 px-3 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#ff5c02] transition-all"
+            className="flex items-center gap-2 py-2.5 px-3 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1f] data-[state=active]:shadow-sm dark:data-[state=active]:shadow-none data-[state=active]:text-[#ff5c02] transition-all"
           >
             <ImageIcon className="w-5 h-5 flex-shrink-0" />
             <span className="hidden sm:inline text-sm font-medium">Publicidad</span>
           </TabsTrigger>
           <TabsTrigger
             value="prompts"
-            className="flex items-center gap-2 py-2.5 px-3 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#ff5c02] transition-all"
+            className="flex items-center gap-2 py-2.5 px-3 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1f] data-[state=active]:shadow-sm dark:data-[state=active]:shadow-none data-[state=active]:text-[#ff5c02] transition-all"
           >
             <FileText className="w-5 h-5 flex-shrink-0" />
             <span className="hidden sm:inline text-sm font-medium">Prompts</span>
           </TabsTrigger>
           <TabsTrigger
             value="skills"
-            className="flex items-center gap-2 py-2.5 px-3 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#ff5c02] transition-all"
+            className="flex items-center gap-2 py-2.5 px-3 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1f] data-[state=active]:shadow-sm dark:data-[state=active]:shadow-none data-[state=active]:text-[#ff5c02] transition-all"
           >
             <Zap className="w-5 h-5 flex-shrink-0" />
             <span className="hidden sm:inline text-sm font-medium">Skills</span>
