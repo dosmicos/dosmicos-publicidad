@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Wand2 } from 'lucide-react';
+import { Wand2, Sparkles, LayoutTemplate, PenLine, Pencil, CheckCircle2, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAiGeneration } from '@/hooks/useAiGeneration';
 import { useAiSkills } from '@/hooks/useAiSkills';
@@ -56,6 +56,7 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
       if (reuseData.ad_seed_ids) setSelectedAdSeedIds(reuseData.ad_seed_ids);
       onReuseConsumed?.();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reuseData]);
 
   const handleSkillSelect = (skillId: string) => {
@@ -120,17 +121,27 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
     return false;
   };
 
+  const used = rateLimitUsed ?? 0;
+  const max = rateLimitMax ?? 50;
+  const ratioPercent = max > 0 ? Math.min((used / max) * 100, 100) : 0;
+
+  const modes = [
+    { key: 'template' as const, label: 'Templates', icon: LayoutTemplate },
+    { key: 'free' as const, label: 'Prompt Libre', icon: PenLine },
+    { key: 'edit' as const, label: 'Editar', icon: Pencil },
+  ];
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left column - Controls */}
-      <div className="lg:col-span-2 space-y-6">
-        {/* Skill selector */}
+      <div className="lg:col-span-2 space-y-5">
+        {/* Skill selector - less prominent */}
         {skills.length > 0 && (
-          <div className="space-y-2">
-            <Label>Skill</Label>
+          <div className="flex items-center gap-3">
+            <Label className="text-xs text-gray-400 whitespace-nowrap">Skill</Label>
             <Select value={selectedSkillId} onValueChange={handleSkillSelect}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar un skill..." />
+              <SelectTrigger className="h-8 text-xs border-gray-200 bg-gray-50 max-w-[220px]">
+                <SelectValue placeholder="Seleccionar skill..." />
               </SelectTrigger>
               <SelectContent>
                 {skills.map((skill) => (
@@ -143,29 +154,22 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
           </div>
         )}
 
-        {/* Mode toggle */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant={mode === 'template' ? 'default' : 'outline'}
-            onClick={() => setMode('template')}
-            size="sm"
-          >
-            Templates
-          </Button>
-          <Button
-            variant={mode === 'free' ? 'default' : 'outline'}
-            onClick={() => setMode('free')}
-            size="sm"
-          >
-            Prompt Libre
-          </Button>
-          <Button
-            variant={mode === 'edit' ? 'default' : 'outline'}
-            onClick={() => setMode('edit')}
-            size="sm"
-          >
-            Editar
-          </Button>
+        {/* Mode toggle - segmented control */}
+        <div className="bg-gray-100 p-1 rounded-xl inline-flex gap-0.5">
+          {modes.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setMode(key)}
+              className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                mode === key
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
         </div>
 
         {/* Mode-specific content */}
@@ -174,11 +178,12 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
             <div className="space-y-4">
               <TemplateSelector onSelect={handleTemplateSelect} selectedTemplateId={selectedTemplateId} />
               <div className="space-y-2">
-                <Label>Personalizacion (opcional)</Label>
+                <Label className="text-sm text-gray-600">Personalizacion (opcional)</Label>
                 <Input
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Ajustes al template seleccionado..."
+                  className="border-gray-200"
                 />
               </div>
             </div>
@@ -207,33 +212,72 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
           )}
         </Card>
 
-        {/* Generate button */}
-        <Button
-          onClick={handleGenerate}
-          disabled={!canGenerate()}
-          className="w-full bg-[#ff5c02] text-white hover:bg-[#e55200]"
-          size="lg"
-        >
-          <Wand2 className="w-5 h-5 mr-2" />
-          {generating ? 'Generando...' : 'Generar Imagen'}
-        </Button>
-        {brandGuide?.extraction_status === 'complete' ? (
-          <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">
-            ✓ Marca aplicada
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="text-xs text-muted-foreground">
-            Sin guía de marca
-          </Badge>
-        )}
+        {/* Generate button + brand guide badge */}
+        <div className="space-y-3">
+          <button
+            onClick={handleGenerate}
+            disabled={!canGenerate()}
+            className={`w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white font-semibold text-base transition-all duration-200 ${
+              canGenerate()
+                ? 'bg-gradient-to-r from-[#ff5c02] to-[#ff8534] hover:from-[#e55200] hover:to-[#ff5c02] shadow-md hover:shadow-lg hover:shadow-orange-200/50 active:scale-[0.98]'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {generating ? (
+              <>
+                <Sparkles className="w-5 h-5 animate-spin" />
+                Generando...
+              </>
+            ) : (
+              <>
+                <Wand2 className="w-5 h-5" />
+                Generar Imagen
+              </>
+            )}
+          </button>
+
+          {/* Brand guide badge - integrated inline */}
+          {brandGuide?.extraction_status === 'complete' ? (
+            <div className="flex items-center gap-1.5 text-xs text-green-600">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Guia de marca aplicada</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <span>Sin guia de marca</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Right column - Preview & Rate limit */}
       <div className="space-y-4">
-        <div className="flex justify-end">
-          <Badge variant="outline" className="text-xs">
-            {rateLimitUsed ?? 0}/{rateLimitMax ?? 50} generaciones hoy
-          </Badge>
+        {/* Rate limit as progress bar */}
+        <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-[#ff5c02]" />
+              <span className="text-xs font-medium text-gray-600">Generaciones hoy</span>
+            </div>
+            <span className="text-xs font-semibold text-gray-800">
+              {used} / {max}
+            </span>
+          </div>
+          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500 ease-out"
+              style={{
+                width: `${ratioPercent}%`,
+                background:
+                  ratioPercent > 80
+                    ? 'linear-gradient(90deg, #f59e0b, #ef4444)'
+                    : 'linear-gradient(90deg, #ff5c02, #ff8534)',
+              }}
+            />
+          </div>
+          {ratioPercent > 80 && (
+            <p className="text-[10px] text-amber-600 mt-1.5">Acercandote al limite diario</p>
+          )}
         </div>
 
         <ImagePreview

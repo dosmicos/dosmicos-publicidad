@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Upload, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSeedImages } from '@/hooks/useSeedImages';
 
@@ -44,6 +44,9 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const title = type === 'product' ? 'Semillas de Producto' : 'Semillas de Publicidad';
+  const description = type === 'product'
+    ? 'Imagenes de referencia de tus productos para generacion'
+    : 'Imagenes de referencia para fondos y estilos publicitarios';
 
   const handleFileSelect = (file: File) => {
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -58,7 +61,7 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: 'Archivo muy grande',
-        description: 'El archivo debe ser menor a 5.4MB.',
+        description: 'El archivo debe ser menor a 5MB.',
         variant: 'destructive',
       });
       return;
@@ -153,30 +156,38 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-black">{title}</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            <p className="text-sm text-gray-500 mt-0.5">{description}</p>
+          </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="p-3 animate-pulse">
-              <div className="aspect-square bg-gray-200 rounded mb-2" />
-              <div className="h-4 bg-gray-200 rounded w-3/4" />
-            </Card>
-          ))}
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-6 h-6 text-[#ff5c02] animate-spin" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-black">{title}</h3>
+        <div>
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+            {seedImages.length > 0 && (
+              <Badge variant="secondary" className="bg-gray-100 text-gray-600 font-medium">
+                {seedImages.length} {seedImages.length === 1 ? 'imagen' : 'imagenes'}
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-gray-500 mt-0.5">{description}</p>
+        </div>
         <Button
           onClick={() => {
             resetForm();
             setDialogOpen(true);
           }}
-          className="bg-[#ff5c02] text-white"
+          className="bg-[#ff5c02] hover:bg-[#e55502] text-white shadow-sm"
         >
           <Plus className="w-4 h-4 mr-2" />
           Agregar Semilla
@@ -184,45 +195,71 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
       </div>
 
       {seedImages.length === 0 ? (
-        <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6">
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <ImageIcon className="w-8 h-8 text-gray-400" />
+        <Card className="bg-white border border-dashed border-gray-300 rounded-2xl">
+          <div className="text-center py-16 px-6">
+            <div className="w-16 h-16 bg-[#ff5c02]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <ImageIcon className="w-8 h-8 text-[#ff5c02]/60" />
             </div>
-            <h3 className="text-lg font-semibold mb-2 text-black">No hay semillas configuradas</h3>
-            <p className="text-gray-600">Agrega imagenes semilla para usar como referencia en la generacion.</p>
+            <h3 className="text-lg font-semibold mb-1 text-gray-900">No hay semillas configuradas</h3>
+            <p className="text-gray-500 text-sm max-w-sm mx-auto">
+              Agrega imagenes semilla para usar como referencia en la generacion de contenido.
+            </p>
+            <Button
+              onClick={() => {
+                resetForm();
+                setDialogOpen(true);
+              }}
+              variant="outline"
+              className="mt-6 border-[#ff5c02] text-[#ff5c02] hover:bg-[#ff5c02]/5"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Agregar primera semilla
+            </Button>
           </div>
         </Card>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {seedImages.map((seed) => (
-            <Card key={seed.id} className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
-              <div className="p-3 space-y-2">
+            <div
+              key={seed.id}
+              className="group relative bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
+            >
+              <div className="aspect-square overflow-hidden">
                 <img
                   src={seed.image_url}
                   alt={seed.name}
-                  className="aspect-square w-full object-cover rounded"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">{seed.name}</p>
-                    {seed.category && (
-                      <Badge variant="outline" className="text-xs mt-1">
-                        {seed.category}
-                      </Badge>
-                    )}
+                {/* Hover overlay with delete action */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="absolute bottom-0 left-0 right-0 p-3 flex items-end justify-between">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-white truncate">{seed.name}</p>
+                      {seed.category && (
+                        <span className="text-xs text-white/80">{seed.category}</span>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-white hover:bg-red-500/80 hover:text-white flex-shrink-0 rounded-full"
+                      onClick={() => handleDeleteClick(seed.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700 flex-shrink-0"
-                    onClick={() => handleDeleteClick(seed.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
                 </div>
               </div>
-            </Card>
+              {/* Always-visible info below image */}
+              <div className="p-3 space-y-1">
+                <p className="text-sm font-medium text-gray-900 truncate">{seed.name}</p>
+                {seed.category && (
+                  <Badge variant="outline" className="text-xs bg-gray-50">
+                    {seed.category}
+                  </Badge>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -231,12 +268,15 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Agregar Semilla</DialogTitle>
+            <DialogTitle className="text-lg">Agregar Semilla</DialogTitle>
+            <p className="text-sm text-gray-500 mt-1">Sube una imagen de referencia para usar en generaciones</p>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-5 pt-2">
             <div
-              className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
-                dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+              className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer ${
+                dragActive
+                  ? 'border-[#ff5c02] bg-[#ff5c02]/5 scale-[1.01]'
+                  : 'border-gray-300 hover:border-[#ff5c02]/50 hover:bg-gray-50'
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -254,36 +294,53 @@ const SeedImageManager = ({ type }: SeedImageManagerProps) => {
                 }}
               />
               {previewUrl ? (
-                <img src={previewUrl} alt="Preview" className="max-h-48 mx-auto rounded object-contain" />
+                <img src={previewUrl} alt="Preview" className="max-h-48 mx-auto rounded-lg object-contain" />
               ) : (
-                <div className="space-y-2">
-                  <Upload className="w-8 h-8 text-gray-400 mx-auto" />
-                  <p className="text-sm text-gray-600">Arrastra una imagen o haz clic para seleccionar</p>
-                  <p className="text-xs text-gray-500">JPG, PNG o WEBP (max. 5.4MB)</p>
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-xl bg-[#ff5c02]/10 flex items-center justify-center mx-auto">
+                    <Upload className="w-6 h-6 text-[#ff5c02]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Arrastra una imagen o haz clic para seleccionar</p>
+                    <p className="text-xs text-gray-400 mt-1">JPG, PNG o WEBP (max. 5MB)</p>
+                  </div>
                 </div>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label>Nombre</Label>
+              <Label className="text-sm font-medium">Nombre</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Nombre de la semilla"
+                className="h-10"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Categoria (opcional)</Label>
+              <Label className="text-sm font-medium">Categoria <span className="text-gray-400 font-normal">(opcional)</span></Label>
               <Input
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 placeholder="Ej: fondos, productos, texturas"
+                className="h-10"
               />
             </div>
 
-            <Button onClick={handleSave} disabled={saving || !selectedFile || !name.trim()} className="w-full">
-              {saving ? 'Guardando...' : 'Guardar Semilla'}
+            <Button
+              onClick={handleSave}
+              disabled={saving || !selectedFile || !name.trim()}
+              className="w-full h-10 bg-[#ff5c02] hover:bg-[#e55502] text-white"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                'Guardar Semilla'
+              )}
             </Button>
           </div>
         </DialogContent>

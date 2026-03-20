@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Copy, Trash2, FileText } from 'lucide-react';
+import { Plus, Pencil, Copy, Trash2, FileText, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSavedPrompts } from '@/hooks/useSavedPrompts';
 
@@ -141,156 +141,201 @@ const SavedPromptsManager = () => {
   const categoryBadgeColor = (cat: string) => {
     switch (cat) {
       case 'producto':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'publicidad':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-purple-50 text-purple-700 border-purple-200';
       default:
         return '';
     }
   };
 
+  const categoryIcon = (cat: string) => {
+    switch (cat) {
+      case 'producto':
+        return '📦';
+      case 'publicidad':
+        return '📢';
+      default:
+        return '📝';
+    }
+  };
+
   if (loading) {
     return (
-      <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6">
-        <div className="text-center py-12">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Cargando prompts...</p>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Prompts Guardados</h3>
+            <p className="text-sm text-gray-500 mt-0.5">Prompts reutilizables para agilizar la generacion</p>
+          </div>
         </div>
-      </Card>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-6 h-6 text-[#ff5c02] animate-spin" />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-black">Prompts Guardados</h3>
-        <Button onClick={openCreateDialog} className="bg-[#ff5c02] text-white">
+        <div>
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold text-gray-900">Prompts Guardados</h3>
+            {prompts.length > 0 && (
+              <Badge variant="secondary" className="bg-gray-100 text-gray-600 font-medium">
+                {prompts.length} {prompts.length === 1 ? 'prompt' : 'prompts'}
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-gray-500 mt-0.5">Prompts reutilizables para agilizar la generacion</p>
+        </div>
+        <Button onClick={openCreateDialog} className="bg-[#ff5c02] hover:bg-[#e55502] text-white shadow-sm">
           <Plus className="w-4 h-4 mr-2" />
           Nuevo Prompt
         </Button>
       </div>
 
       {prompts.length === 0 ? (
-        <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6">
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-8 h-8 text-gray-400" />
+        <Card className="bg-white border border-dashed border-gray-300 rounded-2xl">
+          <div className="text-center py-16 px-6">
+            <div className="w-16 h-16 bg-[#ff5c02]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-8 h-8 text-[#ff5c02]/60" />
             </div>
-            <h3 className="text-lg font-semibold mb-2 text-black">No hay prompts guardados</h3>
-            <p className="text-gray-600">Crea prompts reutilizables para agilizar la generacion de imagenes.</p>
+            <h3 className="text-lg font-semibold mb-1 text-gray-900">No hay prompts guardados</h3>
+            <p className="text-gray-500 text-sm max-w-sm mx-auto">
+              Crea prompts reutilizables para agilizar la generacion de imagenes.
+            </p>
+            <Button
+              onClick={openCreateDialog}
+              variant="outline"
+              className="mt-6 border-[#ff5c02] text-[#ff5c02] hover:bg-[#ff5c02]/5"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Crear primer prompt
+            </Button>
           </div>
         </Card>
       ) : (
-        <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            {/* Header */}
-            <div className="border-b border-gray-200 bg-gray-50 px-6 py-3">
-              <div className="grid grid-cols-12 gap-4 items-center text-sm font-medium text-gray-700">
-                <div className="col-span-2">Nombre</div>
-                <div className="col-span-2">Categoria</div>
-                <div className="col-span-5">Prompt</div>
-                <div className="col-span-3">Acciones</div>
-              </div>
-            </div>
-
-            {/* Rows */}
-            <div className="divide-y divide-gray-100">
-              {prompts.map((prompt) => (
-                <div key={prompt.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                  <div className="grid grid-cols-12 gap-4 items-center">
-                    <div className="col-span-2">
-                      <p className="text-sm font-medium text-gray-900 truncate">{prompt.name}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <Badge variant="outline" className={categoryBadgeColor(prompt.category)}>
-                        {prompt.category}
-                      </Badge>
-                    </div>
-                    <div className="col-span-5">
-                      <p className="text-sm text-gray-600 truncate">
-                        {prompt.prompt.length > 80
-                          ? `${prompt.prompt.substring(0, 80)}...`
-                          : prompt.prompt}
-                      </p>
-                    </div>
-                    <div className="col-span-3 flex items-center space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => openEditDialog(prompt)}
-                        title="Editar"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => handleDuplicate(prompt)}
-                        title="Duplicar"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                        onClick={() => handleDeleteClick(prompt.id)}
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {prompts.map((prompt) => (
+            <Card
+              key={prompt.id}
+              className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
+            >
+              <div className="p-4 space-y-3">
+                {/* Header row: name + actions */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <h4 className="font-semibold text-gray-900 truncate">{prompt.name}</h4>
+                    <Badge variant="outline" className={`text-xs ${categoryBadgeColor(prompt.category)}`}>
+                      <span className="mr-1">{categoryIcon(prompt.category)}</span>
+                      {prompt.category}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-gray-700"
+                      onClick={() => openEditDialog(prompt)}
+                      title="Editar"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-gray-700"
+                      onClick={() => handleDuplicate(prompt)}
+                      title="Duplicar"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
+                      onClick={() => handleDeleteClick(prompt.id)}
+                      title="Eliminar"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </Card>
+
+                {/* Prompt text preview */}
+                <div className="bg-gray-50 rounded-lg px-3 py-2">
+                  <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
+                    {prompt.prompt}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
       )}
 
       {/* Dialog para crear/editar prompt */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingPrompt ? 'Editar Prompt' : 'Nuevo Prompt'}</DialogTitle>
+            <DialogTitle className="text-lg">{editingPrompt ? 'Editar Prompt' : 'Nuevo Prompt'}</DialogTitle>
+            <p className="text-sm text-gray-500 mt-1">
+              {editingPrompt ? 'Modifica el prompt existente' : 'Crea un prompt reutilizable para generaciones'}
+            </p>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-5 pt-2">
             <div className="space-y-2">
-              <Label>Nombre</Label>
+              <Label className="text-sm font-medium">Nombre</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Nombre del prompt"
+                className="h-10"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Prompt</Label>
+              <Label className="text-sm font-medium">Categoria</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="producto">📦 Producto</SelectItem>
+                  <SelectItem value="publicidad">📢 Publicidad</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Prompt</Label>
               <Textarea
                 value={promptText}
                 onChange={(e) => setPromptText(e.target.value)}
                 placeholder="Escribe el prompt..."
                 rows={5}
+                className="resize-none"
               />
+              <p className="text-xs text-gray-400">{promptText.length} caracteres</p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Categoria</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="producto">Producto</SelectItem>
-                  <SelectItem value="publicidad">Publicidad</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button onClick={handleSave} disabled={saving || !name.trim() || !promptText.trim()} className="w-full">
-              {saving ? 'Guardando...' : editingPrompt ? 'Actualizar' : 'Guardar'}
+            <Button
+              onClick={handleSave}
+              disabled={saving || !name.trim() || !promptText.trim()}
+              className="w-full h-10 bg-[#ff5c02] hover:bg-[#e55502] text-white"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Guardando...
+                </>
+              ) : editingPrompt ? (
+                'Actualizar'
+              ) : (
+                'Guardar'
+              )}
             </Button>
           </div>
         </DialogContent>

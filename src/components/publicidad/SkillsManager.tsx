@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, Zap } from 'lucide-react';
+import { Plus, Pencil, Trash2, Zap, Loader2, LayoutTemplate, Type, ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAiSkills } from '@/hooks/useAiSkills';
 import { useAiTemplates } from '@/hooks/useAiTemplates';
@@ -146,11 +146,11 @@ const SkillsManager = () => {
   const modeBadgeColor = (m: string) => {
     switch (m) {
       case 'template':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'free':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'edit':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-orange-50 text-orange-700 border-orange-200';
       default:
         return '';
     }
@@ -169,95 +169,157 @@ const SkillsManager = () => {
     }
   };
 
+  const modeIcon = (m: string) => {
+    switch (m) {
+      case 'template':
+        return <LayoutTemplate className="w-3 h-3" />;
+      case 'free':
+        return <Type className="w-3 h-3" />;
+      case 'edit':
+        return <ImageIcon className="w-3 h-3" />;
+      default:
+        return null;
+    }
+  };
+
   if (loading) {
     return (
-      <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6">
-        <div className="text-center py-12">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Cargando skills...</p>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Skills</h3>
+            <p className="text-sm text-gray-500 mt-0.5">Combinaciones preconfiguradas de templates, prompts y semillas</p>
+          </div>
         </div>
-      </Card>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-6 h-6 text-[#ff5c02] animate-spin" />
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-black">Skills</h3>
-        <Button onClick={openCreateDialog} className="bg-[#ff5c02] text-white">
+        <div>
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold text-gray-900">Skills</h3>
+            {skills.length > 0 && (
+              <Badge variant="secondary" className="bg-gray-100 text-gray-600 font-medium">
+                {skills.length} {skills.length === 1 ? 'skill' : 'skills'}
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-gray-500 mt-0.5">Combinaciones preconfiguradas de templates, prompts y semillas</p>
+        </div>
+        <Button onClick={openCreateDialog} className="bg-[#ff5c02] hover:bg-[#e55502] text-white shadow-sm">
           <Plus className="w-4 h-4 mr-2" />
           Nuevo Skill
         </Button>
       </div>
 
       {skills.length === 0 ? (
-        <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6">
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Zap className="w-8 h-8 text-gray-400" />
+        <Card className="bg-white border border-dashed border-gray-300 rounded-2xl">
+          <div className="text-center py-16 px-6">
+            <div className="w-16 h-16 bg-[#ff5c02]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Zap className="w-8 h-8 text-[#ff5c02]/60" />
             </div>
-            <h3 className="text-lg font-semibold mb-2 text-black">No hay skills configurados</h3>
-            <p className="text-gray-600">Crea skills para combinar templates, prompts e imagenes semilla.</p>
+            <h3 className="text-lg font-semibold mb-1 text-gray-900">No hay skills configurados</h3>
+            <p className="text-gray-500 text-sm max-w-sm mx-auto">
+              Crea skills para combinar templates, prompts e imagenes semilla en un solo flujo.
+            </p>
+            <Button
+              onClick={openCreateDialog}
+              variant="outline"
+              className="mt-6 border-[#ff5c02] text-[#ff5c02] hover:bg-[#ff5c02]/5"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Crear primer skill
+            </Button>
           </div>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {skills.map((skill) => (
-            <Card key={skill.id} className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <h4 className="font-bold text-gray-900">{skill.name}</h4>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={modeBadgeColor(skill.mode)}>
-                      {modeLabel(skill.mode)}
-                    </Badge>
-                    <Badge variant="outline">{skill.resolution || '1K'}</Badge>
+            <Card
+              key={skill.id}
+              className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 group hover:border-[#ff5c02]/30"
+            >
+              <div className="p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2 min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-[#ff5c02]/10 flex items-center justify-center flex-shrink-0">
+                        <Zap className="w-4 h-4 text-[#ff5c02]" />
+                      </div>
+                      <h4 className="font-bold text-gray-900 truncate">{skill.name}</h4>
+                    </div>
+                    <div className="flex items-center gap-2 pl-10">
+                      <Badge variant="outline" className={`text-xs ${modeBadgeColor(skill.mode)}`}>
+                        <span className="mr-1">{modeIcon(skill.mode)}</span>
+                        {modeLabel(skill.mode)}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs bg-gray-50 text-gray-600">
+                        {skill.resolution || '1K'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-gray-700"
+                      onClick={() => openEditDialog(skill)}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
+                      onClick={() => handleDeleteClick(skill.id)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => openEditDialog(skill)}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                    onClick={() => handleDeleteClick(skill.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+
+                {skill.prompt && (
+                  <div className="bg-gray-50 rounded-lg px-3 py-2 ml-10">
+                    <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                      {skill.prompt}
+                    </p>
+                  </div>
+                )}
+
+                {skill.seed_image_ids && skill.seed_image_ids.length > 0 && (
+                  <div className="flex items-center ml-10">
+                    <div className="flex -space-x-2">
+                      {skill.seed_image_ids.slice(0, 5).map((seedId: string, index: number) => {
+                        const seed = seedImages.find((s) => s.id === seedId);
+                        return seed ? (
+                          <img
+                            key={seedId}
+                            src={seed.image_url}
+                            alt={seed.name}
+                            className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
+                            style={{ zIndex: 5 - index }}
+                            title={seed.name}
+                          />
+                        ) : null;
+                      })}
+                    </div>
+                    {skill.seed_image_ids.length > 5 && (
+                      <span className="ml-2 text-xs text-gray-500 font-medium bg-gray-100 rounded-full px-2 py-0.5">
+                        +{skill.seed_image_ids.length - 5}
+                      </span>
+                    )}
+                    <span className="ml-2 text-xs text-gray-400">
+                      {skill.seed_image_ids.length} {skill.seed_image_ids.length === 1 ? 'semilla' : 'semillas'}
+                    </span>
+                  </div>
+                )}
               </div>
-
-              {skill.prompt && (
-                <p className="text-sm text-gray-600 truncate">
-                  {skill.prompt.length > 80 ? `${skill.prompt.substring(0, 80)}...` : skill.prompt}
-                </p>
-              )}
-
-              {skill.seed_image_ids && skill.seed_image_ids.length > 0 && (
-                <div className="flex items-center gap-1">
-                  {skill.seed_image_ids.slice(0, 5).map((seedId: string) => {
-                    const seed = seedImages.find((s) => s.id === seedId);
-                    return seed ? (
-                      <img
-                        key={seedId}
-                        src={seed.image_url}
-                        alt={seed.name}
-                        className="w-8 h-8 rounded-full object-cover border border-gray-200"
-                      />
-                    ) : null;
-                  })}
-                  {skill.seed_image_ids.length > 5 && (
-                    <span className="text-xs text-gray-500">+{skill.seed_image_ids.length - 5}</span>
-                  )}
-                </div>
-              )}
             </Card>
           ))}
         </div>
@@ -265,35 +327,57 @@ const SkillsManager = () => {
 
       {/* Dialog para crear/editar skill */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingSkill ? 'Editar Skill' : 'Nuevo Skill'}</DialogTitle>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-lg">{editingSkill ? 'Editar Skill' : 'Nuevo Skill'}</DialogTitle>
+            <p className="text-sm text-gray-500 mt-1">
+              {editingSkill ? 'Modifica la configuracion del skill' : 'Configura un nuevo skill de generacion'}
+            </p>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Nombre</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del skill" />
-            </div>
+          <div className="space-y-5 pt-2 overflow-y-auto flex-1 pr-1">
+            {/* Basic info section */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Nombre</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del skill" className="h-10" />
+              </div>
 
-            <div className="space-y-2">
-              <Label>Modo</Label>
-              <Select value={mode} onValueChange={setMode}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="template">Template</SelectItem>
-                  <SelectItem value="free">Prompt Libre</SelectItem>
-                  <SelectItem value="edit">Edicion</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Modo</Label>
+                  <Select value={mode} onValueChange={setMode}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="template">Template</SelectItem>
+                      <SelectItem value="free">Prompt Libre</SelectItem>
+                      <SelectItem value="edit">Edicion</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Resolucion</Label>
+                  <Select value={resolution} onValueChange={setResolution}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1K">1K (1024px)</SelectItem>
+                      <SelectItem value="2K">2K (2048px)</SelectItem>
+                      <SelectItem value="4K">4K (4096px)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
 
             {mode === 'template' && (
               <div className="space-y-2">
-                <Label>Template</Label>
+                <Label className="text-sm font-medium">Template</Label>
                 <Select value={templateId} onValueChange={setTemplateId}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10">
                     <SelectValue placeholder="Seleccionar template" />
                   </SelectTrigger>
                   <SelectContent>
@@ -308,49 +392,47 @@ const SkillsManager = () => {
             )}
 
             <div className="space-y-2">
-              <Label>Prompt</Label>
+              <Label className="text-sm font-medium">Prompt</Label>
               <Textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="Escribe el prompt del skill..."
-                rows={4}
+                rows={3}
+                className="resize-none"
               />
             </div>
 
+            {/* Seed images section */}
             <div className="space-y-2">
-              <Label>Resolucion</Label>
-              <Select value={resolution} onValueChange={setResolution}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1K">1K</SelectItem>
-                  <SelectItem value="2K">2K</SelectItem>
-                  <SelectItem value="4K">4K</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Imagenes Semilla</Label>
+              <Label className="text-sm font-medium">
+                Imagenes Semilla
+                {selectedSeedIds.length > 0 && (
+                  <span className="ml-2 text-xs text-gray-400 font-normal">
+                    {selectedSeedIds.length} seleccionadas
+                  </span>
+                )}
+              </Label>
               {seedImages.length === 0 ? (
-                <p className="text-sm text-gray-500">No hay imagenes semilla disponibles.</p>
+                <div className="text-center py-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">No hay imagenes semilla disponibles.</p>
+                </div>
               ) : (
-                <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto">
+                <div className="grid grid-cols-5 gap-2 max-h-36 overflow-y-auto p-1">
                   {seedImages.map((seed) => (
                     <div
                       key={seed.id}
-                      className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-colors ${
+                      className={`relative cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-150 ${
                         selectedSeedIds.includes(seed.id)
-                          ? 'border-primary ring-2 ring-primary/20'
+                          ? 'border-[#ff5c02] ring-2 ring-[#ff5c02]/20 scale-95'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                       onClick={() => toggleSeedImage(seed.id)}
+                      title={seed.name}
                     >
                       <img src={seed.image_url} alt={seed.name} className="w-full aspect-square object-cover" />
                       {selectedSeedIds.includes(seed.id) && (
-                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                          <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                        <div className="absolute inset-0 bg-[#ff5c02]/20 flex items-center justify-center">
+                          <div className="w-5 h-5 bg-[#ff5c02] rounded-full flex items-center justify-center">
                             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                             </svg>
@@ -363,8 +445,21 @@ const SkillsManager = () => {
               )}
             </div>
 
-            <Button onClick={handleSave} disabled={saving || !name.trim()} className="w-full">
-              {saving ? 'Guardando...' : editingSkill ? 'Actualizar' : 'Guardar'}
+            <Button
+              onClick={handleSave}
+              disabled={saving || !name.trim()}
+              className="w-full h-10 bg-[#ff5c02] hover:bg-[#e55502] text-white"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Guardando...
+                </>
+              ) : editingSkill ? (
+                'Actualizar'
+              ) : (
+                'Guardar'
+              )}
             </Button>
           </div>
         </DialogContent>
