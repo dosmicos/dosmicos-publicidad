@@ -39,6 +39,13 @@ export const useAiGeneration = () => {
       let lastGenerationsToday = 0;
 
       // Generate multiple images in parallel
+      // Strip the data URL prefix from base_image to reduce payload size
+      const payload = { ...request };
+      if (payload.base_image && payload.base_image.startsWith('data:')) {
+        // Keep just the base64 data without the prefix
+        payload.base_image = payload.base_image.split(',')[1];
+      }
+
       const promises = Array.from({ length: numImages }, () =>
         fetch(`${SUPABASE_URL}/functions/v1/generate-ai-image`, {
           method: 'POST',
@@ -46,16 +53,23 @@ export const useAiGeneration = () => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify(request),
+          body: JSON.stringify(payload),
         }).then(async (response) => {
-          const data = await response.json();
-          if (!response.ok) throw new Error(data?.error || `Error ${response.status}`);
+          let data: any;
+          const text = await response.text();
+          try {
+            data = JSON.parse(text);
+          } catch {
+            throw new Error(`Respuesta invalida del servidor (${response.status}): ${text.substring(0, 200)}`);
+          }
+          if (!response.ok) throw new Error(data?.error || data?.message || `Error del servidor: ${response.status}`);
           if (data?.error) throw new Error(data.error);
           return data;
         })
       );
 
       const settled = await Promise.allSettled(promises);
+      const errors: string[] = [];
 
       for (const result of settled) {
         if (result.status === 'fulfilled') {
@@ -65,11 +79,16 @@ export const useAiGeneration = () => {
             generation_id: data.generation_id,
           });
           lastGenerationsToday = data.generations_today || lastGenerationsToday;
+        } else {
+          errors.push(result.reason?.message || 'Error desconocido');
         }
       }
 
       if (results.length === 0) {
-        throw new Error('No se pudo generar ninguna imagen. Intenta de nuevo.');
+        const uniqueErrors = [...new Set(errors)];
+        const errorDetail = uniqueErrors.length > 0 ? uniqueErrors[0] : 'Error desconocido';
+        console.error('[AI Generation] All requests failed:', errors);
+        throw new Error(`No se pudo generar: ${errorDetail}`);
       }
 
       setGeneratedImages(results);

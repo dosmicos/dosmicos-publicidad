@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Upload, X, Plus, ShoppingBag, User, Baby, Users, Heart, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Plus, ShoppingBag, User, Baby, Users, Heart, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export interface ProductPreset {
@@ -67,6 +67,40 @@ interface ProductEditorProps {
   presets: ProductPreset[];
 }
 
+// Compress image using Canvas to keep base64 payload small for the API
+const compressImage = (file: File, maxDimension = 1536, quality = 0.85): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+
+      // Scale down if larger than maxDimension
+      if (width > maxDimension || height > maxDimension) {
+        const ratio = Math.min(maxDimension / width, maxDimension / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('Canvas not supported')); return; }
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Always output as JPEG for smaller base64
+      const compressed = canvas.toDataURL('image/jpeg', quality);
+      resolve(compressed);
+    };
+    img.onerror = () => reject(new Error('No se pudo leer la imagen'));
+
+    const reader = new FileReader();
+    reader.onloadend = () => { img.src = reader.result as string; };
+    reader.onerror = () => reject(new Error('Error leyendo archivo'));
+    reader.readAsDataURL(file);
+  });
+};
+
 const ProductEditor = ({
   productImages,
   onProductImagesChange,
@@ -76,23 +110,30 @@ const ProductEditor = ({
 }: ProductEditorProps) => {
   const { toast } = useToast();
   const [dragActive, setDragActive] = useState(false);
+  const [compressing, setCompressing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
       toast({ title: 'Tipo de archivo no valido', description: 'Solo JPG, PNG y WEBP.', variant: 'destructive' });
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: 'Archivo muy grande', description: 'Maximo 5MB por imagen.', variant: 'destructive' });
+    if (file.size > 20 * 1024 * 1024) {
+      toast({ title: 'Archivo muy grande', description: 'Maximo 20MB por imagen.', variant: 'destructive' });
       return;
     }
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      onProductImagesChange([...productImages, reader.result as string]);
-    };
-    reader.readAsDataURL(file);
+
+    try {
+      setCompressing(true);
+      // Compress to max 1536px and JPEG quality 0.85 — keeps base64 under ~500KB
+      const compressed = await compressImage(file, 1536, 0.85);
+      onProductImagesChange([...productImages, compressed]);
+    } catch (err: any) {
+      toast({ title: 'Error procesando imagen', description: err.message || 'Intenta con otra imagen.', variant: 'destructive' });
+    } finally {
+      setCompressing(false);
+    }
   };
 
   const handleMultipleFiles = (files: FileList) => {
@@ -170,8 +211,12 @@ const ProductEditor = ({
                 if (e.target.files?.length) handleMultipleFiles(e.target.files);
               }}
             />
-            <Plus className="w-5 h-5 text-gray-400" />
-            <span className="text-[10px] text-gray-400 mt-1">Agregar</span>
+            {compressing ? (
+              <Loader2 className="w-5 h-5 text-[#ff5c02] animate-spin" />
+            ) : (
+              <Plus className="w-5 h-5 text-gray-400" />
+            )}
+            <span className="text-[10px] text-gray-400 mt-1">{compressing ? 'Procesando...' : 'Agregar'}</span>
           </div>
         </div>
       </div>
