@@ -8,14 +8,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Wand2, Sparkles, LayoutTemplate, PenLine, Pencil, CheckCircle2, Zap, RectangleHorizontal, Square, RectangleVertical, Monitor, Smartphone, Ruler } from 'lucide-react';
+import { Wand2, Sparkles, LayoutTemplate, PenLine, ShoppingBag, CheckCircle2, Zap, RectangleHorizontal, Square, RectangleVertical, Monitor, Smartphone, Ruler } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAiGeneration } from '@/hooks/useAiGeneration';
 import { useAiSkills } from '@/hooks/useAiSkills';
 import { useBrandGuide } from '@/hooks/useBrandGuide';
 import TemplateSelector from './TemplateSelector';
 import PromptEditor from './PromptEditor';
-import ImageEditor from './ImageEditor';
+import ProductEditor, { DEFAULT_PRODUCT_PRESETS, type ProductPreset } from './ProductEditor';
 import ImagePreview from './ImagePreview';
 
 interface GenerateWorkspaceProps {
@@ -47,16 +47,25 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
     useAiGeneration();
   const { skills } = useAiSkills();
 
-  const [mode, setMode] = useState<'template' | 'free' | 'edit'>('template');
+  const [mode, setMode] = useState<'template' | 'free' | 'product'>('template');
   const [prompt, setPrompt] = useState('');
   const [resolution, setResolution] = useState('2K');
   const [aspectRatio, setAspectRatio] = useState('1:1');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [selectedSeedIds, setSelectedSeedIds] = useState<string[]>([]);
-  const [baseImage, setBaseImage] = useState<string | null>(null);
-  const [editInstructions, setEditInstructions] = useState('');
-  const [selectedAdSeedIds, setSelectedAdSeedIds] = useState<string[]>([]);
+  const [productImages, setProductImages] = useState<string[]>([]);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [selectedPresetPrompt, setSelectedPresetPrompt] = useState('');
   const [selectedSkillId, setSelectedSkillId] = useState<string>('');
+
+  // Load custom presets from localStorage
+  const [customPresets] = useState<ProductPreset[]>(() => {
+    try {
+      const stored = localStorage.getItem('dosmicos_product_presets');
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+  const productPresets = customPresets.length > 0 ? customPresets : DEFAULT_PRODUCT_PRESETS;
 
   // Populate state from reuseData
   useEffect(() => {
@@ -66,9 +75,6 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
       if (reuseData.resolution) setResolution(reuseData.resolution);
       if (reuseData.template_id) setSelectedTemplateId(reuseData.template_id);
       if (reuseData.seed_image_ids) setSelectedSeedIds(reuseData.seed_image_ids);
-      if (reuseData.base_image) setBaseImage(reuseData.base_image);
-      if (reuseData.edit_instructions) setEditInstructions(reuseData.edit_instructions);
-      if (reuseData.ad_seed_ids) setSelectedAdSeedIds(reuseData.ad_seed_ids);
       onReuseConsumed?.();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,36 +97,46 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
     if (template.resolution) setResolution(template.resolution);
   };
 
+  const handlePresetSelect = (preset: ProductPreset) => {
+    setSelectedPresetId(preset.id);
+    setSelectedPresetPrompt(preset.prompt);
+  };
+
   const handleGenerate = async () => {
-    const currentPrompt = mode === 'edit' ? editInstructions : prompt;
-    if (!currentPrompt.trim() && mode !== 'template') {
-      toast({
-        title: 'Prompt requerido',
-        description: 'Debes ingresar un prompt o instrucciones para generar.',
-        variant: 'destructive',
-      });
+    if (mode === 'product') {
+      if (productImages.length === 0) {
+        toast({ title: 'Foto requerida', description: 'Sube al menos una foto de producto.', variant: 'destructive' });
+        return;
+      }
+      if (!selectedPresetId) {
+        toast({ title: 'Estilo requerido', description: 'Selecciona un estilo de foto.', variant: 'destructive' });
+        return;
+      }
+    } else if (mode === 'free' && !prompt.trim()) {
+      toast({ title: 'Prompt requerido', description: 'Debes ingresar un prompt.', variant: 'destructive' });
+      return;
+    } else if (mode === 'template' && !selectedTemplateId) {
       return;
     }
 
     try {
-      let finalPrompt = mode === 'edit' ? editInstructions : prompt;
+      let finalPrompt = mode === 'product' ? selectedPresetPrompt : prompt;
       const brandPrefix = getPromptPrefix();
       if (brandPrefix) {
         finalPrompt = `${brandPrefix}\n\n${finalPrompt}`;
       }
 
-      // Add aspect ratio to prompt context
       const ratioInfo = ASPECT_RATIOS.find(r => r.id === aspectRatio);
       if (ratioInfo && aspectRatio !== '1:1') {
         finalPrompt = `[Aspect ratio: ${aspectRatio}, ${ratioInfo.desc}]\n${finalPrompt}`;
       }
 
       const request = {
-        mode,
+        mode: mode === 'product' ? 'edit' : mode,
         prompt: finalPrompt,
         resolution,
-        seed_image_ids: mode === 'edit' ? selectedAdSeedIds : selectedSeedIds,
-        base_image: mode === 'edit' ? baseImage || undefined : undefined,
+        seed_image_ids: selectedSeedIds,
+        base_image: mode === 'product' ? productImages[0] : undefined,
         template_id: mode === 'template' ? selectedTemplateId || undefined : undefined,
       };
       await generate(request);
@@ -137,7 +153,7 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
     if (generating) return false;
     if (mode === 'template') return !!selectedTemplateId;
     if (mode === 'free') return !!prompt.trim();
-    if (mode === 'edit') return !!editInstructions.trim();
+    if (mode === 'product') return productImages.length > 0 && !!selectedPresetId;
     return false;
   };
 
@@ -146,9 +162,9 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
   const ratioPercent = max > 0 ? Math.min((used / max) * 100, 100) : 0;
 
   const modes = [
-    { key: 'template' as const, label: 'Templates', icon: LayoutTemplate, desc: 'Usa una plantilla predefinida' },
+    { key: 'template' as const, label: 'Templates', icon: LayoutTemplate, desc: 'Plantillas predefinidas' },
     { key: 'free' as const, label: 'Prompt Libre', icon: PenLine, desc: 'Escribe tu propio prompt' },
-    { key: 'edit' as const, label: 'Editar', icon: Pencil, desc: 'Modifica una imagen existente' },
+    { key: 'product' as const, label: 'Productos', icon: ShoppingBag, desc: 'Sube producto y elige estilo' },
   ];
 
   const selectedRatio = ASPECT_RATIOS.find(r => r.id === aspectRatio) || ASPECT_RATIOS[0];
@@ -237,14 +253,13 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
             />
           )}
 
-          {mode === 'edit' && (
-            <ImageEditor
-              baseImage={baseImage}
-              onBaseImageChange={setBaseImage}
-              instructions={editInstructions}
-              onInstructionsChange={setEditInstructions}
-              selectedAdSeedIds={selectedAdSeedIds}
-              onAdSeedIdsChange={setSelectedAdSeedIds}
+          {mode === 'product' && (
+            <ProductEditor
+              productImages={productImages}
+              onProductImagesChange={setProductImages}
+              selectedPresetId={selectedPresetId}
+              onPresetSelect={handlePresetSelect}
+              presets={productPresets}
             />
           )}
         </Card>

@@ -1,9 +1,10 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Image as ImageIcon, FileText, Zap, Settings } from 'lucide-react';
+import { Image as ImageIcon, FileText, Zap, Settings, ShoppingBag } from 'lucide-react';
 import SeedImageManager from './SeedImageManager';
 import SavedPromptsManager from './SavedPromptsManager';
 import SkillsManager from './SkillsManager';
+import ProductPresetsManager from './ProductPresetsManager';
 
 const SettingsPanel = () => {
   return (
@@ -22,7 +23,7 @@ const SettingsPanel = () => {
       </div>
 
       <Tabs defaultValue="product-seeds" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-gray-100/80 dark:bg-[#252529] rounded-xl">
+        <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-gray-100/80 dark:bg-[#252529] rounded-xl">
           <TabsTrigger
             value="product-seeds"
             className="flex items-center gap-2 py-2.5 px-3 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1f] data-[state=active]:shadow-sm dark:data-[state=active]:shadow-none data-[state=active]:text-[#ff5c02] transition-all"
@@ -51,6 +52,13 @@ const SettingsPanel = () => {
             <Zap className="w-5 h-5 flex-shrink-0" />
             <span className="hidden sm:inline text-sm font-medium">Skills</span>
           </TabsTrigger>
+          <TabsTrigger
+            value="product-presets"
+            className="flex items-center gap-2 py-2.5 px-3 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-[#1a1a1f] data-[state=active]:shadow-sm dark:data-[state=active]:shadow-none data-[state=active]:text-[#ff5c02] transition-all"
+          >
+            <ShoppingBag className="w-5 h-5 flex-shrink-0" />
+            <span className="hidden sm:inline text-sm font-medium">Productos</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="product-seeds" className="mt-8">
@@ -67,6 +75,10 @@ const SettingsPanel = () => {
 
         <TabsContent value="skills" className="mt-8">
           <SkillsManager />
+        </TabsContent>
+
+        <TabsContent value="product-presets" className="mt-8">
+          <ProductPresetsManager />
         </TabsContent>
       </Tabs>
     </div>
