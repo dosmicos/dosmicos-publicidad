@@ -15,7 +15,7 @@ import { useAiSkills } from '@/hooks/useAiSkills';
 import { useBrandGuide } from '@/hooks/useBrandGuide';
 import TemplateSelector from './TemplateSelector';
 import PromptEditor from './PromptEditor';
-import ProductEditor, { DEFAULT_PRODUCT_PRESETS, type ProductPreset } from './ProductEditor';
+import ProductEditor, { DEFAULT_PRODUCT_PRESETS, PRESETS_VERSION, type ProductPreset } from './ProductEditor';
 import ImagePreview from './ImagePreview';
 
 interface GenerateWorkspaceProps {
@@ -58,9 +58,16 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
   const [selectedPresetPrompt, setSelectedPresetPrompt] = useState('');
   const [selectedSkillId, setSelectedSkillId] = useState<string>('');
 
-  // Load custom presets from localStorage
+  // Load custom presets from localStorage — versioned so default prompt updates take effect
   const [customPresets] = useState<ProductPreset[]>(() => {
     try {
+      const storedVersion = parseInt(localStorage.getItem('dosmicos_product_presets_version') || '0', 10);
+      if (storedVersion < PRESETS_VERSION) {
+        // Defaults were updated — clear stale presets
+        localStorage.removeItem('dosmicos_product_presets');
+        localStorage.setItem('dosmicos_product_presets_version', String(PRESETS_VERSION));
+        return [];
+      }
       const stored = localStorage.getItem('dosmicos_product_presets');
       return stored ? JSON.parse(stored) : [];
     } catch { return []; }
@@ -266,6 +273,8 @@ const GenerateWorkspace = ({ reuseData, onReuseConsumed }: GenerateWorkspaceProp
               selectedPresetId={selectedPresetId}
               onPresetSelect={handlePresetSelect}
               presets={productPresets}
+              editablePrompt={selectedPresetPrompt}
+              onPromptChange={setSelectedPresetPrompt}
             />
           )}
         </Card>

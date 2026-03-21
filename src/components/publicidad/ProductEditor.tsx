@@ -11,6 +11,9 @@ export interface ProductPreset {
   prompt: string;
 }
 
+// Bump this version whenever default prompts are updated — forces localStorage refresh
+export const PRESETS_VERSION = 2;
+
 export const DEFAULT_PRODUCT_PRESETS: ProductPreset[] = [
   {
     id: 'solo-product',
@@ -65,6 +68,8 @@ interface ProductEditorProps {
   selectedPresetId: string | null;
   onPresetSelect: (preset: ProductPreset) => void;
   presets: ProductPreset[];
+  editablePrompt?: string;
+  onPromptChange?: (prompt: string) => void;
 }
 
 // Compress image using Canvas to keep base64 payload small for the API
@@ -107,6 +112,8 @@ const ProductEditor = ({
   selectedPresetId,
   onPresetSelect,
   presets,
+  editablePrompt,
+  onPromptChange,
 }: ProductEditorProps) => {
   const { toast } = useToast();
   const [dragActive, setDragActive] = useState(false);
@@ -253,11 +260,15 @@ const ProductEditor = ({
           })}
         </div>
 
-        {selectedPresetId && (
-          <div className="bg-gray-50 dark:bg-[#0f0f11] rounded-lg px-3 py-2 border border-gray-200 dark:border-white/10">
-            <p className="text-[11px] text-gray-500 dark:text-gray-500 leading-relaxed">
-              {activePresets.find(p => p.id === selectedPresetId)?.prompt}
-            </p>
+        {selectedPresetId && editablePrompt !== undefined && (
+          <div className="space-y-1.5">
+            <Label className="text-[11px] text-gray-400">Prompt (puedes editarlo antes de generar):</Label>
+            <textarea
+              value={editablePrompt}
+              onChange={(e) => onPromptChange?.(e.target.value)}
+              rows={4}
+              className="w-full text-[11px] text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-[#0f0f11] rounded-lg px-3 py-2 border border-gray-200 dark:border-white/10 resize-y leading-relaxed focus:outline-none focus:ring-1 focus:ring-[#ff5c02]/30 focus:border-[#ff5c02]/40"
+            />
           </div>
         )}
       </div>
