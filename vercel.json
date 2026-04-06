@@ -1,3 +1,6 @@
 {
-  "rewrites": [{ "source": "/((?!assets/).*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/ugc/:token", "destination": "https://ysdcsqsfnckeuafjyrbc.supabase.co/functions/v1/ugc-redirect/:token" },
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+  ]
 }
