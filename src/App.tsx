@@ -1,10 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { OrganizationProvider } from '@/contexts/OrganizationContext';
 import LoginPage from '@/pages/LoginPage';
-import PublicidadPage from '@/pages/PublicidadPage';
-import RankingPage from '@/pages/RankingPage';
-import CreatorPortalPage from '@/pages/CreatorPortalPage';
+import UgcDashboardPage from '@/pages/UgcDashboardPage';
+import AdminPage from '@/pages/AdminPage';
 
 const LoadingScreen = () => (
   <div style={{
@@ -13,18 +11,18 @@ const LoadingScreen = () => (
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#ffffff',
+    background: '#0a0a0f',
     gap: '16px',
   }}>
     <div style={{
-      width: 40,
-      height: 40,
+      width: 36,
+      height: 36,
       borderRadius: '50%',
       border: '3px solid #ff5c02',
       borderTopColor: 'transparent',
       animation: 'spin 0.8s linear infinite',
     }} />
-    <p style={{ color: '#6b7280', fontSize: '14px', margin: 0 }}>Cargando DosmiAds…</p>
+    <p style={{ color: '#4b5563', fontSize: '13px', margin: 0 }}>Cargando DosmiAds…</p>
     <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
   </div>
 );
@@ -41,17 +39,32 @@ function AppRoutes() {
   if (loading) return <LoadingScreen />;
   return (
     <Routes>
-      {/* Public routes — no auth required */}
-      <Route path="/ranking" element={<RankingPage />} />
-      <Route path="/creator" element={<CreatorPortalPage />} />
+      {/* Public routes */}
+      <Route path="/" element={<UgcDashboardPage />} />
+      <Route path="/login" element={user ? <Navigate to="/admin" replace /> : <LoginPage />} />
 
-      {/* Protected routes */}
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
-      <Route path="/*" element={<ProtectedRoute><OrganizationProvider><PublicidadPage /></OrganizationProvider></ProtectedRoute>} />
+      {/* Protected admin route */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
 
 export default function App() {
-  return <BrowserRouter><AuthProvider><AppRoutes /></AuthProvider></BrowserRouter>;
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
+  );
 }
