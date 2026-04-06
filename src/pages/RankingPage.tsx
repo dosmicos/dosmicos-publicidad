@@ -78,9 +78,13 @@ export default function RankingPage() {
             <div className="w-8 h-8 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : ranking.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">
-            <Trophy className="h-12 w-12 mx-auto mb-3 opacity-20" />
-            <p>Aún no hay datos de comisiones para este período.</p>
+          <div className="text-center py-20">
+            <div className="w-16 h-16 rounded-full bg-yellow-400/10 flex items-center justify-center mx-auto mb-4">
+              <Trophy className="h-8 w-8 text-yellow-400/60" />
+            </div>
+            <p className="text-white font-semibold text-lg mb-1">El ranking está vacío</p>
+            <p className="text-gray-400 text-sm">Aún no hay comisiones registradas para este período.</p>
+            <p className="text-gray-600 text-xs mt-3">Las posiciones aparecerán aquí cuando haya compras con link de creator.</p>
           </div>
         ) : (
           <>
