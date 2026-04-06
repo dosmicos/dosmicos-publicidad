@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Medal, Award, Copy, Check, Share2 } from 'lucide-react';
+import { Trophy, Medal, Award, Copy, Check, Share2, Wallet } from 'lucide-react';
 
 interface RankingEntry {
   creator_name: string;
@@ -8,6 +8,7 @@ interface RankingEntry {
   avatar_url: string;
   orders_in_period: number;
   commission_in_period: number;
+  pending_balance: number;
   rank: number;
 }
 
@@ -195,6 +196,11 @@ export default function RankingPage() {
                   <div className="text-right">
                     <p className="text-yellow-400 text-sm font-bold">{formatCOP(entry.commission_in_period)}</p>
                     <p className="text-gray-600 text-xs">{entry.orders_in_period} pedidos</p>
+                    {entry.pending_balance > 0 && (
+                      <p className="text-green-400 text-xs flex items-center justify-end gap-0.5 mt-0.5">
+                        <Wallet className="h-3 w-3" /> {formatCOP(entry.pending_balance)}
+                      </p>
+                    )}
                   </div>
 
                   <button
@@ -214,9 +220,16 @@ export default function RankingPage() {
           </>
         )}
 
-        <p className="text-center text-gray-700 text-xs pt-4">
-          Dosmicos · Las comisiones se actualizan en tiempo real con cada compra
-        </p>
+        <div className="text-center space-y-1 pt-4">
+          <p className="text-gray-700 text-xs">
+            Dosmicos · Las comisiones se actualizan en tiempo real con cada compra
+          </p>
+          <p className="text-gray-700 text-xs flex items-center justify-center gap-1">
+            <Wallet className="h-3 w-3 text-green-400" />
+            <span className="text-green-500">Saldo disponible</span>
+            <span className="text-gray-600">· Acumulado pendiente de pago</span>
+          </p>
+        </div>
       </div>
     </div>
   );
