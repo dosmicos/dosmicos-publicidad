@@ -38,7 +38,7 @@ export function useAdminDashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No autenticado');
 
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await (supabase as any)
         .from('profiles')
         .select('organization_id')
         .eq('id', user.id)
@@ -48,13 +48,15 @@ export function useAdminDashboard() {
       const currentOrgId = profile.organization_id as string;
       setOrgId(currentOrgId);
 
-      // 2. Fetch organization_settings for ranking start date
-      const { data: settings } = await (supabase as any)
-        .from('organization_settings')
-        .select('ugc_ranking_started_at')
-        .eq('organization_id', currentOrgId)
-        .maybeSingle();
-      setRankingStartedAt(settings?.ugc_ranking_started_at ?? null);
+      // 2. Read ugc_ranking_started_at from organizations.settings JSONB
+      // (this is the same source that get_ugc_public_ranking reads from)
+      const { data: orgData } = await (supabase as any)
+        .from('organizations')
+        .select('settings')
+        .eq('id', currentOrgId)
+        .single();
+      const startedAt = orgData?.settings?.ugc_ranking_started_at ?? null;
+      setRankingStartedAt(startedAt);
 
       // 3. Fetch creators with their active discount links
       const { data: creatorsData, error: creatorsError } = await (supabase as any)
@@ -83,9 +85,8 @@ export function useAdminDashboard() {
       if (creatorsError) throw creatorsError;
 
       const mapped: CreatorWithLink[] = (creatorsData || []).map((c: any) => {
-        // Find the active link, or the most recent link
         const links: any[] = c.ugc_discount_links || [];
-        const activeLink = links.find((l: any) => l.is_active) || null;
+        const activeLink = links.find((l: any) => l.is_active) ?? null;
         return {
           id: c.id,
           name: c.name,
@@ -115,7 +116,7 @@ export function useAdminDashboard() {
     fetchAll();
   }, [fetchAll]);
 
-  // Reset ranking period
+  // Reset ranking period — updates organizations.settings.ugc_ranking_started_at
   const resetRankingPeriod = async () => {
     if (!orgId) return;
     const { error } = await (supabase as any).rpc('reset_ugc_ranking_period', {
@@ -125,17 +126,26 @@ export function useAdminDashboard() {
     await fetchAll();
   };
 
-  // Register payout
+  // Register payout — passes all required params to the SQL function
   const registerPayout = async (linkId: string, amount: number) => {
+    if (!orgId) throw new Error('Org no disponible');
+    // Find the creator associated with this link to pass required SQL params
+    const creator = creators.find((c) => c.discount_link?.id === linkId);
+    if (!creator) throw new Error('Creadora no encontrada');
+
     const { error } = await (supabase as any).rpc('register_ugc_commission_payout', {
       p_link_id: linkId,
       p_amount: amount,
+      p_type: 'nequi',
+      p_notes: null,
+      p_creator_id: creator.id,
+      p_org_id: orgId,
     });
     if (error) throw error;
     await fetchAll();
   };
 
-  // Update commission rate
+  // Update commission rate directly on the link
   const updateCommissionRate = async (linkId: string, rate: number) => {
     const { error } = await (supabase as any)
       .from('ugc_discount_links')
