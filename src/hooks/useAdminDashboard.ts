@@ -162,12 +162,12 @@ export function useAdminDashboard() {
     await fetchAll();
   };
 
-  // Update commission rate
+  // Update commission rate via SECURITY DEFINER RPC (bypasses RLS)
   const updateCommissionRate = async (linkId: string, rate: number) => {
-    const { error } = await (supabase as any)
-      .from('ugc_discount_links')
-      .update({ commission_rate: rate, updated_at: new Date().toISOString() })
-      .eq('id', linkId);
+    const { error } = await (supabase as any).rpc('update_ugc_commission_rate', {
+      p_link_id: linkId,
+      p_rate: rate,
+    });
     if (error) throw error;
     await fetchAll();
   };

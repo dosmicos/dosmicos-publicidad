@@ -26,7 +26,7 @@ const formatCOP = (n: number) =>
   }).format(n);
 
 type Tab = 'creators' | 'ranking' | 'payouts';
-type CreatorFilter = 'all' | 'with_balance' | 'no_link';
+type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link';
 
 export default function AdminPage() {
   const { signOut } = useAuth();
@@ -77,6 +77,7 @@ export default function AdminPage() {
       (c.instagram_handle || '').toLowerCase().includes(search.toLowerCase());
     if (!matchesSearch) return false;
     if (filter === 'with_balance') return (c.discount_link?.pending_balance ?? 0) > 0;
+    if (filter === 'with_link') return !!c.discount_link;
     if (filter === 'no_link') return !c.discount_link;
     return true;
   });
@@ -202,6 +203,7 @@ export default function AdminPage() {
             <div className="flex gap-2">
               {([
                 { id: 'all', label: 'Todas' },
+                { id: 'with_link', label: 'Con link' },
                 { id: 'with_balance', label: 'Con saldo' },
                 { id: 'no_link', label: 'Sin link' },
               ] as const).map(({ id, label }) => (

@@ -60,6 +60,7 @@ export default function AdminCreatorCard({
     creator.discount_link?.commission_rate?.toString() ?? '10'
   );
   const [deletingLink, setDeletingLink] = useState(false);
+  const [savingRate, setSavingRate] = useState(false);
   const [actionError, setActionError] = useState('');
   const [showPayouts, setShowPayouts] = useState(false);
 
@@ -77,12 +78,19 @@ export default function AdminCreatorCard({
   const handleSaveRate = async () => {
     if (!link) return;
     const rate = parseFloat(rateValue);
-    if (!rate || rate <= 0) return;
+    if (!rate || rate <= 0) {
+      setActionError('Ingresa una comisión válida mayor a 0');
+      return;
+    }
+    setSavingRate(true);
+    setActionError('');
     try {
       await onUpdateCommission(link.id, rate);
       setEditingRate(false);
     } catch (err: any) {
       setActionError(err.message || 'Error al actualizar comisión');
+    } finally {
+      setSavingRate(false);
     }
   };
 
@@ -170,9 +178,10 @@ export default function AdminCreatorCard({
                   <span className="text-gray-400 text-xs">%</span>
                   <button
                     onClick={handleSaveRate}
-                    className="text-xs px-2 py-1 rounded-lg bg-gray-900 text-white"
+                    disabled={savingRate}
+                    className="text-xs px-2 py-1 rounded-lg bg-gray-900 text-white disabled:opacity-50 min-w-[32px]"
                   >
-                    OK
+                    {savingRate ? '…' : 'OK'}
                   </button>
                   <button
                     onClick={() => { setEditingRate(false); setRateValue(link.commission_rate.toString()); }}
@@ -194,14 +203,14 @@ export default function AdminCreatorCard({
 
             {/* Actions */}
             <div className="flex gap-2">
-              {link.pending_balance > 0 && (
-                <button
-                  onClick={() => setShowPayoutModal(true)}
-                  className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-gray-900 hover:bg-gray-700 transition-colors"
-                >
-                  Registrar Pago
-                </button>
-              )}
+              <button
+                onClick={() => setShowPayoutModal(true)}
+                disabled={link.pending_balance <= 0}
+                className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-gray-900 hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title={link.pending_balance <= 0 ? 'Sin saldo pendiente' : 'Registrar pago'}
+              >
+                Registrar Pago
+              </button>
               <button
                 onClick={() => setShowPayouts((v) => !v)}
                 className="flex items-center gap-1.5 py-2 px-3 rounded-xl text-xs text-gray-500 hover:text-gray-700 border border-gray-100 hover:border-gray-200 transition-colors"
