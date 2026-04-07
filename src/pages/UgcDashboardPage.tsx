@@ -1,31 +1,27 @@
-import { Trophy, Wallet, Settings } from 'lucide-react';
 import { usePublicRanking } from '@/hooks/usePublicRanking';
 import RankingSection from '@/components/ugc/RankingSection';
-import BalancesSection from '@/components/ugc/BalancesSection';
+import CreatorBalanceGate from '@/components/ugc/CreatorBalanceGate';
+import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
 export default function UgcDashboardPage() {
   const { rankingByCommission, balancesByAmount, loading, error } = usePublicRanking('dosmicos');
+  const { user } = useAuth();
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #0a0a0f 0%, #0f0f16 50%, #0a0a0f 100%)' }}>
-      {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-white/5" style={{ background: 'rgba(10,10,15,0.85)', backdropFilter: 'blur(12px)' }}>
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #ff5c02 0%, #ff8a3d 100%)' }}
-            >
-              <Trophy className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-white font-bold text-sm">DosmiAds · UGC</span>
-          </div>
+    <div className="min-h-screen bg-white">
+      {/* Sticky header */}
+      <header className="sticky top-0 z-20 bg-white border-b border-gray-100">
+        <div className="max-w-lg mx-auto px-5 h-14 flex items-center justify-center relative">
+          <img
+            src="/logo-dosmicos.png"
+            alt="Dosmicos"
+            className="h-8 object-contain"
+          />
           <Link
             to="/login"
-            className="flex items-center gap-1.5 text-gray-500 hover:text-gray-300 transition-colors text-xs"
+            className="absolute right-5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <Settings className="w-3.5 h-3.5" />
             Admin
           </Link>
         </div>
@@ -33,60 +29,44 @@ export default function UgcDashboardPage() {
 
       {loading ? (
         <div className="flex justify-center items-center py-32">
-          <div
-            className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: '#ff5c02', borderTopColor: 'transparent' }}
-          />
+          <div className="w-6 h-6 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
         </div>
       ) : error ? (
-        <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="max-w-lg mx-auto px-5 py-20 text-center">
+          <p className="text-gray-400 text-sm">{error}</p>
         </div>
       ) : (
-        <>
-          {/* ── Sección 1: Ranking del período ── */}
-          <section className="max-w-2xl mx-auto px-4 pt-10 pb-16">
-            <div className="flex items-center gap-3 mb-7">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: 'rgba(250,204,21,0.1)' }}
-              >
-                <Trophy className="w-5 h-5 text-yellow-400" />
-              </div>
-              <div>
-                <h2 className="text-white text-lg font-bold leading-tight">Ranking del Período</h2>
-                <p className="text-gray-500 text-xs">Comisiones acumuladas · período actual</p>
-              </div>
+        <div className="max-w-lg mx-auto px-5">
+          {/* Ranking section */}
+          <section className="pt-8 pb-10">
+            <div className="mb-6">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">
+                Período actual
+              </p>
+              <h2 className="text-gray-900 text-xl font-semibold">Ranking de comisiones</h2>
             </div>
             <RankingSection ranking={rankingByCommission} />
           </section>
 
           {/* Divider */}
-          <div className="max-w-2xl mx-auto px-4">
-            <div className="border-t border-white/5" />
-          </div>
+          <div className="border-t border-gray-100" />
 
-          {/* ── Sección 2: Saldos acumulados ── */}
-          <section className="max-w-2xl mx-auto px-4 pt-10 pb-20">
-            <div className="flex items-center gap-3 mb-7">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: 'rgba(34,197,94,0.1)' }}
-              >
-                <Wallet className="w-5 h-5 text-green-400" />
-              </div>
-              <div>
-                <h2 className="text-white text-lg font-bold leading-tight">Saldos Acumulados</h2>
-                <p className="text-gray-500 text-xs">Comisiones pendientes de pago</p>
-              </div>
+          {/* Balances section — gated by access code (or shown to admins) */}
+          <section className="pt-8 pb-16">
+            <div className="mb-6">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">
+                Privado
+              </p>
+              <h2 className="text-gray-900 text-xl font-semibold">Mi saldo acumulado</h2>
             </div>
-            <BalancesSection balances={balancesByAmount} />
+            <CreatorBalanceGate isAdmin={!!user} adminBalances={balancesByAmount} />
           </section>
-        </>
+        </div>
       )}
 
-      <footer className="text-center pb-8">
-        <p className="text-gray-700 text-xs">Dosmicos · Las comisiones se actualizan con cada compra</p>
+      {/* Footer */}
+      <footer className="text-center pb-10">
+        <p className="text-xs text-gray-300">Powered by Dosmicos</p>
       </footer>
     </div>
   );
