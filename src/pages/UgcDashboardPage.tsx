@@ -28,6 +28,13 @@ interface OrderRow {
   commission_amount: number;
 }
 
+interface PayoutRow {
+  amount: number;
+  payout_type: string;
+  notes: string | null;
+  created_at: string;
+}
+
 function StatTooltip({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -63,6 +70,8 @@ export default function UgcDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+  const [payouts, setPayouts] = useState<PayoutRow[]>([]);
+  const [payoutsLoading, setPayoutsLoading] = useState(false);
 
   const isUnlocked = !!user || !!creator;
 
@@ -82,19 +91,33 @@ export default function UgcDashboardPage() {
         setNotFound(true);
       } else {
         setCreator(data[0]);
+
+        // Fetch orders and payouts in parallel
         setOrdersLoading(true);
-        const { data: ordersData } = await (supabase as any).rpc(
-          'get_creator_orders_by_code',
-          { p_code: code.trim().toUpperCase() }
-        );
-        setOrders(ordersData || []);
+        setPayoutsLoading(true);
+
+        const [ordersRes, payoutsRes] = await Promise.all([
+          (supabase as any).rpc('get_creator_orders_by_code', { p_code: code.trim().toUpperCase() }),
+          (supabase as any).rpc('get_creator_payouts_by_code', { p_code: code.trim().toUpperCase() }),
+        ]);
+
+        setOrders(ordersRes.data || []);
+        setPayouts(payoutsRes.data || []);
         setOrdersLoading(false);
+        setPayoutsLoading(false);
       }
     } catch (err: any) {
       setError(err.message || 'Error al consultar');
     } finally {
       setChecking(false);
     }
+  };
+
+  const handleSignOut = () => {
+    setCreator(null);
+    setCode('');
+    setOrders([]);
+    setPayouts([]);
   };
 
   return (
@@ -111,7 +134,7 @@ export default function UgcDashboardPage() {
           </Link>
           {isUnlocked && !user && (
             <button
-              onClick={() => { setCreator(null); setCode(''); setOrders([]); }}
+              onClick={handleSignOut}
               className="absolute left-5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
             >
               Salir
@@ -195,7 +218,7 @@ export default function UgcDashboardPage() {
 
               {/* Creator stats card */}
               {creator && (
-                <section className="pt-8 pb-8">
+                <section className="pt-8 pb-6">
                   <div className="rounded-2xl border border-gray-100 p-5">
                     <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-4">
                       Mi saldo
@@ -260,7 +283,7 @@ export default function UgcDashboardPage() {
 
               {/* Transaction history */}
               {creator && (
-                <section className="pb-8">
+                <section className="pb-6">
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-4">
                     Mis pedidos
                   </p>
@@ -282,7 +305,7 @@ export default function UgcDashboardPage() {
                             </p>
                             <p className="text-gray-400 text-xs">
                               {new Date(order.order_date).toLocaleDateString('es-CO', {
-                                day: 'numeric', month: 'short', year: 'numeric'
+                                day: 'numeric', month: 'short', year: 'numeric',
                               })}
                             </p>
                           </div>
@@ -301,9 +324,48 @@ export default function UgcDashboardPage() {
                 </section>
               )}
 
+              {/* Payout history */}
+              {creator && (
+                <section className="pb-6">
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-4">
+                    Mis pagos recibidos
+                  </p>
+                  {payoutsLoading ? (
+                    <div className="flex justify-center py-6">
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
+                    </div>
+                  ) : payouts.length === 0 ? (
+                    <p className="text-gray-400 text-sm text-center py-4">
+                      Aún no has recibido pagos.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {payouts.map((payout, i) => (
+                        <div key={i} className="flex items-center justify-between rounded-2xl border border-gray-100 px-4 py-3">
+                          <div>
+                            <p className="text-gray-900 text-sm font-medium capitalize">
+                              {payout.payout_type}
+                            </p>
+                            <p className="text-gray-400 text-xs">
+                              {new Date(payout.created_at).toLocaleDateString('es-CO', {
+                                day: 'numeric', month: 'short', year: 'numeric',
+                              })}
+                              {payout.notes ? ` · ${payout.notes}` : ''}
+                            </p>
+                          </div>
+                          <p className="text-gray-900 text-sm font-semibold text-green-600">
+                            {formatCOP(payout.amount)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              )}
+
               {/* Admin balances */}
               {user && balancesByAmount.length > 0 && (
-                <section className="pt-8 pb-8">
+                <section className="pt-4 pb-8">
                   <div className="mb-5">
                     <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">Admin</p>
                     <h2 className="text-gray-900 text-xl font-semibold">Saldos acumulados</h2>

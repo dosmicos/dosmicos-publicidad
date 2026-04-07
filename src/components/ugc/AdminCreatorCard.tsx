@@ -9,8 +9,11 @@ import {
   TrendingUp,
   Pencil,
   X,
+  ChevronDown,
+  ChevronUp,
+  History,
 } from 'lucide-react';
-import type { CreatorWithLink } from '@/hooks/useAdminDashboard';
+import type { CreatorWithLink, PayoutRecord } from '@/hooks/useAdminDashboard';
 import PayoutModal from './PayoutModal';
 import CreateLinkModal from './CreateLinkModal';
 
@@ -27,7 +30,8 @@ function Avatar({ url, name }: { url: string | null; name: string }) {
       <img
         src={url}
         alt={name}
-        className="w-10 h-10 rounded-full object-cover border border-gray-700 shrink-0"
+        className="w-10 h-10 rounded-full object-cover shrink-0"
+        style={{ border: '1px solid rgba(255,255,255,0.08)' }}
       />
     );
   }
@@ -43,6 +47,7 @@ function Avatar({ url, name }: { url: string | null; name: string }) {
 
 interface AdminCreatorCardProps {
   creator: CreatorWithLink;
+  creatorPayouts: PayoutRecord[];
   onRegisterPayout: (linkId: string, amount: number) => Promise<void>;
   onCreateLink: (creatorId: string, discountValue: number, commissionRate: number) => Promise<void>;
   onDeleteLink: (linkId: string) => Promise<void>;
@@ -51,6 +56,7 @@ interface AdminCreatorCardProps {
 
 export default function AdminCreatorCard({
   creator,
+  creatorPayouts,
   onRegisterPayout,
   onCreateLink,
   onDeleteLink,
@@ -65,6 +71,7 @@ export default function AdminCreatorCard({
   );
   const [deletingLink, setDeletingLink] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [showPayouts, setShowPayouts] = useState(false);
 
   const link = creator.discount_link;
   const shareUrl = link ? `https://ads.dosmicos.com/ugc/${link.redirect_token}` : '';
@@ -106,19 +113,18 @@ export default function AdminCreatorCard({
   return (
     <>
       <div
-        className="rounded-2xl p-4"
+        className="rounded-2xl p-4 flex flex-col gap-3"
         style={{ background: 'rgba(20,20,26,0.8)', border: '1px solid rgba(255,255,255,0.07)' }}
       >
         {/* Creator header */}
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-3">
           <Avatar url={creator.avatar_url} name={creator.name} />
           <div className="flex-1 min-w-0">
-            <p className="text-white font-semibold truncate">{creator.name}</p>
+            <p className="text-white font-semibold text-sm truncate">{creator.name}</p>
             {creator.instagram_handle && (
               <p className="text-gray-500 text-xs">@{creator.instagram_handle}</p>
             )}
           </div>
-          {/* Pending balance badge */}
           {link && link.pending_balance > 0 && (
             <div
               className="px-2 py-1 rounded-lg text-xs font-semibold text-green-400 shrink-0"
@@ -133,7 +139,7 @@ export default function AdminCreatorCard({
           <>
             {/* Link URL */}
             <div
-              className="flex items-center gap-2 rounded-lg px-3 py-2 mb-3"
+              className="flex items-center gap-2 rounded-xl px-3 py-2"
               style={{ background: 'rgba(255,92,2,0.06)', border: '1px solid rgba(255,92,2,0.15)' }}
             >
               <Link2 className="h-3.5 w-3.5 text-orange-400 shrink-0" />
@@ -147,33 +153,27 @@ export default function AdminCreatorCard({
             </div>
 
             {/* Stats row */}
-            <div className="grid grid-cols-3 gap-2 mb-3">
-              <div className="text-center rounded-lg py-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <p className="text-gray-500 text-xs flex items-center justify-center gap-1 mb-0.5">
-                  <ShoppingBag className="h-3 w-3" />
-                </p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center rounded-xl py-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                <ShoppingBag className="h-3 w-3 text-gray-600 mx-auto mb-1" />
                 <p className="text-white text-sm font-bold">{link.total_orders}</p>
                 <p className="text-gray-600 text-xs">pedidos</p>
               </div>
-              <div className="text-center rounded-lg py-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <p className="text-gray-500 text-xs flex items-center justify-center gap-1 mb-0.5">
-                  <TrendingUp className="h-3 w-3" />
-                </p>
-                <p className="text-yellow-400 text-sm font-bold">{formatCOP(link.total_commission)}</p>
-                <p className="text-gray-600 text-xs">comisión total</p>
+              <div className="text-center rounded-xl py-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                <TrendingUp className="h-3 w-3 text-gray-600 mx-auto mb-1" />
+                <p className="text-yellow-400 text-xs font-bold leading-tight">{formatCOP(link.total_commission)}</p>
+                <p className="text-gray-600 text-xs">comisión</p>
               </div>
-              <div className="text-center rounded-lg py-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <p className="text-gray-500 text-xs flex items-center justify-center gap-1 mb-0.5">
-                  <Wallet className="h-3 w-3" />
-                </p>
-                <p className="text-green-400 text-sm font-bold">{formatCOP(link.pending_balance)}</p>
+              <div className="text-center rounded-xl py-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                <Wallet className="h-3 w-3 text-gray-600 mx-auto mb-1" />
+                <p className="text-green-400 text-xs font-bold leading-tight">{formatCOP(link.pending_balance)}</p>
                 <p className="text-gray-600 text-xs">pendiente</p>
               </div>
             </div>
 
             {/* Commission rate */}
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-gray-500 text-xs shrink-0">Comisión:</span>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500 text-xs shrink-0">Descuento: {link.discount_value}% · Comisión:</span>
               {editingRate ? (
                 <div className="flex items-center gap-1 flex-1">
                   <input
@@ -183,7 +183,7 @@ export default function AdminCreatorCard({
                     min="1"
                     max="100"
                     step="0.5"
-                    className="w-16 rounded-lg px-2 py-1 text-white text-xs focus:outline-none"
+                    className="w-14 rounded-lg px-2 py-1 text-white text-xs focus:outline-none"
                     style={{ background: '#1a1a22', border: '1px solid rgba(255,255,255,0.1)' }}
                     autoFocus
                   />
@@ -193,7 +193,7 @@ export default function AdminCreatorCard({
                     className="text-xs px-2 py-1 rounded-lg text-white"
                     style={{ background: '#ff5c02' }}
                   >
-                    Guardar
+                    OK
                   </button>
                   <button
                     onClick={() => { setEditingRate(false); setRateValue(link.commission_rate.toString()); }}
@@ -218,12 +218,23 @@ export default function AdminCreatorCard({
               {link.pending_balance > 0 && (
                 <button
                   onClick={() => setShowPayoutModal(true)}
-                  className="flex-1 py-2 rounded-xl text-xs font-semibold text-white"
+                  className="flex-1 py-2 rounded-xl text-xs font-semibold text-white transition-colors hover:opacity-90"
                   style={{ background: '#15803d' }}
                 >
                   Registrar Pago
                 </button>
               )}
+              <button
+                onClick={() => setShowPayouts((v) => !v)}
+                className="flex items-center gap-1.5 py-2 px-3 rounded-xl text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <History className="h-3.5 w-3.5" />
+                {creatorPayouts.length > 0 && (
+                  <span className="text-gray-600">{creatorPayouts.length}</span>
+                )}
+                {showPayouts ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              </button>
               <button
                 onClick={handleDeleteLink}
                 disabled={deletingLink}
@@ -232,11 +243,42 @@ export default function AdminCreatorCard({
                 {deletingLink ? '…' : <Trash2 className="h-4 w-4" />}
               </button>
             </div>
+
+            {/* Payout history (expandable) */}
+            {showPayouts && (
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                {creatorPayouts.length === 0 ? (
+                  <p className="text-gray-600 text-xs text-center py-3">Sin pagos registrados</p>
+                ) : (
+                  creatorPayouts.map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between px-3 py-2.5 border-b border-white/5 last:border-0"
+                    >
+                      <div>
+                        <p className="text-gray-400 text-xs">
+                          {new Date(p.created_at).toLocaleDateString('es-CO', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </p>
+                        {p.notes && <p className="text-gray-600 text-xs">{p.notes}</p>}
+                      </div>
+                      <p className="text-green-400 text-xs font-semibold">{formatCOP(p.amount)}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </>
         ) : (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
             style={{ background: 'linear-gradient(135deg, #ff5c02 0%, #ff7a2e 100%)' }}
           >
             Crear Link de Descuento
@@ -244,7 +286,7 @@ export default function AdminCreatorCard({
         )}
 
         {actionError && (
-          <p className="text-red-400 text-xs mt-2">{actionError}</p>
+          <p className="text-red-400 text-xs">{actionError}</p>
         )}
       </div>
 

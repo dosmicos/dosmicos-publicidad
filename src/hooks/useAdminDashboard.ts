@@ -23,8 +23,18 @@ export interface CreatorWithLink {
   discount_link: DiscountLink | null;
 }
 
+export interface PayoutRecord {
+  id: string;
+  creator_id: string;
+  amount: number;
+  payout_type: string;
+  notes: string | null;
+  created_at: string;
+}
+
 export function useAdminDashboard() {
   const [creators, setCreators] = useState<CreatorWithLink[]>([]);
+  const [payouts, setPayouts] = useState<PayoutRecord[]>([]);
   const [rankingStartedAt, setRankingStartedAt] = useState<string | null>(null);
   const [orgId, setOrgId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,7 +59,6 @@ export function useAdminDashboard() {
       setOrgId(currentOrgId);
 
       // 2. Read ugc_ranking_started_at from organizations.settings JSONB
-      // (this is the same source that get_ugc_public_ranking reads from)
       const { data: orgData } = await (supabase as any)
         .from('organizations')
         .select('settings')
@@ -105,6 +114,15 @@ export function useAdminDashboard() {
       });
 
       setCreators(mapped);
+
+      // 4. Fetch all payouts for the org
+      const { data: payoutsData } = await (supabase as any)
+        .from('ugc_commission_payouts')
+        .select('id, creator_id, amount, payout_type, notes, created_at')
+        .eq('organization_id', currentOrgId)
+        .order('created_at', { ascending: false });
+
+      setPayouts(payoutsData || []);
     } catch (err: any) {
       setError(err.message || 'Error al cargar datos');
     } finally {
@@ -116,7 +134,7 @@ export function useAdminDashboard() {
     fetchAll();
   }, [fetchAll]);
 
-  // Reset ranking period — updates organizations.settings.ugc_ranking_started_at
+  // Reset ranking period
   const resetRankingPeriod = async () => {
     if (!orgId) return;
     const { error } = await (supabase as any).rpc('reset_ugc_ranking_period', {
@@ -126,10 +144,9 @@ export function useAdminDashboard() {
     await fetchAll();
   };
 
-  // Register payout — passes all required params to the SQL function
+  // Register payout
   const registerPayout = async (linkId: string, amount: number) => {
     if (!orgId) throw new Error('Org no disponible');
-    // Find the creator associated with this link to pass required SQL params
     const creator = creators.find((c) => c.discount_link?.id === linkId);
     if (!creator) throw new Error('Creadora no encontrada');
 
@@ -145,7 +162,7 @@ export function useAdminDashboard() {
     await fetchAll();
   };
 
-  // Update commission rate directly on the link
+  // Update commission rate
   const updateCommissionRate = async (linkId: string, rate: number) => {
     const { error } = await (supabase as any)
       .from('ugc_discount_links')
@@ -185,6 +202,7 @@ export function useAdminDashboard() {
 
   return {
     creators,
+    payouts,
     rankingStartedAt,
     orgId,
     loading,
