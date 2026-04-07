@@ -26,20 +26,10 @@ const formatCOP = (n: number) =>
 
 function Avatar({ url, name }: { url: string | null; name: string }) {
   if (url) {
-    return (
-      <img
-        src={url}
-        alt={name}
-        className="w-10 h-10 rounded-full object-cover shrink-0"
-        style={{ border: '1px solid rgba(255,255,255,0.08)' }}
-      />
-    );
+    return <img src={url} alt={name} className="w-10 h-10 rounded-full object-cover shrink-0 border border-gray-100" />;
   }
   return (
-    <div
-      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-      style={{ background: 'rgba(255,92,2,0.1)', color: '#ff5c02' }}
-    >
+    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium text-gray-600 shrink-0">
       {name?.[0]?.toUpperCase() ?? '?'}
     </div>
   );
@@ -112,24 +102,18 @@ export default function AdminCreatorCard({
 
   return (
     <>
-      <div
-        className="rounded-2xl p-4 flex flex-col gap-3"
-        style={{ background: 'rgba(20,20,26,0.8)', border: '1px solid rgba(255,255,255,0.07)' }}
-      >
+      <div className="rounded-2xl border border-gray-100 p-4 flex flex-col gap-3">
         {/* Creator header */}
         <div className="flex items-center gap-3">
           <Avatar url={creator.avatar_url} name={creator.name} />
           <div className="flex-1 min-w-0">
-            <p className="text-white font-semibold text-sm truncate">{creator.name}</p>
+            <p className="text-gray-900 font-semibold text-sm truncate">{creator.name}</p>
             {creator.instagram_handle && (
-              <p className="text-gray-500 text-xs">@{creator.instagram_handle}</p>
+              <p className="text-gray-400 text-xs">@{creator.instagram_handle}</p>
             )}
           </div>
           {link && link.pending_balance > 0 && (
-            <div
-              className="px-2 py-1 rounded-lg text-xs font-semibold text-green-400 shrink-0"
-              style={{ background: 'rgba(34,197,94,0.1)' }}
-            >
+            <div className="px-2 py-1 rounded-lg text-xs font-semibold text-green-700 bg-green-50 border border-green-100 shrink-0">
               {formatCOP(link.pending_balance)}
             </div>
           )}
@@ -138,66 +122,61 @@ export default function AdminCreatorCard({
         {link ? (
           <>
             {/* Link URL */}
-            <div
-              className="flex items-center gap-2 rounded-xl px-3 py-2"
-              style={{ background: 'rgba(255,92,2,0.06)', border: '1px solid rgba(255,92,2,0.15)' }}
-            >
-              <Link2 className="h-3.5 w-3.5 text-orange-400 shrink-0" />
-              <span className="text-orange-300 text-xs truncate flex-1">{shareUrl}</span>
+            <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+              <Link2 className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+              <span className="text-gray-600 text-xs truncate flex-1">{shareUrl}</span>
               <button
                 onClick={handleCopy}
-                className="shrink-0 text-orange-400/70 hover:text-orange-400 transition-colors"
+                className="shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
               >
-                {copied ? <Check className="h-3.5 w-3.5 text-green-400" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
               </button>
             </div>
 
             {/* Stats row */}
             <div className="grid grid-cols-3 gap-2">
-              <div className="text-center rounded-xl py-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <ShoppingBag className="h-3 w-3 text-gray-600 mx-auto mb-1" />
-                <p className="text-white text-sm font-bold">{link.total_orders}</p>
-                <p className="text-gray-600 text-xs">pedidos</p>
+              <div className="text-center rounded-xl py-2 bg-gray-50 border border-gray-100">
+                <ShoppingBag className="h-3 w-3 text-gray-400 mx-auto mb-1" />
+                <p className="text-gray-900 text-sm font-bold">{link.total_orders}</p>
+                <p className="text-gray-400 text-xs">pedidos</p>
               </div>
-              <div className="text-center rounded-xl py-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <TrendingUp className="h-3 w-3 text-gray-600 mx-auto mb-1" />
-                <p className="text-yellow-400 text-xs font-bold leading-tight">{formatCOP(link.total_commission)}</p>
-                <p className="text-gray-600 text-xs">comisión</p>
+              <div className="text-center rounded-xl py-2 bg-gray-50 border border-gray-100">
+                <TrendingUp className="h-3 w-3 text-gray-400 mx-auto mb-1" />
+                <p className="text-gray-900 text-xs font-bold leading-tight">{formatCOP(link.total_commission)}</p>
+                <p className="text-gray-400 text-xs">comisión</p>
               </div>
-              <div className="text-center rounded-xl py-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                <Wallet className="h-3 w-3 text-gray-600 mx-auto mb-1" />
-                <p className="text-green-400 text-xs font-bold leading-tight">{formatCOP(link.pending_balance)}</p>
-                <p className="text-gray-600 text-xs">pendiente</p>
+              <div className="text-center rounded-xl py-2 bg-gray-50 border border-gray-100">
+                <Wallet className="h-3 w-3 text-gray-400 mx-auto mb-1" />
+                <p className="text-green-600 text-xs font-bold leading-tight">{formatCOP(link.pending_balance)}</p>
+                <p className="text-gray-400 text-xs">pendiente</p>
               </div>
             </div>
 
             {/* Commission rate */}
             <div className="flex items-center gap-2">
-              <span className="text-gray-500 text-xs shrink-0">Descuento: {link.discount_value}% · Comisión:</span>
+              <span className="text-gray-400 text-xs shrink-0">
+                Descuento: {link.discount_value}% · Comisión:
+              </span>
               {editingRate ? (
                 <div className="flex items-center gap-1 flex-1">
                   <input
                     type="number"
                     value={rateValue}
                     onChange={(e) => setRateValue(e.target.value)}
-                    min="1"
-                    max="100"
-                    step="0.5"
-                    className="w-14 rounded-lg px-2 py-1 text-white text-xs focus:outline-none"
-                    style={{ background: '#1a1a22', border: '1px solid rgba(255,255,255,0.1)' }}
+                    min="1" max="100" step="0.5"
+                    className="w-14 rounded-lg border border-gray-200 px-2 py-1 text-gray-900 text-xs focus:outline-none focus:border-gray-400"
                     autoFocus
                   />
-                  <span className="text-gray-500 text-xs">%</span>
+                  <span className="text-gray-400 text-xs">%</span>
                   <button
                     onClick={handleSaveRate}
-                    className="text-xs px-2 py-1 rounded-lg text-white"
-                    style={{ background: '#ff5c02' }}
+                    className="text-xs px-2 py-1 rounded-lg bg-gray-900 text-white"
                   >
                     OK
                   </button>
                   <button
                     onClick={() => { setEditingRate(false); setRateValue(link.commission_rate.toString()); }}
-                    className="text-gray-500 hover:text-gray-300"
+                    className="text-gray-400 hover:text-gray-600"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -205,7 +184,7 @@ export default function AdminCreatorCard({
               ) : (
                 <button
                   onClick={() => setEditingRate(true)}
-                  className="flex items-center gap-1 text-orange-400 text-xs hover:text-orange-300 transition-colors"
+                  className="flex items-center gap-1 text-gray-700 text-xs hover:text-gray-900 transition-colors"
                 >
                   <span className="font-semibold">{link.commission_rate}%</span>
                   <Pencil className="h-3 w-3" />
@@ -218,27 +197,25 @@ export default function AdminCreatorCard({
               {link.pending_balance > 0 && (
                 <button
                   onClick={() => setShowPayoutModal(true)}
-                  className="flex-1 py-2 rounded-xl text-xs font-semibold text-white transition-colors hover:opacity-90"
-                  style={{ background: '#15803d' }}
+                  className="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-gray-900 hover:bg-gray-700 transition-colors"
                 >
                   Registrar Pago
                 </button>
               )}
               <button
                 onClick={() => setShowPayouts((v) => !v)}
-                className="flex items-center gap-1.5 py-2 px-3 rounded-xl text-xs text-gray-500 hover:text-gray-300 transition-colors"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                className="flex items-center gap-1.5 py-2 px-3 rounded-xl text-xs text-gray-500 hover:text-gray-700 border border-gray-100 hover:border-gray-200 transition-colors"
               >
                 <History className="h-3.5 w-3.5" />
                 {creatorPayouts.length > 0 && (
-                  <span className="text-gray-600">{creatorPayouts.length}</span>
+                  <span className="text-gray-400">{creatorPayouts.length}</span>
                 )}
                 {showPayouts ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
               </button>
               <button
                 onClick={handleDeleteLink}
                 disabled={deletingLink}
-                className="py-2 px-3 rounded-xl text-xs text-red-400 hover:text-red-300 hover:bg-red-400/10 transition-colors disabled:opacity-50"
+                className="py-2 px-3 rounded-xl text-xs text-red-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-colors disabled:opacity-50"
               >
                 {deletingLink ? '…' : <Trash2 className="h-4 w-4" />}
               </button>
@@ -246,29 +223,24 @@ export default function AdminCreatorCard({
 
             {/* Payout history (expandable) */}
             {showPayouts && (
-              <div
-                className="rounded-xl overflow-hidden"
-                style={{ border: '1px solid rgba(255,255,255,0.06)' }}
-              >
+              <div className="rounded-xl border border-gray-100 overflow-hidden">
                 {creatorPayouts.length === 0 ? (
-                  <p className="text-gray-600 text-xs text-center py-3">Sin pagos registrados</p>
+                  <p className="text-gray-400 text-xs text-center py-3">Sin pagos registrados</p>
                 ) : (
                   creatorPayouts.map((p) => (
                     <div
                       key={p.id}
-                      className="flex items-center justify-between px-3 py-2.5 border-b border-white/5 last:border-0"
+                      className="flex items-center justify-between px-3 py-2.5 border-b border-gray-50 last:border-0"
                     >
                       <div>
-                        <p className="text-gray-400 text-xs">
+                        <p className="text-gray-600 text-xs">
                           {new Date(p.created_at).toLocaleDateString('es-CO', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
+                            day: 'numeric', month: 'short', year: 'numeric',
                           })}
                         </p>
-                        {p.notes && <p className="text-gray-600 text-xs">{p.notes}</p>}
+                        {p.notes && <p className="text-gray-400 text-xs">{p.notes}</p>}
                       </div>
-                      <p className="text-green-400 text-xs font-semibold">{formatCOP(p.amount)}</p>
+                      <p className="text-green-600 text-xs font-semibold">{formatCOP(p.amount)}</p>
                     </div>
                   ))
                 )}
@@ -278,15 +250,14 @@ export default function AdminCreatorCard({
         ) : (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg, #ff5c02 0%, #ff7a2e 100%)' }}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-gray-900 hover:bg-gray-700 transition-colors"
           >
             Crear Link de Descuento
           </button>
         )}
 
         {actionError && (
-          <p className="text-red-400 text-xs">{actionError}</p>
+          <p className="text-red-500 text-xs">{actionError}</p>
         )}
       </div>
 
