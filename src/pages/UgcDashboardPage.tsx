@@ -21,6 +21,37 @@ interface CreatorResult {
   commission_in_period: number;
 }
 
+interface OrderRow {
+  shopify_order_number: string | null;
+  order_date: string;
+  order_total: number;
+  commission_amount: number;
+}
+
+function StatTooltip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-flex items-center ml-1">
+      <button
+        type="button"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        onClick={() => setOpen(v => !v)}
+        className="w-3.5 h-3.5 rounded-full border border-gray-300 text-gray-400 text-[9px] leading-none flex items-center justify-center hover:border-gray-400 hover:text-gray-600 transition-colors"
+        aria-label="Más información"
+      >?</button>
+      {open && (
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-48 bg-gray-900 text-white text-xs rounded-lg px-2.5 py-1.5 z-10 pointer-events-none shadow-lg">
+          {text}
+          <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+        </span>
+      )}
+    </span>
+  );
+}
+
 export default function UgcDashboardPage() {
   const { rankingByCommission, balancesByAmount, loading: rankingLoading } = usePublicRanking('dosmicos');
   const { user } = useAuth();
@@ -30,6 +61,8 @@ export default function UgcDashboardPage() {
   const [creator, setCreator] = useState<CreatorResult | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   const isUnlocked = !!user || !!creator;
 
@@ -49,6 +82,13 @@ export default function UgcDashboardPage() {
         setNotFound(true);
       } else {
         setCreator(data[0]);
+        setOrdersLoading(true);
+        const { data: ordersData } = await (supabase as any).rpc(
+          'get_creator_orders_by_code',
+          { p_code: code.trim().toUpperCase() }
+        );
+        setOrders(ordersData || []);
+        setOrdersLoading(false);
       }
     } catch (err: any) {
       setError(err.message || 'Error al consultar');
@@ -71,7 +111,7 @@ export default function UgcDashboardPage() {
           </Link>
           {isUnlocked && !user && (
             <button
-              onClick={() => { setCreator(null); setCode(''); }}
+              onClick={() => { setCreator(null); setCode(''); setOrders([]); }}
               className="absolute left-5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
             >
               Salir
@@ -183,13 +223,19 @@ export default function UgcDashboardPage() {
                     {/* Stats row */}
                     <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100">
                       <div className="text-center">
-                        <p className="text-xs text-gray-400 mb-0.5">Compras</p>
+                        <p className="text-xs text-gray-400 mb-0.5 flex items-center justify-center">
+                          Compras
+                          <StatTooltip text="Pedidos generados con tu link en el período actual" />
+                        </p>
                         <p className="text-gray-900 font-semibold text-lg leading-tight">
                           {creator.orders_in_period}
                         </p>
                       </div>
                       <div className="text-center border-x border-gray-100">
-                        <p className="text-xs text-gray-400 mb-0.5">Comisiones</p>
+                        <p className="text-xs text-gray-400 mb-0.5 flex items-center justify-center">
+                          Comisiones
+                          <StatTooltip text="Total ganado en el período actual. Se reinicia cuando el equipo inicia un nuevo período" />
+                        </p>
                         <p className="text-gray-900 font-semibold text-sm leading-tight">
                           {creator.commission_in_period > 0
                             ? formatCOP(creator.commission_in_period)
@@ -197,7 +243,10 @@ export default function UgcDashboardPage() {
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="text-xs text-gray-400 mb-0.5">Saldo pendiente</p>
+                        <p className="text-xs text-gray-400 mb-0.5 flex items-center justify-center">
+                          Saldo pendiente
+                          <StatTooltip text="Lo que Dosmicos te debe: comisiones acumuladas de todos los períodos menos los pagos ya realizados" />
+                        </p>
                         <p className="text-gray-900 font-semibold text-sm leading-tight">
                           {creator.pending_balance > 0
                             ? formatCOP(creator.pending_balance)
@@ -206,6 +255,49 @@ export default function UgcDashboardPage() {
                       </div>
                     </div>
                   </div>
+                </section>
+              )}
+
+              {/* Transaction history */}
+              {creator && (
+                <section className="pb-8">
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-4">
+                    Mis pedidos
+                  </p>
+                  {ordersLoading ? (
+                    <div className="flex justify-center py-6">
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
+                    </div>
+                  ) : orders.length === 0 ? (
+                    <p className="text-gray-400 text-sm text-center py-4">
+                      Aún no tienes pedidos registrados.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {orders.map((order, i) => (
+                        <div key={i} className="flex items-center justify-between rounded-2xl border border-gray-100 px-4 py-3">
+                          <div>
+                            <p className="text-gray-900 text-sm font-medium">
+                              {order.shopify_order_number ? `#${order.shopify_order_number}` : '—'}
+                            </p>
+                            <p className="text-gray-400 text-xs">
+                              {new Date(order.order_date).toLocaleDateString('es-CO', {
+                                day: 'numeric', month: 'short', year: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-gray-900 text-sm font-semibold">
+                              +{formatCOP(order.commission_amount)}
+                            </p>
+                            <p className="text-gray-400 text-xs">
+                              de {formatCOP(order.order_total)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </section>
               )}
 
