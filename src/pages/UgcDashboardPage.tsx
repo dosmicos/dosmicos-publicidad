@@ -281,48 +281,6 @@ export default function UgcDashboardPage() {
                 </section>
               )}
 
-              {/* Transaction history */}
-              {creator && (
-                <section className="pb-6">
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-4">
-                    Mis pedidos
-                  </p>
-                  {ordersLoading ? (
-                    <div className="flex justify-center py-6">
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
-                    </div>
-                  ) : orders.length === 0 ? (
-                    <p className="text-gray-400 text-sm text-center py-4">
-                      Aún no tienes pedidos registrados.
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {orders.map((order, i) => (
-                        <div key={i} className="flex items-center justify-between rounded-2xl border border-gray-100 px-4 py-3">
-                          <div>
-                            <p className="text-gray-900 text-sm font-medium">
-                              {order.shopify_order_number ? `#${order.shopify_order_number}` : '—'}
-                            </p>
-                            <p className="text-gray-400 text-xs">
-                              {new Date(order.order_date).toLocaleDateString('es-CO', {
-                                day: 'numeric', month: 'short', year: 'numeric',
-                              })}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-gray-900 text-sm font-semibold">
-                              +{formatCOP(order.commission_amount)}
-                            </p>
-                            <p className="text-gray-400 text-xs">
-                              de {formatCOP(order.order_total)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-              )}
 
               {/* Payout history */}
               {creator && (
