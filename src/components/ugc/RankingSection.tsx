@@ -15,9 +15,7 @@ function Avatar({ url, name, size = 'sm' }: { url: string | null; name: string; 
     return <img src={url} alt={name} className={`${dim} rounded-full object-cover shrink-0`} />;
   }
   return (
-    <div
-      className={`${dim} rounded-full flex items-center justify-center font-medium shrink-0 bg-gray-100 text-gray-600`}
-    >
+    <div className={`${dim} rounded-full flex items-center justify-center font-medium shrink-0 bg-gray-100 text-gray-600`}>
       {name?.[0]?.toUpperCase() ?? '?'}
     </div>
   );
@@ -34,17 +32,46 @@ export default function RankingSection({ ranking }: { ranking: RankingEntry[] })
     );
   }
 
+  const hasActivity = ranking.some((e) => e.commission_in_period > 0);
+
+  // No activity yet — show profiles without rank
+  if (!hasActivity) {
+    return (
+      <div className="space-y-2">
+        <p className="text-xs text-gray-400 text-center mb-4">
+          Aún no hay compras registradas en este período. ¡Tú puedes ser la primera! 🚀
+        </p>
+        {ranking.map((entry) => (
+          <div
+            key={entry.instagram_handle || entry.creator_name}
+            className="flex items-center gap-3 rounded-2xl px-4 py-3 border border-gray-100"
+          >
+            <Avatar url={entry.avatar_url} name={entry.creator_name} />
+            <div className="flex-1 min-w-0">
+              <p className="text-gray-900 text-sm font-medium truncate">{entry.creator_name}</p>
+              {entry.instagram_handle && (
+                <p className="text-gray-400 text-xs truncate">@{entry.instagram_handle}</p>
+              )}
+            </div>
+            <p className="text-gray-300 text-xs shrink-0">0 compras</p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Has activity — show full ranking with medals
   return (
     <div className="space-y-2">
-      {ranking.map((entry, i) => {
-        const isTop3 = entry.rank <= 3;
+      {ranking.map((entry) => {
+        const isTop3 = entry.rank <= 3 && entry.commission_in_period > 0;
         const medal = MEDALS[entry.rank - 1];
 
         return (
           <div
             key={entry.instagram_handle || entry.creator_name}
             className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors ${
-              entry.rank === 1
+              entry.rank === 1 && entry.commission_in_period > 0
                 ? 'bg-gray-50 border border-gray-200'
                 : 'border border-gray-100'
             }`}
@@ -53,12 +80,14 @@ export default function RankingSection({ ranking }: { ranking: RankingEntry[] })
             <div className="w-7 text-center shrink-0">
               {isTop3 ? (
                 <span className="text-lg leading-none">{medal}</span>
-              ) : (
+              ) : entry.commission_in_period > 0 ? (
                 <span className="text-xs font-medium text-gray-400">#{entry.rank}</span>
+              ) : (
+                <span className="text-xs text-gray-300">—</span>
               )}
             </div>
 
-            <Avatar url={entry.avatar_url} name={entry.creator_name} size={entry.rank === 1 ? 'md' : 'sm'} />
+            <Avatar url={entry.avatar_url} name={entry.creator_name} size={entry.rank === 1 && entry.commission_in_period > 0 ? 'md' : 'sm'} />
 
             <div className="flex-1 min-w-0">
               <p className="text-gray-900 text-sm font-medium truncate">{entry.creator_name}</p>
@@ -68,10 +97,16 @@ export default function RankingSection({ ranking }: { ranking: RankingEntry[] })
             </div>
 
             <div className="text-right shrink-0">
-              <p className="text-gray-900 text-sm font-semibold">
-                {formatCOP(entry.commission_in_period)}
-              </p>
-              <p className="text-gray-400 text-xs">{entry.orders_in_period} pedidos</p>
+              {entry.commission_in_period > 0 ? (
+                <>
+                  <p className="text-gray-900 text-sm font-semibold">
+                    {formatCOP(entry.commission_in_period)}
+                  </p>
+                  <p className="text-gray-400 text-xs">{entry.orders_in_period} compras</p>
+                </>
+              ) : (
+                <p className="text-gray-300 text-xs">0 compras</p>
+              )}
             </div>
           </div>
         );

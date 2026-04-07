@@ -17,6 +17,8 @@ interface CreatorResult {
   instagram_handle: string;
   avatar_url: string | null;
   pending_balance: number;
+  orders_in_period: number;
+  commission_in_period: number;
 }
 
 export default function UgcDashboardPage() {
@@ -78,7 +80,7 @@ export default function UgcDashboardPage() {
         </div>
       </header>
 
-      {/* Code gate — shown when not unlocked */}
+      {/* Code gate */}
       {!isUnlocked && (
         <div className="max-w-lg mx-auto px-5 pt-16 pb-20">
           <div className="text-center mb-8">
@@ -151,14 +153,14 @@ export default function UgcDashboardPage() {
           ) : (
             <div className="max-w-lg mx-auto px-5">
 
-              {/* Mi saldo — shown at the top when a creator is logged in */}
+              {/* Creator stats card */}
               {creator && (
                 <section className="pt-8 pb-8">
                   <div className="rounded-2xl border border-gray-100 p-5">
                     <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-4">
                       Mi saldo
                     </p>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 mb-4">
                       {creator.avatar_url ? (
                         <img
                           src={creator.avatar_url}
@@ -176,9 +178,27 @@ export default function UgcDashboardPage() {
                           <p className="text-gray-400 text-xs">@{creator.instagram_handle}</p>
                         )}
                       </div>
-                      <div className="text-right shrink-0">
+                    </div>
+
+                    {/* Stats row */}
+                    <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100">
+                      <div className="text-center">
+                        <p className="text-xs text-gray-400 mb-0.5">Compras</p>
+                        <p className="text-gray-900 font-semibold text-lg leading-tight">
+                          {creator.orders_in_period}
+                        </p>
+                      </div>
+                      <div className="text-center border-x border-gray-100">
+                        <p className="text-xs text-gray-400 mb-0.5">Comisiones</p>
+                        <p className="text-gray-900 font-semibold text-sm leading-tight">
+                          {creator.commission_in_period > 0
+                            ? formatCOP(creator.commission_in_period)
+                            : '—'}
+                        </p>
+                      </div>
+                      <div className="text-center">
                         <p className="text-xs text-gray-400 mb-0.5">Saldo pendiente</p>
-                        <p className="text-gray-900 font-semibold text-base">
+                        <p className="text-gray-900 font-semibold text-sm leading-tight">
                           {creator.pending_balance > 0
                             ? formatCOP(creator.pending_balance)
                             : '—'}
@@ -189,7 +209,7 @@ export default function UgcDashboardPage() {
                 </section>
               )}
 
-              {/* Admin balance overview */}
+              {/* Admin balances */}
               {user && balancesByAmount.length > 0 && (
                 <section className="pt-8 pb-8">
                   <div className="mb-5">
@@ -220,7 +240,6 @@ export default function UgcDashboardPage() {
                 </section>
               )}
 
-              {/* Divider before ranking */}
               {(creator || (user && balancesByAmount.length > 0)) && (
                 <div className="border-t border-gray-100" />
               )}
@@ -240,7 +259,6 @@ export default function UgcDashboardPage() {
         </>
       )}
 
-      {/* Footer */}
       <footer className="text-center pb-10">
         <p className="text-xs text-gray-300">Powered by Dosmicos</p>
       </footer>
