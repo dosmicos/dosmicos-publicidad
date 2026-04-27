@@ -21,18 +21,41 @@ interface CreatorResult {
   commission_in_period: number;
 }
 
-interface OrderRow {
-  shopify_order_number: string | null;
-  order_date: string;
-  order_total: number;
-  commission_amount: number;
-}
-
 interface PayoutRow {
   amount: number;
   payout_type: string;
   notes: string | null;
   created_at: string;
+}
+
+interface RpcError { message: string }
+interface PublicSupabaseClient {
+  rpc<T>(fn: string, args?: Record<string, unknown>): PromiseLike<{ data: T | null; error: RpcError | null }>;
+}
+
+const publicSupabase = supabase as unknown as PublicSupabaseClient;
+
+const WEEKLY_CHALLENGE = {
+  title: 'Reto de la semana',
+  headline: 'Publica 3 historias con tu link + una razón real por la que usas Dosmicos.',
+  ideas: [
+    'Muestra una noche fría o una salida donde Dosmicos te resolvió algo.',
+    'Cuenta por qué escogiste ese diseño, nombre o bordado.',
+    'Cierra con: “con mi link tienes 5% de descuento”.',
+  ],
+};
+
+function getProgressToTopFive(creator: CreatorResult | null, ranking: CreatorResult[]) {
+  if (!creator || ranking.length === 0) return null;
+  const topFive = ranking
+    .filter((entry) => entry.commission_in_period > 0)
+    .sort((a, b) => b.commission_in_period - a.commission_in_period)
+    .slice(0, 5);
+  const current = creator.commission_in_period || 0;
+  const threshold = topFive.length >= 5 ? topFive[topFive.length - 1].commission_in_period : 1;
+  const missing = Math.max(threshold - current + 1, 0);
+  const rank = ranking.findIndex((entry) => entry.instagram_handle === creator.instagram_handle && entry.creator_name === creator.creator_name) + 1;
+  return { missing, rank: rank || null };
 }
 
 function StatTooltip({ text }: { text: string }) {
@@ -60,7 +83,7 @@ function StatTooltip({ text }: { text: string }) {
 }
 
 export default function UgcDashboardPage() {
-  const { rankingByCommission, balancesByAmount, loading: rankingLoading } = usePublicRanking('dosmicos');
+  const { rankingByCommission, balancesByAmount, loading: rankingLoading } = usePublicRanking('dosmicos-org');
   const { user } = useAuth();
 
   const [code, setCode] = useState('');
@@ -68,12 +91,11 @@ export default function UgcDashboardPage() {
   const [creator, setCreator] = useState<CreatorResult | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
   const [payoutsLoading, setPayoutsLoading] = useState(false);
 
   const isUnlocked = !!user || !!creator;
+  const creatorProgress = getProgressToTopFive(creator, rankingByCommission);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,9 +104,10 @@ export default function UgcDashboardPage() {
     setError(null);
     setNotFound(false);
     try {
-      const { data, error: rpcError } = await (supabase as any).rpc(
+      const normalizedCode = code.trim().toUpperCase();
+      const { data, error: rpcError } = await publicSupabase.rpc<CreatorResult[]>(
         'get_creator_balance_by_code',
-        { p_code: code.trim().toUpperCase() }
+        { p_code: normalizedCode }
       );
       if (rpcError) throw rpcError;
       if (!data || data.length === 0) {
@@ -92,22 +115,13 @@ export default function UgcDashboardPage() {
       } else {
         setCreator(data[0]);
 
-        // Fetch orders and payouts in parallel
-        setOrdersLoading(true);
         setPayoutsLoading(true);
-
-        const [ordersRes, payoutsRes] = await Promise.all([
-          (supabase as any).rpc('get_creator_orders_by_code', { p_code: code.trim().toUpperCase() }),
-          (supabase as any).rpc('get_creator_payouts_by_code', { p_code: code.trim().toUpperCase() }),
-        ]);
-
-        setOrders(ordersRes.data || []);
+        const payoutsRes = await publicSupabase.rpc<PayoutRow[]>('get_creator_payouts_by_code', { p_code: normalizedCode });
         setPayouts(payoutsRes.data || []);
-        setOrdersLoading(false);
         setPayoutsLoading(false);
       }
-    } catch (err: any) {
-      setError(err.message || 'Error al consultar');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al consultar');
     } finally {
       setChecking(false);
     }
@@ -116,7 +130,6 @@ export default function UgcDashboardPage() {
   const handleSignOut = () => {
     setCreator(null);
     setCode('');
-    setOrders([]);
     setPayouts([]);
   };
 
@@ -281,6 +294,41 @@ export default function UgcDashboardPage() {
                 </section>
               )}
 
+
+              {/* Weekly challenge */}
+              {creator && (
+                <section className="pb-6">
+                  <div className="rounded-2xl border border-orange-100 bg-orange-50 p-5 space-y-4">
+                    <div>
+                      <p className="text-xs font-medium text-orange-500 uppercase tracking-widest mb-1">
+                        {WEEKLY_CHALLENGE.title}
+                      </p>
+                      <h2 className="text-gray-900 text-base font-semibold leading-snug">
+                        {WEEKLY_CHALLENGE.headline}
+                      </h2>
+                    </div>
+                    <ul className="space-y-2">
+                      {WEEKLY_CHALLENGE.ideas.map((idea) => (
+                        <li key={idea} className="flex gap-2 text-sm text-gray-600">
+                          <span className="text-orange-400">•</span>
+                          <span>{idea}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="rounded-xl bg-white border border-orange-100 px-4 py-3 text-sm text-gray-600">
+                      {creatorProgress?.missing === 0 ? (
+                        <span>🔥 Vas en el top. Sigue moviendo tu link para mantenerte arriba.</span>
+                      ) : creatorProgress ? (
+                        <span>
+                          Te faltan aprox. <strong className="text-gray-900">{formatCOP(creatorProgress.missing)}</strong> en comisiones para pelear top 5.
+                        </span>
+                      ) : (
+                        <span>Cada compra suma a tu ranking y a tu saldo pendiente.</span>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              )}
 
               {/* Payout history */}
               {creator && (
