@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import type { RankingEntry } from '@/hooks/usePublicRanking';
 
 const formatCOP = (n: number) =>
@@ -10,13 +12,25 @@ const formatCOP = (n: number) =>
 const MEDALS = ['🥇', '🥈', '🥉'];
 
 function Avatar({ url, name, size = 'sm' }: { url: string | null; name: string; size?: 'sm' | 'md' }) {
+  const [imageFailed, setImageFailed] = useState(false);
   const dim = size === 'md' ? 'w-12 h-12 text-base' : 'w-9 h-9 text-sm';
-  if (url) {
-    return <img src={url} alt={name} className={`${dim} rounded-full object-cover shrink-0`} />;
+  const initial = name?.trim()?.[0]?.toUpperCase() ?? '?';
+  const hasValidUrl = Boolean(url?.trim()) && !imageFailed;
+
+  if (hasValidUrl) {
+    return (
+      <img
+        src={url ?? undefined}
+        alt={name}
+        className={`${dim} rounded-full object-cover shrink-0 bg-gray-100`}
+        onError={() => setImageFailed(true)}
+      />
+    );
   }
+
   return (
     <div className={`${dim} rounded-full flex items-center justify-center font-medium shrink-0 bg-gray-100 text-gray-600`}>
-      {name?.[0]?.toUpperCase() ?? '?'}
+      {initial}
     </div>
   );
 }
