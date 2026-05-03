@@ -101,11 +101,14 @@ export default function AdminCreatorClubTools({
   const [lastClubUrl, setLastClubUrl] = useState('');
   const [lastUploadUrl, setLastUploadUrl] = useState('');
 
+  const existingClubUrl = creator.portal_link?.portal_url || '';
+  const visibleClubUrl = lastClubUrl || existingClubUrl;
   const uploadUrl = creator.upload_token?.token
     ? `https://club.dosmicos.com/upload/${creator.upload_token.token}`
     : '';
   const toolkits = creator.toolkits || [];
   const hasClubLink = !!creator.portal_link;
+  const hasVisibleClubUrl = !!visibleClubUrl;
   const hasUploadLink = !!creator.upload_token;
   const toolkitCount = toolkits.length;
 
@@ -160,6 +163,14 @@ export default function AdminCreatorClubTools({
       setShowToolkitForm(false);
     });
 
+  const handleClubPrimary = () => {
+    if (visibleClubUrl) {
+      setExpanded(true);
+      return handleCopy('club', visibleClubUrl);
+    }
+    return handleGenerateClub();
+  };
+
   const copyIcon = (key: string) => copied === key ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />;
 
   return (
@@ -189,12 +200,12 @@ export default function AdminCreatorClubTools({
         <button
           type="button"
           disabled={loadingAction === 'club'}
-          onClick={handleGenerateClub}
+          onClick={handleClubPrimary}
           className="inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-xl bg-gray-950 px-2 text-[11px] font-semibold text-white transition hover:bg-gray-800 disabled:opacity-50"
-          title={hasClubLink ? 'Regenerar y copiar Club' : 'Generar y copiar Club'}
+          title={hasVisibleClubUrl ? 'Copiar link Club' : hasClubLink ? 'Recrear y copiar Club' : 'Generar y copiar Club'}
         >
           {loadingAction === 'club' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
-          <span className="truncate">{hasClubLink ? 'Regenerar Club' : 'Crear Club'}</span>
+          <span className="truncate">{hasVisibleClubUrl ? 'Copiar Club' : hasClubLink ? 'Recrear Club' : 'Crear Club'}</span>
         </button>
         <button
           type="button"
@@ -226,7 +237,7 @@ export default function AdminCreatorClubTools({
       {(lastClubUrl || lastUploadUrl) && (
         <div className="mt-2 rounded-xl border border-emerald-100 bg-emerald-50 px-2.5 py-2 text-[11px] text-emerald-800">
           <p className="font-semibold">Link generado y copiado.</p>
-          <p>El link completo queda visible abajo solo durante esta sesión.</p>
+          <p>Queda guardado para copiarlo siempre desde este admin.</p>
         </div>
       )}
 
@@ -237,20 +248,20 @@ export default function AdminCreatorClubTools({
               <p className="text-[11px] font-semibold text-gray-900">Club privado</p>
               <MiniStatus active={hasClubLink} label={hasClubLink ? `••••${creator.portal_link?.token_last4}` : 'Sin link'} />
             </div>
-            {lastClubUrl ? (
+            {visibleClubUrl ? (
               <div className="flex min-w-0 items-center gap-1.5 rounded-lg bg-emerald-50 px-2 py-1.5">
-                <span className="min-w-0 flex-1 truncate text-[11px] text-emerald-900">{lastClubUrl}</span>
-                <IconButton title="Copiar Club" onClick={() => handleCopy('club', lastClubUrl)}>{copyIcon('club')}</IconButton>
-                <IconButton title="Abrir Club" onClick={() => window.open(lastClubUrl, '_blank', 'noopener,noreferrer')}><ExternalLink className="h-3.5 w-3.5" /></IconButton>
+                <span className="min-w-0 flex-1 truncate text-[11px] text-emerald-900">{visibleClubUrl}</span>
+                <IconButton title="Copiar Club" onClick={() => handleCopy('club', visibleClubUrl)}>{copyIcon('club')}</IconButton>
+                <IconButton title="Abrir Club" onClick={() => window.open(visibleClubUrl, '_blank', 'noopener,noreferrer')}><ExternalLink className="h-3.5 w-3.5" /></IconButton>
               </div>
             ) : hasClubLink ? (
-              <p className="text-[11px] leading-snug text-amber-700">Existe, pero el link completo solo se ve al regenerar.</p>
+              <p className="text-[11px] leading-snug text-amber-700">Este es un link antiguo sin URL guardada. Recrea una sola vez y desde ahí quedará visible siempre.</p>
             ) : (
               <p className="text-[11px] text-gray-500">Sin link Club.</p>
             )}
             <div className="mt-1.5 flex gap-1.5">
               <button type="button" onClick={handleGenerateClub} disabled={loadingAction === 'club'} className="h-8 flex-1 rounded-lg bg-gray-950 px-2 text-[11px] font-semibold text-white disabled:opacity-50">
-                {hasClubLink ? 'Regenerar' : 'Generar'}
+                {hasVisibleClubUrl ? 'Regenerar link' : hasClubLink ? 'Recrear y guardar' : 'Generar link'}
               </button>
               <button type="button" onClick={() => runAction('revoke-club', () => onRevokeClubLink(creator.id))} disabled={!hasClubLink || loadingAction === 'revoke-club'} className="h-8 rounded-lg border border-gray-200 bg-white px-2 text-[11px] font-medium text-gray-500 disabled:opacity-40">
                 Revocar

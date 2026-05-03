@@ -9,7 +9,8 @@ const formatCOP = (n?: number | null) =>
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,
-  }).format(Number(n || 0));
+    maximumFractionDigits: 0,
+  }).format(Math.ceil(Number(n || 0)));
 
 interface PortalCreator {
   id: string;

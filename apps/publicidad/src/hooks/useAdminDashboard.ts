@@ -18,6 +18,7 @@ export interface DiscountLink {
 export interface CreatorPortalLinkMeta {
   id: string;
   token_last4: string;
+  portal_url: string | null;
   is_active: boolean;
   created_at: string;
   last_accessed_at: string | null;
@@ -134,10 +135,10 @@ export function useAdminDashboard() {
           discount_link: activeLink
             ? {
                 ...activeLink,
-                pending_balance: Math.max(
+                pending_balance: Math.ceil(Math.max(
                   (activeLink.total_commission || 0) - (activeLink.total_paid_out || 0),
                   0
-                ),
+                )),
               }
             : null,
           portal_link: null,
@@ -154,7 +155,7 @@ export function useAdminDashboard() {
         try {
           const { data: portalLinks } = await (supabase as any)
             .from('ugc_creator_portal_links')
-            .select('id, creator_id, token_last4, is_active, created_at, last_accessed_at')
+            .select('id, creator_id, token_last4, portal_url, is_active, created_at, last_accessed_at')
             .eq('organization_id', currentOrgId)
             .eq('is_active', true)
             .order('created_at', { ascending: false });

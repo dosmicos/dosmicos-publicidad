@@ -6,7 +6,10 @@ const formatCOP = (n: number) =>
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,
-  }).format(n);
+    maximumFractionDigits: 0,
+  }).format(Math.ceil(n || 0));
+
+const roundedCOP = (n: number) => Math.ceil(Math.max(n || 0, 0));
 
 interface PayoutModalProps {
   creatorName: string;
@@ -23,19 +26,20 @@ export default function PayoutModal({
   onClose,
   onConfirm,
 }: PayoutModalProps) {
-  const [amount, setAmount] = useState(pendingBalance.toString());
+  const payableBalance = roundedCOP(pendingBalance);
+  const [amount, setAmount] = useState(payableBalance.toString());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = parseFloat(amount.replace(/[^0-9.]/g, ''));
+    const parsed = Math.ceil(parseFloat(amount.replace(/[^0-9.,]/g, '').replace(',', '.')));
     if (!parsed || parsed <= 0) {
       setError('Ingresa un monto válido');
       return;
     }
-    if (parsed > pendingBalance) {
-      setError(`El monto no puede ser mayor al saldo disponible (${formatCOP(pendingBalance)})`);
+    if (parsed > payableBalance) {
+      setError(`El monto no puede ser mayor al saldo disponible (${formatCOP(payableBalance)})`);
       return;
     }
     setLoading(true);
@@ -73,7 +77,7 @@ export default function PayoutModal({
 
         <div className="rounded-xl border border-green-100 bg-green-50 px-4 py-3 mb-4">
           <p className="text-gray-500 text-xs mb-0.5">Saldo disponible</p>
-          <p className="text-green-700 text-xl font-bold">{formatCOP(pendingBalance)}</p>
+          <p className="text-green-700 text-xl font-bold">{formatCOP(payableBalance)}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -83,6 +87,7 @@ export default function PayoutModal({
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
+              inputMode="numeric"
               min="0"
               step="1"
               className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-900 text-sm focus:outline-none focus:border-gray-400"
