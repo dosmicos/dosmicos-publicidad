@@ -156,66 +156,86 @@ export default function UgcDashboardPage() {
         </div>
       </header>
 
-      {/* Code gate */}
+      {/* Public landing / legacy code gate */}
       {!isUnlocked && (
-        <div className="max-w-lg mx-auto px-5 pt-16 pb-20">
+        <div className="max-w-lg mx-auto px-5 pt-10 pb-10">
           <div className="text-center mb-8">
-            <p className="text-3xl mb-4">🔒</p>
-            <h1 className="text-gray-900 text-lg font-semibold mb-1">Panel UGC · Dosmicos</h1>
-            <p className="text-gray-400 text-sm">
-              Ingresa tu código de acceso para ver el ranking y tu saldo acumulado.
+            <p className="text-3xl mb-4">🏆</p>
+            <h1 className="text-gray-900 text-lg font-semibold mb-1">Ranking UGC · Dosmicos</h1>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Aquí puedes ver el ranking público. Para ver ganancias, saldo, link de descuento y subir contenido, entra desde tu link único del Club.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <input
-              type="text"
-              value={code}
-              onChange={(e) => {
-                setCode(e.target.value.toUpperCase());
-                setNotFound(false);
-                setError(null);
-              }}
-              placeholder="Ej: AB12CD"
-              maxLength={6}
-              className={`w-full text-center text-2xl font-mono tracking-widest border rounded-xl px-4 py-4 outline-none transition-colors bg-white ${
-                notFound
-                  ? 'border-red-200 focus:border-red-300'
-                  : 'border-gray-200 focus:border-gray-400'
-              }`}
-              autoComplete="off"
-              spellCheck={false}
-              autoFocus
-            />
+          <div className="rounded-2xl border border-orange-100 bg-orange-50 p-4 mb-8 text-center">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              ¿No tienes tu link único? Escríbele al equipo de Dosmicos para que te lo compartan.
+            </p>
+          </div>
 
-            {notFound && (
-              <p className="text-red-400 text-xs text-center">
-                Código no encontrado. Verifica e intenta de nuevo.
-              </p>
-            )}
-            {error && (
-              <p className="text-red-400 text-xs text-center">{error}</p>
-            )}
+          <details className="rounded-2xl border border-gray-100 p-4 mb-8">
+            <summary className="cursor-pointer text-sm font-medium text-gray-700">Entrar con código anterior</summary>
+            <form onSubmit={handleSubmit} className="space-y-3 mt-4">
+              <input
+                type="text"
+                value={code}
+                onChange={(e) => {
+                  setCode(e.target.value.toUpperCase());
+                  setNotFound(false);
+                  setError(null);
+                }}
+                placeholder="Ej: AB12CD"
+                maxLength={6}
+                className={`w-full text-center text-2xl font-mono tracking-widest border rounded-xl px-4 py-4 outline-none transition-colors bg-white ${
+                  notFound
+                    ? 'border-red-200 focus:border-red-300'
+                    : 'border-gray-200 focus:border-gray-400'
+                }`}
+                autoComplete="off"
+                spellCheck={false}
+              />
 
-            <button
-              type="submit"
-              disabled={checking || code.length < 2}
-              className="w-full bg-gray-900 text-white text-sm font-medium rounded-xl py-3.5 hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {checking ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Verificando...
-                </span>
-              ) : (
-                'Entrar'
+              {notFound && (
+                <p className="text-red-400 text-xs text-center">
+                  Código no encontrado. Verifica e intenta de nuevo.
+                </p>
               )}
-            </button>
-          </form>
+              {error && (
+                <p className="text-red-400 text-xs text-center">{error}</p>
+              )}
 
-          <p className="text-center text-xs text-gray-300 mt-8">
-            Tu código lo asigna el equipo de Dosmicos.
-          </p>
+              <button
+                type="submit"
+                disabled={checking || code.length < 2}
+                className="w-full bg-gray-900 text-white text-sm font-medium rounded-xl py-3.5 hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {checking ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    Verificando...
+                  </span>
+                ) : (
+                  'Entrar'
+                )}
+              </button>
+            </form>
+          </details>
+
+          <section className="pt-2 pb-10">
+            <div className="mb-6">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">
+                Período actual
+              </p>
+              <h2 className="text-gray-900 text-xl font-semibold">Ranking de comisiones</h2>
+            </div>
+            {rankingLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="w-5 h-5 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
+              </div>
+            ) : (
+              <RankingSection ranking={rankingByCommission} />
+            )}
+          </section>
         </div>
       )}
 
