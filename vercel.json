@@ -1,0 +1,18 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/ugc/:token",
+      "destination": "https://ysdcsqsfnckeuafjyrbc.supabase.co/functions/v1/ugc-redirect/:token"
+    },
+    {
+      "source": "/upload/:path*",
+      "destination": "/upload/index.html"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/index.html"
+    }
+  ]
+}

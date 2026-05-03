@@ -1,11 +1,39 @@
 # Dosmicos UGC
 
-Monorepo para los sistemas UGC de Dosmicos.
+Un solo proyecto para los sistemas UGC de Dosmicos.
 
-## Apps
+## Estructura
 
-- `apps/publicidad` — ranking/publicidad UGC + dashboard admin. Origen: `dosmicos/dosmicos-publicidad`.
-- `apps/upload-portal` — portal para subida de contenido UGC por token. Origen: `jdcastro2/dosmicos-upload-portal`.
+```txt
+dosmicos-ugc/
+  apps/
+    publicidad/      # ranking/publicidad UGC + dashboard admin
+    upload-portal/   # portal para subida de contenido UGC por token
+  scripts/
+    build-single-project.mjs
+  dist/              # salida generada para deploy único
+  vercel.json
+```
+
+## Cómo funciona el proyecto único
+
+El proyecto mantiene las dos apps separadas internamente para no mezclar dependencias incompatibles, pero genera **un solo deploy**:
+
+- `/` sirve `apps/publicidad`.
+- `/login` y `/admin` siguen funcionando desde `apps/publicidad`.
+- `/ugc/:token` sigue redirigiendo a la función Supabase original.
+- `/upload/:token` sirve `apps/upload-portal`.
+
+La salida final se compone en `dist/`:
+
+```txt
+dist/
+  index.html              # app publicidad
+  assets/                 # assets publicidad
+  upload/
+    index.html            # app upload portal
+    assets/               # assets upload portal
+```
 
 ## Comandos
 
@@ -13,31 +41,32 @@ Desde la raíz:
 
 ```bash
 npm run dev:publicidad
-npm run build:publicidad
-npm run lint:publicidad
 npm run dev:upload
-npm run build:upload
 npm run build
 ```
 
-También puedes entrar a cada app y usar sus comandos originales:
+`npm run build` instala/build-ea ambas apps y compone el deploy único en `dist/`.
+
+También se pueden correr builds individuales:
 
 ```bash
-cd apps/publicidad && npm install && npm run dev
-cd apps/upload-portal && npm install && npm run dev
+npm run build:publicidad
+npm run build:upload
+npm run lint:publicidad
 ```
 
-## Deploy sugerido
+## Deploy en Vercel
 
-Mantener dos proyectos de Vercel apuntando al mismo repositorio, cada uno con su Root Directory:
+Usar **un solo proyecto de Vercel** apuntando a la raíz del repo:
 
-- Proyecto `dosmicos-publicidad`: Root Directory `apps/publicidad`
-- Proyecto `dosmicos-upload-portal`: Root Directory `apps/upload-portal`
+- Build Command: `npm run build`
+- Output Directory: `dist`
 
-Así quedan en un solo repo sin mezclar dependencias ni romper rutas/deploys.
+`vercel.json` ya contiene las rewrites para que funcionen las rutas de ambas apps.
 
 ## Notas
 
-- Cada app conserva su `package.json`, `package-lock.json`, `vite.config.ts` y `vercel.json`.
-- Se importaron con `git subtree` para preservar historial de ambos repos en un solo repo.
-- No se fusionaron todavía en una sola app React porque usan stacks distintos: React 19/Tailwind 4/Vite 8 vs React 18/Tailwind 3/Vite 6.
+- Cada app conserva su `package.json`, `package-lock.json`, `vite.config.ts` y configuración original.
+- Se importaron con `git subtree` para preservar historial de ambos repos.
+- No se fusionaron en un solo runtime React para reducir riesgo: las apps usan stacks distintos.
+- `apps/upload-portal` usa `VITE_BASE_PATH=/upload/` solo durante el build único para que sus assets carguen correctamente bajo `/upload/`.
