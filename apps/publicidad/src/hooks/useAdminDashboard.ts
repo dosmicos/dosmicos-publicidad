@@ -70,8 +70,8 @@ export function useAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
+  const fetchAll = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) setLoading(true);
     setError(null);
     try {
       // 1. Get org_id from the user's profile
@@ -224,7 +224,7 @@ export function useAdminDashboard() {
     } catch (err: any) {
       setError(err.message || 'Error al cargar datos');
     } finally {
-      setLoading(false);
+      if (!options?.silent) setLoading(false);
     }
   }, []);
 
@@ -239,7 +239,7 @@ export function useAdminDashboard() {
       p_org_id: orgId,
     });
     if (error) throw error;
-    await fetchAll();
+    await fetchAll({ silent: true });
   };
 
   // Register payout
@@ -257,7 +257,7 @@ export function useAdminDashboard() {
       p_org_id: orgId,
     });
     if (error) throw error;
-    await fetchAll();
+    await fetchAll({ silent: true });
   };
 
   // Update commission rate via SECURITY DEFINER RPC (bypasses RLS)
@@ -267,7 +267,7 @@ export function useAdminDashboard() {
       p_rate: rate,
     });
     if (error) throw error;
-    await fetchAll();
+    await fetchAll({ silent: true });
   };
 
   // Create discount link via edge function
@@ -284,7 +284,7 @@ export function useAdminDashboard() {
       },
     });
     if (error) throw error;
-    await fetchAll();
+    await fetchAll({ silent: true });
     return data;
   };
 
@@ -294,7 +294,7 @@ export function useAdminDashboard() {
       body: { discount_link_id: linkId },
     });
     if (error) throw error;
-    await fetchAll();
+    await fetchAll({ silent: true });
     return data;
   };
 
@@ -303,7 +303,7 @@ export function useAdminDashboard() {
       p_creator_id: creatorId,
     });
     if (error) throw error;
-    await fetchAll();
+    await fetchAll({ silent: true });
     const generated = Array.isArray(data) ? data[0] : data;
     return generated?.portal_url as string | undefined;
   };
@@ -313,7 +313,7 @@ export function useAdminDashboard() {
       p_creator_id: creatorId,
     });
     if (error) throw error;
-    await fetchAll();
+    await fetchAll({ silent: true });
   };
 
   const generateUploadToken = async (creatorId: string) => {
@@ -336,7 +336,7 @@ export function useAdminDashboard() {
       .select('token')
       .single();
     if (error) throw error;
-    await fetchAll();
+    await fetchAll({ silent: true });
     return data?.token ? `https://club.dosmicos.com/upload/${data.token}` : undefined;
   };
 
@@ -346,7 +346,7 @@ export function useAdminDashboard() {
       .update({ is_active: false })
       .eq('id', tokenId);
     if (error) throw error;
-    await fetchAll();
+    await fetchAll({ silent: true });
   };
 
   const addToolkitAssignment = async (creatorId: string, toolkitUrl: string, label = 'Idea de contenido') => {
@@ -363,7 +363,7 @@ export function useAdminDashboard() {
         is_active: true,
       });
     if (error) throw error;
-    await fetchAll();
+    await fetchAll({ silent: true });
   };
 
   const deactivateToolkitAssignment = async (toolkitId: string) => {
@@ -372,7 +372,7 @@ export function useAdminDashboard() {
       .update({ is_active: false })
       .eq('id', toolkitId);
     if (error) throw error;
-    await fetchAll();
+    await fetchAll({ silent: true });
   };
 
   return {
