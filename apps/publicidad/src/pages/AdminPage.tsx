@@ -274,7 +274,7 @@ export default function AdminPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid items-start gap-3 md:grid-cols-2">
+              <div className="space-y-2">
                 {filteredCreators.map((creator) => (
                   <AdminCreatorCard
                     key={creator.id}

@@ -173,191 +173,203 @@ export default function AdminCreatorCard({
 
   return (
     <>
-      <article className="flex h-full flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-3.5">
-        <header className="flex items-start gap-2.5">
-          <Avatar url={creator.avatar_url} name={creator.name} />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <h3 className="truncate text-sm font-semibold text-gray-950">{creator.name}</h3>
-                {creator.instagram_handle && (
-                  <p className="truncate text-xs text-gray-400">@{creator.instagram_handle}</p>
+      <article className="rounded-2xl border border-gray-200 bg-white p-2.5 shadow-sm transition hover:border-gray-300 sm:p-3">
+        <div className="grid gap-2 lg:grid-cols-[minmax(220px,0.7fr)_minmax(360px,1.25fr)_minmax(300px,1fr)] lg:items-start">
+          <header className="flex min-w-0 items-start gap-2 lg:pt-1">
+            <Avatar url={creator.avatar_url} name={creator.name} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="truncate text-sm font-semibold text-gray-950">{creator.name}</h3>
+                  {creator.instagram_handle && (
+                    <p className="truncate text-xs text-gray-400">@{creator.instagram_handle}</p>
+                  )}
+                </div>
+                {link && link.pending_balance > 0 && (
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                    {formatCOP(link.pending_balance)}
+                  </span>
                 )}
               </div>
-              {link && link.pending_balance > 0 && (
-                <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                  {formatCOP(link.pending_balance)}
-                </span>
-              )}
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                <StatusBadge active={!!link}>Descuento</StatusBadge>
+                <StatusBadge active={!!creator.portal_link}>Club</StatusBadge>
+                <StatusBadge active={!!creator.upload_token}>Upload</StatusBadge>
+                <StatusBadge active={(creator.toolkits?.length ?? 0) > 0}>{creator.toolkits?.length ?? 0} ideas</StatusBadge>
+              </div>
             </div>
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              <StatusBadge active={!!link}>Descuento</StatusBadge>
-              <StatusBadge active={!!creator.portal_link}>Club</StatusBadge>
-              <StatusBadge active={!!creator.upload_token}>Upload</StatusBadge>
-              <StatusBadge active={(creator.toolkits?.length ?? 0) > 0}>{creator.toolkits?.length ?? 0} ideas</StatusBadge>
-            </div>
-          </div>
-        </header>
+          </header>
 
-        {link ? (
-          <>
-            <section className="rounded-2xl border border-gray-200 bg-white p-2.5">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-900">
-                    <BadgePercent className="h-3.5 w-3.5 text-gray-500" /> Descuento clientes
-                  </p>
-                  <p className="text-[11px] text-gray-400">Para compradores</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleDeleteLink}
-                  disabled={deletingLink}
-                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-red-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-                  title="Eliminar link de descuento"
-                >
-                  {deletingLink ? '…' : <Trash2 className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-
-              <div className="flex min-w-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-2 py-1.5">
-                <Link2 className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-                <span className="min-w-0 flex-1 truncate text-[11px] text-gray-600">{shareUrl}</span>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white text-gray-500 transition hover:text-gray-900"
-                  title="Copiar link de descuento"
-                >
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-              {copyError && <p className="mt-1.5 text-[11px] text-red-500">{copyError}</p>}
-
-              <div className="mt-2 grid grid-cols-3 gap-1.5">
-                <Metric icon={<ShoppingBag className="h-3 w-3" />} label="Pedidos" value={link.total_orders} />
-                <Metric icon={<TrendingUp className="h-3 w-3" />} label="Comisión" value={formatCOP(link.total_commission)} />
-                <Metric icon={<Wallet className="h-3 w-3" />} label="Pendiente" value={formatCOP(link.pending_balance)} tone="green" />
-              </div>
-
-              <div className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-gray-50 px-2.5 py-1.5">
-                <p className="truncate text-[11px] text-gray-500">
-                  Desc. <span className="font-semibold text-gray-900">{link.discount_value}%</span> · Comisión
-                </p>
-                {editingRate ? (
-                  <div className="flex shrink-0 items-center gap-1">
-                    <input
-                      type="number"
-                      value={rateValue}
-                      onChange={(e) => setRateValue(e.target.value)}
-                      min="1"
-                      max="100"
-                      step="0.5"
-                      className="h-7 w-14 rounded-lg border border-gray-200 bg-white px-1.5 text-xs font-semibold text-gray-900 outline-none focus:border-gray-400"
-                      autoFocus
-                    />
+          <div className="min-w-0 space-y-2">
+            {link ? (
+              <>
+                <section className="rounded-xl border border-gray-200 bg-gray-50/70 p-2">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-900">
+                        <BadgePercent className="h-3.5 w-3.5 text-gray-500" /> Descuento clientes
+                      </p>
+                      <p className="text-[10px] text-gray-400">Para compradores</p>
+                    </div>
                     <button
                       type="button"
-                      onClick={handleSaveRate}
-                      disabled={savingRate}
-                      className="h-7 rounded-lg bg-gray-950 px-2 text-[11px] font-semibold text-white disabled:opacity-50"
+                      onClick={handleDeleteLink}
+                      disabled={deletingLink}
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-red-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                      title="Eliminar link de descuento"
                     >
-                      {savingRate ? '…' : 'OK'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setEditingRate(false); setRateValue(link.commission_rate.toString()); }}
-                      className="grid h-7 w-7 place-items-center rounded-lg text-gray-400 hover:text-gray-700"
-                    >
-                      <X className="h-3.5 w-3.5" />
+                      {deletingLink ? '…' : <Trash2 className="h-3.5 w-3.5" />}
                     </button>
                   </div>
-                ) : (
+
+                  <div className="flex min-w-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-1.5">
+                    <Link2 className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                    <span className="min-w-0 flex-1 truncate text-[11px] text-gray-600">{shareUrl}</span>
+                    <button
+                      type="button"
+                      onClick={handleCopy}
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gray-50 text-gray-500 transition hover:text-gray-900"
+                      title="Copiar link de descuento"
+                    >
+                      {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                  {copyError && <p className="mt-1.5 text-[11px] text-red-500">{copyError}</p>}
+
+                  <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+                    <Metric icon={<ShoppingBag className="h-3 w-3" />} label="Pedidos" value={link.total_orders} />
+                    <Metric icon={<TrendingUp className="h-3 w-3" />} label="Comisión" value={formatCOP(link.total_commission)} />
+                    <Metric icon={<Wallet className="h-3 w-3" />} label="Pendiente" value={formatCOP(link.pending_balance)} tone="green" />
+                  </div>
+
+                  <div className="mt-1.5 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center justify-between gap-2 rounded-lg bg-white px-2 py-1.5 sm:flex-1">
+                      <p className="truncate text-[11px] text-gray-500">
+                        Desc. <span className="font-semibold text-gray-900">{link.discount_value}%</span> · Comisión
+                      </p>
+                      {editingRate ? (
+                        <div className="flex shrink-0 items-center gap-1">
+                          <input
+                            type="number"
+                            value={rateValue}
+                            onChange={(e) => setRateValue(e.target.value)}
+                            min="1"
+                            max="100"
+                            step="0.5"
+                            className="h-7 w-14 rounded-lg border border-gray-200 bg-white px-1.5 text-xs font-semibold text-gray-900 outline-none focus:border-gray-400"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={handleSaveRate}
+                            disabled={savingRate}
+                            className="h-7 rounded-lg bg-gray-950 px-2 text-[11px] font-semibold text-white disabled:opacity-50"
+                          >
+                            {savingRate ? '…' : 'OK'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setEditingRate(false); setRateValue(link.commission_rate.toString()); }}
+                            className="grid h-7 w-7 place-items-center rounded-lg text-gray-400 hover:text-gray-700"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setEditingRate(true)}
+                          className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 text-[11px] font-semibold text-gray-800 hover:border-gray-300"
+                        >
+                          {link.commission_rate}%
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5 sm:w-56">
+                      <button
+                        type="button"
+                        onClick={() => setShowPayoutModal(true)}
+                        disabled={link.pending_balance <= 0}
+                        className="h-8 rounded-lg bg-gray-950 px-2 text-[11px] font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-white"
+                        title={link.pending_balance <= 0 ? 'Sin saldo pendiente' : 'Registrar pago'}
+                      >
+                        Pagar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowPayouts((v) => !v)}
+                        className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white px-2 text-[11px] font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
+                      >
+                        <History className="h-3.5 w-3.5" />
+                        {creatorPayouts.length > 0 ? `(${creatorPayouts.length})` : 'Hist.'}
+                        {showPayouts ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
+                {showPayouts && (
+                  <div className="overflow-hidden rounded-xl border border-gray-200">
+                    {creatorPayouts.length === 0 ? (
+                      <p className="py-2.5 text-center text-[11px] text-gray-400">Sin pagos registrados</p>
+                    ) : (
+                      creatorPayouts.map((p) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between gap-2 border-b border-gray-100 px-2.5 py-2 last:border-0"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-medium text-gray-700">
+                              {new Date(p.created_at).toLocaleDateString('es-CO', {
+                                day: 'numeric', month: 'short', year: 'numeric',
+                              })}
+                            </p>
+                            {p.notes && <p className="truncate text-[11px] text-gray-400">{p.notes}</p>}
+                          </div>
+                          <p className="shrink-0 text-[11px] font-semibold text-emerald-600">{formatCOP(p.amount)}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <section className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-2.5 text-center lg:text-left">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-900">Sin descuento clientes</p>
+                    <p className="mt-0.5 text-[11px] text-gray-500">Solo si venderá con link/código.</p>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setEditingRate(true)}
-                    className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 text-[11px] font-semibold text-gray-800 hover:border-gray-300"
+                    onClick={() => setShowCreateModal(true)}
+                    className="h-8 rounded-lg bg-gray-950 px-3 text-[11px] font-semibold text-white hover:bg-gray-800 sm:w-auto"
                   >
-                    {link.commission_rate}%
-                    <Pencil className="h-3 w-3" />
+                    Crear descuento
                   </button>
-                )}
-              </div>
-            </section>
-
-            <div className="grid grid-cols-2 gap-1.5">
-              <button
-                type="button"
-                onClick={() => setShowPayoutModal(true)}
-                disabled={link.pending_balance <= 0}
-                className="h-9 rounded-xl bg-gray-950 px-2 text-xs font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-white"
-                title={link.pending_balance <= 0 ? 'Sin saldo pendiente' : 'Registrar pago'}
-              >
-                Registrar pago
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowPayouts((v) => !v)}
-                className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-gray-200 bg-white px-2 text-xs font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
-              >
-                <History className="h-3.5 w-3.5" />
-                Historial {creatorPayouts.length > 0 ? `(${creatorPayouts.length})` : ''}
-                {showPayouts ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              </button>
-            </div>
-
-            {showPayouts && (
-              <div className="overflow-hidden rounded-xl border border-gray-200">
-                {creatorPayouts.length === 0 ? (
-                  <p className="py-2.5 text-center text-[11px] text-gray-400">Sin pagos registrados</p>
-                ) : (
-                  creatorPayouts.map((p) => (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between gap-2 border-b border-gray-100 px-2.5 py-2 last:border-0"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-medium text-gray-700">
-                          {new Date(p.created_at).toLocaleDateString('es-CO', {
-                            day: 'numeric', month: 'short', year: 'numeric',
-                          })}
-                        </p>
-                        {p.notes && <p className="truncate text-[11px] text-gray-400">{p.notes}</p>}
-                      </div>
-                      <p className="shrink-0 text-[11px] font-semibold text-emerald-600">{formatCOP(p.amount)}</p>
-                    </div>
-                  ))
-                )}
-              </div>
+                </div>
+              </section>
             )}
-          </>
-        ) : (
-          <section className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-3 text-center">
-            <p className="text-xs font-semibold text-gray-900">Sin descuento clientes</p>
-            <p className="mt-0.5 text-[11px] text-gray-500">Solo si venderá con link/código.</p>
-            <button
-              type="button"
-              onClick={() => setShowCreateModal(true)}
-              className="mt-2 h-9 w-full rounded-xl bg-gray-950 px-3 text-xs font-semibold text-white hover:bg-gray-800"
-            >
-              Crear descuento
-            </button>
-          </section>
-        )}
 
-        <AdminCreatorClubTools
-          creator={creator}
-          onGenerateClubLink={onGenerateClubLink}
-          onRevokeClubLink={onRevokeClubLink}
-          onGenerateUploadLink={onGenerateUploadLink}
-          onDeactivateUploadLink={onDeactivateUploadLink}
-          onAddToolkit={onAddToolkit}
-          onDeactivateToolkit={onDeactivateToolkit}
-        />
+            {actionError && (
+              <p className="rounded-xl border border-red-100 bg-red-50 px-2.5 py-2 text-[11px] text-red-600">{actionError}</p>
+            )}
+          </div>
 
-        {actionError && (
-          <p className="rounded-xl border border-red-100 bg-red-50 px-2.5 py-2 text-[11px] text-red-600">{actionError}</p>
-        )}
+          <div className="min-w-0">
+            <AdminCreatorClubTools
+              creator={creator}
+              onGenerateClubLink={onGenerateClubLink}
+              onRevokeClubLink={onRevokeClubLink}
+              onGenerateUploadLink={onGenerateUploadLink}
+              onDeactivateUploadLink={onDeactivateUploadLink}
+              onAddToolkit={onAddToolkit}
+              onDeactivateToolkit={onDeactivateToolkit}
+            />
+          </div>
+        </div>
       </article>
 
       {showPayoutModal && link && (
