@@ -109,7 +109,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-[#f7f8fb]">
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2">
             <img src="/logo-dosmicos.png" alt="Dosmicos" className="h-7 object-contain" />
             <span className="text-gray-400 text-xs font-medium">Admin</span>
@@ -134,50 +134,50 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
+      <main className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-5">
 
-        <section className="mb-5 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-          <div className="rounded-[32px] border border-gray-200 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] sm:p-6">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-gray-400">Panel UGC</p>
-            <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <section className="mb-4 grid gap-3 lg:grid-cols-[1.4fr_1fr]">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">Panel UGC</p>
+            <div className="mt-1.5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h1 className="text-2xl font-black tracking-tight text-gray-950 sm:text-3xl">Administrar creadoras</h1>
-                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-gray-500">
-                  Crea links de descuento para clientes y links Club/upload para las UGC sin confundirte.
+                <h1 className="text-xl font-semibold tracking-tight text-gray-950 sm:text-2xl">Administrar creadoras</h1>
+                <p className="mt-1 max-w-xl text-xs leading-relaxed text-gray-500 sm:text-sm">
+                  Links de clientes separados de links Club/upload para UGC.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowResetModal(true)}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
               >
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw className="h-3.5 w-3.5" />
                 Reiniciar ranking
               </button>
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            <div className="rounded-[24px] border border-gray-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-gray-400">
-                <RotateCcw className="h-4 w-4" />
-                <p className="text-xs font-bold uppercase tracking-wide">Ranking desde</p>
+          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+            <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+              <div className="flex items-center gap-1.5 text-gray-400">
+                <RotateCcw className="h-3.5 w-3.5" />
+                <p className="text-[10px] font-medium uppercase tracking-wide">Ranking desde</p>
               </div>
-              <p className="mt-2 text-lg font-black text-gray-950">{formattedStartDate}</p>
+              <p className="mt-1 text-sm font-semibold text-gray-950">{formattedStartDate}</p>
             </div>
             {!loading && (
               <>
-                <div className="rounded-[24px] border border-gray-200 bg-white p-4 shadow-sm">
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <Users className="h-4 w-4" />
-                    <p className="text-xs font-bold uppercase tracking-wide">Creadoras</p>
+                <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+                  <div className="flex items-center gap-1.5 text-gray-400">
+                    <Users className="h-3.5 w-3.5" />
+                    <p className="text-[10px] font-medium uppercase tracking-wide">Creadoras</p>
                   </div>
-                  <p className="mt-2 text-lg font-black text-gray-950">{creators.length}</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-950">{creators.length}</p>
                 </div>
-                <div className="rounded-[24px] border border-green-100 bg-green-50 p-4 shadow-sm">
-                  <p className="text-xs font-bold uppercase tracking-wide text-green-600">Pendiente por pagar</p>
-                  <p className="mt-2 text-lg font-black text-green-800">{formatCOP(totalPendingBalance)}</p>
-                  <p className="text-xs font-medium text-green-600">{creatorsWithBalance} creadora{creatorsWithBalance === 1 ? '' : 's'}</p>
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 shadow-sm">
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-emerald-600">Pendiente</p>
+                  <p className="mt-1 text-sm font-semibold text-emerald-800">{formatCOP(totalPendingBalance)}</p>
+                  <p className="text-[11px] text-emerald-600">{creatorsWithBalance} creadora{creatorsWithBalance === 1 ? '' : 's'}</p>
                 </div>
               </>
             )}
@@ -185,7 +185,7 @@ export default function AdminPage() {
         </section>
 
         {/* Tabs */}
-        <div className="mb-5 grid grid-cols-3 rounded-3xl border border-gray-200 bg-white p-1 shadow-sm">
+        <div className="mb-4 grid grid-cols-3 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
           {([
             { id: 'creators', icon: Users, label: 'Creadoras' },
             { id: 'ranking', icon: Trophy, label: 'Ranking' },
@@ -195,13 +195,13 @@ export default function AdminPage() {
               key={id}
               type="button"
               onClick={() => setTab(id)}
-              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-2xl text-sm font-black transition-colors ${
+              className={`flex h-9 items-center justify-center gap-1.5 rounded-xl text-xs font-semibold transition-colors ${
                 tab === id
                   ? 'bg-gray-950 text-white shadow-sm'
                   : 'text-gray-400 hover:bg-gray-50 hover:text-gray-700'
               }`}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-3.5 w-3.5" />
               {label}
             </button>
           ))}
@@ -209,10 +209,10 @@ export default function AdminPage() {
 
         {/* ── Tab: Creadoras ── */}
         {tab === 'creators' && (
-          <section className="space-y-4">
-            <div className="rounded-[28px] border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
+          <section className="space-y-3">
+            <div className="rounded-2xl border border-gray-200 bg-white p-2.5 shadow-sm sm:p-3">
               <div className="grid gap-3 lg:grid-cols-[minmax(280px,1fr)_auto] lg:items-center">
-                <div className="flex min-h-12 items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+                <div className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
                   <Search className="h-4 w-4 shrink-0 text-gray-400" />
                   <input
                     type="text"
@@ -235,7 +235,7 @@ export default function AdminPage() {
                       key={id}
                       type="button"
                       onClick={() => setFilter(id)}
-                      className={`min-h-10 shrink-0 rounded-2xl border px-3 py-2 text-xs font-black transition-all ${
+                      className={`h-8 shrink-0 rounded-xl border px-2.5 text-[11px] font-medium transition-all ${
                         filter === id
                           ? 'border-gray-950 bg-gray-950 text-white shadow-sm'
                           : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-900'
@@ -274,7 +274,7 @@ export default function AdminPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid items-start gap-3 md:grid-cols-2">
                 {filteredCreators.map((creator) => (
                   <AdminCreatorCard
                     key={creator.id}

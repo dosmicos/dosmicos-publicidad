@@ -24,6 +24,7 @@ const formatCOP = (n: number) =>
     style: 'currency',
     currency: 'COP',
     minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(n);
 
 const copyToClipboard = async (value: string) => {
@@ -50,10 +51,10 @@ const copyToClipboard = async (value: string) => {
 
 function Avatar({ url, name }: { url: string | null; name: string }) {
   if (url) {
-    return <img src={url} alt={name} className="h-12 w-12 rounded-2xl border border-gray-100 object-cover shadow-sm" />;
+    return <img src={url} alt={name} className="h-10 w-10 rounded-xl border border-gray-100 object-cover" />;
   }
   return (
-    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 text-base font-black text-gray-600 shadow-sm">
+    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-sm font-semibold text-gray-600">
       {name?.[0]?.toUpperCase() ?? '?'}
     </div>
   );
@@ -61,21 +62,21 @@ function Avatar({ url, name }: { url: string | null; name: string }) {
 
 function StatusBadge({ active, children }: { active: boolean; children: ReactNode }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-green-500' : 'bg-gray-300'}`} />
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-emerald-500' : 'bg-gray-300'}`} />
       {children}
     </span>
   );
 }
 
-function MetricCard({ icon, label, value, tone = 'gray' }: { icon: ReactNode; label: string; value: string | number; tone?: 'gray' | 'green' }) {
+function Metric({ icon, label, value, tone = 'gray' }: { icon: ReactNode; label: string; value: string | number; tone?: 'gray' | 'green' }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
-      <div className="mb-1 flex items-center gap-1.5 text-gray-400">
+    <div className="min-w-0 rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-2">
+      <div className="mb-0.5 flex items-center gap-1 text-gray-400">
         {icon}
-        <p className="text-[11px] font-bold uppercase tracking-wide">{label}</p>
+        <p className="truncate text-[9px] font-medium uppercase tracking-wide">{label}</p>
       </div>
-      <p className={`truncate text-sm font-black ${tone === 'green' ? 'text-green-700' : 'text-gray-950'}`}>{value}</p>
+      <p className={`truncate text-xs font-semibold ${tone === 'green' ? 'text-emerald-700' : 'text-gray-900'}`}>{value}</p>
     </div>
   );
 }
@@ -131,7 +132,7 @@ export default function AdminCreatorCard({
     const ok = await copyToClipboard(shareUrl);
     if (ok) {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 1800);
     } else {
       setCopyError('No pude copiar automáticamente. Selecciona el link y cópialo manualmente.');
     }
@@ -172,24 +173,24 @@ export default function AdminCreatorCard({
 
   return (
     <>
-      <article className="flex h-full flex-col gap-4 rounded-[30px] border border-gray-200 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)] sm:p-5">
-        <header className="flex items-start gap-3">
+      <article className="flex h-full flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-3.5">
+        <header className="flex items-start gap-2.5">
           <Avatar url={creator.avatar_url} name={creator.name} />
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <h3 className="truncate text-base font-black tracking-tight text-gray-950">{creator.name}</h3>
+                <h3 className="truncate text-sm font-semibold text-gray-950">{creator.name}</h3>
                 {creator.instagram_handle && (
-                  <p className="truncate text-sm font-medium text-gray-400">@{creator.instagram_handle}</p>
+                  <p className="truncate text-xs text-gray-400">@{creator.instagram_handle}</p>
                 )}
               </div>
               {link && link.pending_balance > 0 && (
-                <div className="shrink-0 rounded-2xl border border-green-100 bg-green-50 px-2.5 py-1 text-xs font-black text-green-700">
+                <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                   {formatCOP(link.pending_balance)}
-                </div>
+                </span>
               )}
             </div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="mt-1.5 flex flex-wrap gap-1">
               <StatusBadge active={!!link}>Descuento</StatusBadge>
               <StatusBadge active={!!creator.portal_link}>Club</StatusBadge>
               <StatusBadge active={!!creator.upload_token}>Upload</StatusBadge>
@@ -200,54 +201,51 @@ export default function AdminCreatorCard({
 
         {link ? (
           <>
-            <section className="rounded-[24px] border border-gray-200 bg-white p-3.5">
-              <div className="mb-2 flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="grid h-9 w-9 place-items-center rounded-2xl bg-gray-100 text-gray-700">
-                    <BadgePercent className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-black text-gray-950">Link descuento clientes</p>
-                    <p className="text-xs text-gray-500">Este sí va para compradores.</p>
-                  </div>
+            <section className="rounded-2xl border border-gray-200 bg-white p-2.5">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-900">
+                    <BadgePercent className="h-3.5 w-3.5 text-gray-500" /> Descuento clientes
+                  </p>
+                  <p className="text-[11px] text-gray-400">Para compradores</p>
                 </div>
                 <button
                   type="button"
                   onClick={handleDeleteLink}
                   disabled={deletingLink}
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl text-red-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-red-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                   title="Eliminar link de descuento"
                 >
-                  {deletingLink ? '…' : <Trash2 className="h-4 w-4" />}
+                  {deletingLink ? '…' : <Trash2 className="h-3.5 w-3.5" />}
                 </button>
               </div>
 
-              <div className="flex min-w-0 items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2.5">
-                <Link2 className="h-4 w-4 shrink-0 text-gray-400" />
-                <span className="min-w-0 flex-1 truncate text-xs font-medium text-gray-700">{shareUrl}</span>
+              <div className="flex min-w-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-2 py-1.5">
+                <Link2 className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                <span className="min-w-0 flex-1 truncate text-[11px] text-gray-600">{shareUrl}</span>
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white text-gray-500 shadow-sm transition hover:text-gray-900"
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white text-gray-500 transition hover:text-gray-900"
                   title="Copiar link de descuento"
                 >
-                  {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
               </div>
-              {copyError && <p className="mt-2 text-xs text-red-500">{copyError}</p>}
+              {copyError && <p className="mt-1.5 text-[11px] text-red-500">{copyError}</p>}
 
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <MetricCard icon={<ShoppingBag className="h-3.5 w-3.5" />} label="Pedidos" value={link.total_orders} />
-                <MetricCard icon={<TrendingUp className="h-3.5 w-3.5" />} label="Comisión" value={formatCOP(link.total_commission)} />
-                <MetricCard icon={<Wallet className="h-3.5 w-3.5" />} label="Pendiente" value={formatCOP(link.pending_balance)} tone="green" />
+              <div className="mt-2 grid grid-cols-3 gap-1.5">
+                <Metric icon={<ShoppingBag className="h-3 w-3" />} label="Pedidos" value={link.total_orders} />
+                <Metric icon={<TrendingUp className="h-3 w-3" />} label="Comisión" value={formatCOP(link.total_commission)} />
+                <Metric icon={<Wallet className="h-3 w-3" />} label="Pendiente" value={formatCOP(link.pending_balance)} tone="green" />
               </div>
 
-              <div className="mt-3 flex flex-col gap-2 rounded-2xl bg-gray-50 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs font-medium text-gray-500">
-                  Descuento <span className="font-black text-gray-900">{link.discount_value}%</span> · Comisión
+              <div className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-gray-50 px-2.5 py-1.5">
+                <p className="truncate text-[11px] text-gray-500">
+                  Desc. <span className="font-semibold text-gray-900">{link.discount_value}%</span> · Comisión
                 </p>
                 {editingRate ? (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex shrink-0 items-center gap-1">
                     <input
                       type="number"
                       value={rateValue}
@@ -255,45 +253,44 @@ export default function AdminCreatorCard({
                       min="1"
                       max="100"
                       step="0.5"
-                      className="h-9 w-16 rounded-xl border border-gray-200 bg-white px-2 text-sm font-bold text-gray-900 outline-none focus:border-gray-400"
+                      className="h-7 w-14 rounded-lg border border-gray-200 bg-white px-1.5 text-xs font-semibold text-gray-900 outline-none focus:border-gray-400"
                       autoFocus
                     />
-                    <span className="text-xs text-gray-400">%</span>
                     <button
                       type="button"
                       onClick={handleSaveRate}
                       disabled={savingRate}
-                      className="h-9 rounded-xl bg-gray-950 px-3 text-xs font-bold text-white disabled:opacity-50"
+                      className="h-7 rounded-lg bg-gray-950 px-2 text-[11px] font-semibold text-white disabled:opacity-50"
                     >
-                      {savingRate ? '…' : 'Guardar'}
+                      {savingRate ? '…' : 'OK'}
                     </button>
                     <button
                       type="button"
                       onClick={() => { setEditingRate(false); setRateValue(link.commission_rate.toString()); }}
-                      className="grid h-9 w-9 place-items-center rounded-xl text-gray-400 hover:text-gray-700"
+                      className="grid h-7 w-7 place-items-center rounded-lg text-gray-400 hover:text-gray-700"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setEditingRate(true)}
-                    className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-xs font-black text-gray-800 transition hover:border-gray-300"
+                    className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 text-[11px] font-semibold text-gray-800 hover:border-gray-300"
                   >
                     {link.commission_rate}%
-                    <Pencil className="h-3.5 w-3.5" />
+                    <Pencil className="h-3 w-3" />
                   </button>
                 )}
               </div>
             </section>
 
-            <section className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+            <div className="grid grid-cols-2 gap-1.5">
               <button
                 type="button"
                 onClick={() => setShowPayoutModal(true)}
                 disabled={link.pending_balance <= 0}
-                className="min-h-11 rounded-2xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-30"
+                className="h-9 rounded-xl bg-gray-950 px-2 text-xs font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-white"
                 title={link.pending_balance <= 0 ? 'Sin saldo pendiente' : 'Registrar pago'}
               >
                 Registrar pago
@@ -301,33 +298,33 @@ export default function AdminCreatorCard({
               <button
                 type="button"
                 onClick={() => setShowPayouts((v) => !v)}
-                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-600 transition hover:border-gray-300 hover:text-gray-900"
+                className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-gray-200 bg-white px-2 text-xs font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
               >
-                <History className="h-4 w-4" />
+                <History className="h-3.5 w-3.5" />
                 Historial {creatorPayouts.length > 0 ? `(${creatorPayouts.length})` : ''}
-                {showPayouts ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                {showPayouts ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
               </button>
-            </section>
+            </div>
 
             {showPayouts && (
-              <div className="overflow-hidden rounded-2xl border border-gray-200">
+              <div className="overflow-hidden rounded-xl border border-gray-200">
                 {creatorPayouts.length === 0 ? (
-                  <p className="py-3 text-center text-xs text-gray-400">Sin pagos registrados</p>
+                  <p className="py-2.5 text-center text-[11px] text-gray-400">Sin pagos registrados</p>
                 ) : (
                   creatorPayouts.map((p) => (
                     <div
                       key={p.id}
-                      className="flex items-center justify-between gap-3 border-b border-gray-100 px-3 py-2.5 last:border-0"
+                      className="flex items-center justify-between gap-2 border-b border-gray-100 px-2.5 py-2 last:border-0"
                     >
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-gray-700">
+                        <p className="text-[11px] font-medium text-gray-700">
                           {new Date(p.created_at).toLocaleDateString('es-CO', {
                             day: 'numeric', month: 'short', year: 'numeric',
                           })}
                         </p>
-                        {p.notes && <p className="truncate text-xs text-gray-400">{p.notes}</p>}
+                        {p.notes && <p className="truncate text-[11px] text-gray-400">{p.notes}</p>}
                       </div>
-                      <p className="shrink-0 text-xs font-black text-green-600">{formatCOP(p.amount)}</p>
+                      <p className="shrink-0 text-[11px] font-semibold text-emerald-600">{formatCOP(p.amount)}</p>
                     </div>
                   ))
                 )}
@@ -335,16 +332,15 @@ export default function AdminCreatorCard({
             )}
           </>
         ) : (
-          <section className="rounded-[24px] border border-dashed border-gray-300 bg-gray-50 p-4 text-center">
-            <BadgePercent className="mx-auto mb-2 h-6 w-6 text-gray-400" />
-            <p className="text-sm font-black text-gray-950">No tiene link de descuento</p>
-            <p className="mt-1 text-xs text-gray-500">Créalo solo si esta creadora va a vender con código/link para clientes.</p>
+          <section className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-3 text-center">
+            <p className="text-xs font-semibold text-gray-900">Sin descuento clientes</p>
+            <p className="mt-0.5 text-[11px] text-gray-500">Solo si venderá con link/código.</p>
             <button
               type="button"
               onClick={() => setShowCreateModal(true)}
-              className="mt-3 min-h-11 w-full rounded-2xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white transition hover:bg-gray-800"
+              className="mt-2 h-9 w-full rounded-xl bg-gray-950 px-3 text-xs font-semibold text-white hover:bg-gray-800"
             >
-              Crear link descuento clientes
+              Crear descuento
             </button>
           </section>
         )}
@@ -360,7 +356,7 @@ export default function AdminCreatorCard({
         />
 
         {actionError && (
-          <p className="rounded-2xl border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600">{actionError}</p>
+          <p className="rounded-xl border border-red-100 bg-red-50 px-2.5 py-2 text-[11px] text-red-600">{actionError}</p>
         )}
       </article>
 
