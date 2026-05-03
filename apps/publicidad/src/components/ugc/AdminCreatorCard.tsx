@@ -50,12 +50,42 @@ const copyToClipboard = async (value: string) => {
 };
 
 function Avatar({ url, name }: { url: string | null; name: string }) {
-  if (url) {
-    return <img src={url} alt={name} className="h-10 w-10 rounded-xl border border-gray-100 object-cover" />;
+  const [imageFailed, setImageFailed] = useState(false);
+  const cleanName = name?.trim() || '?';
+  const initials = cleanName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || '?';
+  const palette = [
+    'from-slate-900 to-slate-600 text-white',
+    'from-indigo-500 to-violet-500 text-white',
+    'from-emerald-500 to-teal-500 text-white',
+    'from-rose-500 to-orange-400 text-white',
+    'from-amber-400 to-yellow-300 text-amber-950',
+    'from-sky-500 to-cyan-400 text-white',
+  ];
+  const color = palette[cleanName.charCodeAt(0) % palette.length];
+
+  if (url && !imageFailed) {
+    return (
+      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-white bg-gray-100 shadow-sm ring-1 ring-gray-200">
+        <img
+          src={url}
+          alt={cleanName}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={() => setImageFailed(true)}
+        />
+      </div>
+    );
   }
+
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-sm font-semibold text-gray-600">
-      {name?.[0]?.toUpperCase() ?? '?'}
+    <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${color} text-sm font-semibold tracking-tight shadow-sm ring-1 ring-gray-200`}>
+      {initials}
     </div>
   );
 }
