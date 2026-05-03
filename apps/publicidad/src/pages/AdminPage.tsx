@@ -26,7 +26,7 @@ const formatCOP = (n: number) =>
   }).format(n);
 
 type Tab = 'creators' | 'ranking' | 'payouts';
-type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link';
+type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link' | 'no_club' | 'no_upload';
 
 export default function AdminPage() {
   const { signOut } = useAuth();
@@ -85,6 +85,8 @@ export default function AdminPage() {
     if (filter === 'with_balance') return (c.discount_link?.pending_balance ?? 0) > 0;
     if (filter === 'with_link') return !!c.discount_link;
     if (filter === 'no_link') return !c.discount_link;
+    if (filter === 'no_club') return !c.portal_link;
+    if (filter === 'no_upload') return !c.upload_token;
     return true;
   });
 
@@ -104,10 +106,10 @@ export default function AdminPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#f7f8fb]">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-white border-b border-gray-100">
-        <div className="max-w-lg mx-auto px-5 h-14 flex items-center justify-between">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
             <img src="/logo-dosmicos.png" alt="Dosmicos" className="h-7 object-contain" />
             <span className="text-gray-400 text-xs font-medium">Admin</span>
@@ -132,47 +134,58 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-5 py-6 space-y-5">
+      <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
 
-        {/* Período de ranking */}
-        <div className="rounded-2xl border border-gray-100 p-4">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
-                <RotateCcw className="w-4 h-4 text-gray-500" />
-              </div>
+        <section className="mb-5 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+          <div className="rounded-[32px] border border-gray-200 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] sm:p-6">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-gray-400">Panel UGC</p>
+            <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-gray-900 font-semibold text-sm">Período de Ranking</p>
-                <p className="text-gray-400 text-xs">Desde: {formattedStartDate}</p>
+                <h1 className="text-2xl font-black tracking-tight text-gray-950 sm:text-3xl">Administrar creadoras</h1>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-gray-500">
+                  Crea links de descuento para clientes y links Club/upload para las UGC sin confundirte.
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowResetModal(true)}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reiniciar ranking
+              </button>
             </div>
-            <button
-              onClick={() => setShowResetModal(true)}
-              className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-700 border border-gray-200 hover:border-gray-300 transition-colors"
-            >
-              Reiniciar
-            </button>
           </div>
-        </div>
 
-        {/* Summary chips */}
-        {!loading && (
-          <div className="flex gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 bg-gray-50 border border-gray-100 text-xs text-gray-500">
-              <Users className="w-3.5 h-3.5" />
-              {creators.length} creadoras
-            </div>
-            {creatorsWithBalance > 0 && (
-              <div className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 bg-green-50 border border-green-100 text-xs">
-                <span className="text-green-700 font-semibold">{formatCOP(totalPendingBalance)}</span>
-                <span className="text-green-500">pendiente · {creatorsWithBalance} creadoras</span>
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            <div className="rounded-[24px] border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-gray-400">
+                <RotateCcw className="h-4 w-4" />
+                <p className="text-xs font-bold uppercase tracking-wide">Ranking desde</p>
               </div>
+              <p className="mt-2 text-lg font-black text-gray-950">{formattedStartDate}</p>
+            </div>
+            {!loading && (
+              <>
+                <div className="rounded-[24px] border border-gray-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center gap-2 text-gray-400">
+                    <Users className="h-4 w-4" />
+                    <p className="text-xs font-bold uppercase tracking-wide">Creadoras</p>
+                  </div>
+                  <p className="mt-2 text-lg font-black text-gray-950">{creators.length}</p>
+                </div>
+                <div className="rounded-[24px] border border-green-100 bg-green-50 p-4 shadow-sm">
+                  <p className="text-xs font-bold uppercase tracking-wide text-green-600">Pendiente por pagar</p>
+                  <p className="mt-2 text-lg font-black text-green-800">{formatCOP(totalPendingBalance)}</p>
+                  <p className="text-xs font-medium text-green-600">{creatorsWithBalance} creadora{creatorsWithBalance === 1 ? '' : 's'}</p>
+                </div>
+              </>
             )}
           </div>
-        )}
+        </section>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-100">
+        <div className="mb-5 grid grid-cols-3 rounded-3xl border border-gray-200 bg-white p-1 shadow-sm">
           {([
             { id: 'creators', icon: Users, label: 'Creadoras' },
             { id: 'ranking', icon: Trophy, label: 'Ranking' },
@@ -180,14 +193,15 @@ export default function AdminPage() {
           ] as const).map(({ id, icon: Icon, label }) => (
             <button
               key={id}
+              type="button"
               onClick={() => setTab(id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
+              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-2xl text-sm font-black transition-colors ${
                 tab === id
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
+                  ? 'bg-gray-950 text-white shadow-sm'
+                  : 'text-gray-400 hover:bg-gray-50 hover:text-gray-700'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="h-4 w-4" />
               {label}
             </button>
           ))}
@@ -195,36 +209,46 @@ export default function AdminPage() {
 
         {/* ── Tab: Creadoras ── */}
         {tab === 'creators' && (
-          <section className="space-y-3">
-            <div className="flex items-center gap-2 rounded-xl border border-gray-200 px-3 py-2.5">
-              <Search className="w-4 h-4 text-gray-400 shrink-0" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nombre o @handle..."
-                className="flex-1 bg-transparent text-gray-900 text-sm placeholder-gray-400 outline-none"
-              />
-            </div>
-            <div className="flex gap-2">
-              {([
-                { id: 'all', label: 'Todas' },
-                { id: 'with_link', label: 'Con link' },
-                { id: 'with_balance', label: 'Con saldo' },
-                { id: 'no_link', label: 'Sin link' },
-              ] as const).map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => setFilter(id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                    filter === id
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+          <section className="space-y-4">
+            <div className="rounded-[28px] border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
+              <div className="grid gap-3 lg:grid-cols-[minmax(280px,1fr)_auto] lg:items-center">
+                <div className="flex min-h-12 items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+                  <Search className="h-4 w-4 shrink-0 text-gray-400" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar por nombre o @handle..."
+                    className="min-w-0 flex-1 bg-transparent text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400"
+                  />
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:justify-end lg:overflow-visible lg:pb-0">
+                  {([
+                    { id: 'all', label: 'Todas' },
+                    { id: 'with_link', label: 'Con descuento' },
+                    { id: 'with_balance', label: 'Con saldo' },
+                    { id: 'no_link', label: 'Sin descuento' },
+                    { id: 'no_club', label: 'Sin Club' },
+                    { id: 'no_upload', label: 'Sin upload' },
+                  ] as const).map(({ id, label }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setFilter(id)}
+                      className={`min-h-10 shrink-0 rounded-2xl border px-3 py-2 text-xs font-black transition-all ${
+                        filter === id
+                          ? 'border-gray-950 bg-gray-950 text-white shadow-sm'
+                          : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-900'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="mt-3 text-xs font-medium text-gray-400">
+                Mostrando {filteredCreators.length} de {creators.length} creadora{creators.length === 1 ? '' : 's'}.
+              </p>
             </div>
 
             {loading ? (
@@ -250,7 +274,7 @@ export default function AdminPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {filteredCreators.map((creator) => (
                   <AdminCreatorCard
                     key={creator.id}
