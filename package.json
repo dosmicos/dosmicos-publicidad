@@ -1,0 +1,14 @@
+{
+  "name": "dosmicos-ugc",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev:publicidad": "npm --prefix apps/publicidad run dev",
+    "build:publicidad": "npm --prefix apps/publicidad run build",
+    "lint:publicidad": "npm --prefix apps/publicidad run lint",
+    "dev:upload": "npm --prefix apps/upload-portal run dev",
+    "build:upload": "npm --prefix apps/upload-portal run build",
+    "build": "npm run build:publicidad && npm run build:upload"
+  }
+}
