@@ -16,6 +16,7 @@ import {
 import type { CreatorWithLink, PayoutRecord } from '@/hooks/useAdminDashboard';
 import PayoutModal from './PayoutModal';
 import CreateLinkModal from './CreateLinkModal';
+import AdminCreatorClubTools from './AdminCreatorClubTools';
 
 const formatCOP = (n: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -42,6 +43,12 @@ interface AdminCreatorCardProps {
   onCreateLink: (creatorId: string, discountValue: number, commissionRate: number) => Promise<void>;
   onDeleteLink: (linkId: string) => Promise<void>;
   onUpdateCommission: (linkId: string, rate: number) => Promise<void>;
+  onGenerateClubLink: (creatorId: string) => Promise<string | undefined>;
+  onRevokeClubLink: (creatorId: string) => Promise<void>;
+  onGenerateUploadLink: (creatorId: string) => Promise<string | undefined>;
+  onDeactivateUploadLink: (tokenId: string) => Promise<void>;
+  onAddToolkit: (creatorId: string, toolkitUrl: string, label?: string) => Promise<void>;
+  onDeactivateToolkit: (toolkitId: string) => Promise<void>;
 }
 
 export default function AdminCreatorCard({
@@ -51,6 +58,12 @@ export default function AdminCreatorCard({
   onCreateLink,
   onDeleteLink,
   onUpdateCommission,
+  onGenerateClubLink,
+  onRevokeClubLink,
+  onGenerateUploadLink,
+  onDeactivateUploadLink,
+  onAddToolkit,
+  onDeactivateToolkit,
 }: AdminCreatorCardProps) {
   const [copied, setCopied] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
@@ -264,6 +277,16 @@ export default function AdminCreatorCard({
             Crear Link de Descuento
           </button>
         )}
+
+        <AdminCreatorClubTools
+          creator={creator}
+          onGenerateClubLink={onGenerateClubLink}
+          onRevokeClubLink={onRevokeClubLink}
+          onGenerateUploadLink={onGenerateUploadLink}
+          onDeactivateUploadLink={onDeactivateUploadLink}
+          onAddToolkit={onAddToolkit}
+          onDeactivateToolkit={onDeactivateToolkit}
+        />
 
         {actionError && (
           <p className="text-red-500 text-xs">{actionError}</p>

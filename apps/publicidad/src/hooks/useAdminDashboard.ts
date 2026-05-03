@@ -15,12 +15,42 @@ export interface DiscountLink {
   shopify_price_rule_id: string | null;
 }
 
+export interface CreatorPortalLinkMeta {
+  id: string;
+  token_last4: string;
+  is_active: boolean;
+  created_at: string;
+  last_accessed_at: string | null;
+}
+
+export interface CreatorUploadTokenMeta {
+  id: string;
+  token: string;
+  is_active: boolean;
+  expires_at: string | null;
+  upload_count: number | null;
+  max_uploads: number | null;
+  created_at: string | null;
+}
+
+export interface CreatorToolkitAssignment {
+  id: string;
+  label: string;
+  toolkit_url: string;
+  is_active: boolean;
+  campaign_id: string | null;
+  created_at: string;
+}
+
 export interface CreatorWithLink {
   id: string;
   name: string;
   instagram_handle: string;
   avatar_url: string | null;
   discount_link: DiscountLink | null;
+  portal_link?: CreatorPortalLinkMeta | null;
+  upload_token?: CreatorUploadTokenMeta | null;
+  toolkits?: CreatorToolkitAssignment[];
 }
 
 export interface PayoutRecord {
@@ -110,12 +140,80 @@ export function useAdminDashboard() {
                 ),
               }
             : null,
+          portal_link: null,
+          upload_token: null,
+          toolkits: [],
         };
       });
 
+      const creatorIds = mapped.map((creator) => creator.id);
+
+      // 4. Fetch optional Club portal data defensively. If the migration is not
+      // applied yet, admin still loads and discount links keep working.
+      if (creatorIds.length > 0) {
+        try {
+          const { data: portalLinks } = await (supabase as any)
+            .from('ugc_creator_portal_links')
+            .select('id, creator_id, token_last4, is_active, created_at, last_accessed_at')
+            .eq('organization_id', currentOrgId)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false });
+
+          const byCreator = new Map<string, CreatorPortalLinkMeta>();
+          (portalLinks || []).forEach((link: any) => {
+            if (!byCreator.has(link.creator_id)) byCreator.set(link.creator_id, link);
+          });
+          mapped.forEach((creator) => {
+            creator.portal_link = byCreator.get(creator.id) ?? null;
+          });
+        } catch {
+          // Club migration not available yet; keep admin backwards compatible.
+        }
+
+        try {
+          const { data: uploadTokens } = await (supabase as any)
+            .from('ugc_upload_tokens')
+            .select('id, creator_id, token, is_active, expires_at, upload_count, max_uploads, created_at')
+            .eq('organization_id', currentOrgId)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false });
+
+          const byCreator = new Map<string, CreatorUploadTokenMeta>();
+          (uploadTokens || []).forEach((token: any) => {
+            if (!byCreator.has(token.creator_id)) byCreator.set(token.creator_id, token);
+          });
+          mapped.forEach((creator) => {
+            creator.upload_token = byCreator.get(creator.id) ?? null;
+          });
+        } catch {
+          // Upload tokens table may be unavailable in older environments.
+        }
+
+        try {
+          const { data: toolkitRows } = await (supabase as any)
+            .from('ugc_toolkit_assignments')
+            .select('id, creator_id, label, toolkit_url, is_active, campaign_id, created_at')
+            .eq('organization_id', currentOrgId)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false });
+
+          const byCreator = new Map<string, CreatorToolkitAssignment[]>();
+          (toolkitRows || []).forEach((toolkit: any) => {
+            const current = byCreator.get(toolkit.creator_id) || [];
+            current.push(toolkit);
+            byCreator.set(toolkit.creator_id, current);
+          });
+          mapped.forEach((creator) => {
+            creator.toolkits = byCreator.get(creator.id) || [];
+          });
+        } catch {
+          // Toolkit migration not available yet; preserve current admin.
+        }
+      }
+
       setCreators(mapped);
 
-      // 4. Fetch all payouts for the org
+      // 5. Fetch all payouts for the org
       const { data: payoutsData } = await (supabase as any)
         .from('ugc_commission_payouts')
         .select('id, creator_id, amount, payout_type, notes, created_at')
@@ -200,6 +298,83 @@ export function useAdminDashboard() {
     return data;
   };
 
+  const generateClubPortalLink = async (creatorId: string) => {
+    const { data, error } = await (supabase as any).rpc('generate_ugc_creator_portal_link', {
+      p_creator_id: creatorId,
+    });
+    if (error) throw error;
+    await fetchAll();
+    const generated = Array.isArray(data) ? data[0] : data;
+    return generated?.portal_url as string | undefined;
+  };
+
+  const revokeClubPortalLink = async (creatorId: string) => {
+    const { error } = await (supabase as any).rpc('revoke_ugc_creator_portal_link', {
+      p_creator_id: creatorId,
+    });
+    if (error) throw error;
+    await fetchAll();
+  };
+
+  const generateUploadToken = async (creatorId: string) => {
+    if (!orgId) throw new Error('Org no disponible');
+    await (supabase as any)
+      .from('ugc_upload_tokens')
+      .update({ is_active: false })
+      .eq('creator_id', creatorId)
+      .eq('is_active', true);
+
+    const { data, error } = await (supabase as any)
+      .from('ugc_upload_tokens')
+      .insert({
+        organization_id: orgId,
+        creator_id: creatorId,
+        is_active: true,
+        expires_at: null,
+        max_uploads: null,
+      })
+      .select('token')
+      .single();
+    if (error) throw error;
+    await fetchAll();
+    return data?.token ? `https://club.dosmicos.com/upload/${data.token}` : undefined;
+  };
+
+  const deactivateUploadToken = async (tokenId: string) => {
+    const { error } = await (supabase as any)
+      .from('ugc_upload_tokens')
+      .update({ is_active: false })
+      .eq('id', tokenId);
+    if (error) throw error;
+    await fetchAll();
+  };
+
+  const addToolkitAssignment = async (creatorId: string, toolkitUrl: string, label = 'Idea de contenido') => {
+    if (!orgId) throw new Error('Org no disponible');
+    const url = toolkitUrl.trim();
+    if (!url.startsWith('https://')) throw new Error('El link del toolkit debe empezar por https://');
+    const { error } = await (supabase as any)
+      .from('ugc_toolkit_assignments')
+      .insert({
+        organization_id: orgId,
+        creator_id: creatorId,
+        label: label.trim() || 'Idea de contenido',
+        toolkit_url: url,
+        is_active: true,
+      });
+    if (error) throw error;
+    await fetchAll();
+  };
+
+  const deactivateToolkitAssignment = async (toolkitId: string) => {
+    const { error } = await (supabase as any)
+      .from('ugc_toolkit_assignments')
+      .update({ is_active: false })
+      .eq('id', toolkitId);
+    if (error) throw error;
+    await fetchAll();
+  };
+
   return {
     creators,
     payouts,
@@ -213,5 +388,11 @@ export function useAdminDashboard() {
     updateCommissionRate,
     createDiscountLink,
     deleteDiscountLink,
+    generateClubPortalLink,
+    revokeClubPortalLink,
+    generateUploadToken,
+    deactivateUploadToken,
+    addToolkitAssignment,
+    deactivateToolkitAssignment,
   };
 }

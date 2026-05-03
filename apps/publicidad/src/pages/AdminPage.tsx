@@ -43,6 +43,12 @@ export default function AdminPage() {
     createDiscountLink,
     deleteDiscountLink,
     updateCommissionRate,
+    generateClubPortalLink,
+    revokeClubPortalLink,
+    generateUploadToken,
+    deactivateUploadToken,
+    addToolkitAssignment,
+    deactivateToolkitAssignment,
   } = useAdminDashboard();
 
   const { rankingByCommission, loading: rankingLoading } = usePublicRanking('dosmicos');
@@ -254,6 +260,12 @@ export default function AdminPage() {
                     onCreateLink={createDiscountLink}
                     onDeleteLink={deleteDiscountLink}
                     onUpdateCommission={updateCommissionRate}
+                    onGenerateClubLink={generateClubPortalLink}
+                    onRevokeClubLink={revokeClubPortalLink}
+                    onGenerateUploadLink={generateUploadToken}
+                    onDeactivateUploadLink={deactivateUploadToken}
+                    onAddToolkit={addToolkitAssignment}
+                    onDeactivateToolkit={deactivateToolkitAssignment}
                   />
                 ))}
               </div>
