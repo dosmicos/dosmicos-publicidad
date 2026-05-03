@@ -7,8 +7,6 @@ import {
   ExternalLink,
   KeyRound,
   Lightbulb,
-  Loader2,
-  Plus,
   Upload,
   X,
 } from 'lucide-react';
@@ -56,6 +54,8 @@ function MiniStatus({ active, label }: { active: boolean; label: string }) {
   );
 }
 
+type ActiveSection = 'club' | 'upload' | 'toolkits';
+
 function IconButton({
   children,
   onClick,
@@ -82,6 +82,38 @@ function IconButton({
   );
 }
 
+function OpenSectionButton({
+  icon,
+  title,
+  detail,
+  active,
+  onClick,
+}: {
+  icon: ReactNode;
+  title: string;
+  detail: string;
+  active?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-w-0 rounded-xl border px-2 py-2 text-left transition ${
+        active
+          ? 'border-gray-900 bg-white shadow-sm'
+          : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+      }`}
+    >
+      <span className="flex min-w-0 items-center gap-1.5 text-[11px] font-semibold text-gray-900">
+        {icon}
+        <span className="truncate">{title}</span>
+      </span>
+      <span className="mt-0.5 block truncate text-[10px] text-gray-500">{detail}</span>
+    </button>
+  );
+}
+
 export default function AdminCreatorClubTools({
   creator,
   onGenerateClubLink,
@@ -92,6 +124,7 @@ export default function AdminCreatorClubTools({
   onDeactivateToolkit,
 }: AdminCreatorClubToolsProps) {
   const [expanded, setExpanded] = useState(false);
+  const [activeSection, setActiveSection] = useState<ActiveSection>('club');
   const [showToolkitForm, setShowToolkitForm] = useState(false);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -141,6 +174,7 @@ export default function AdminCreatorClubTools({
       if (url) {
         setLastClubUrl(url);
         setExpanded(true);
+        setActiveSection('club');
         await handleCopy('club', url);
       }
     });
@@ -151,6 +185,7 @@ export default function AdminCreatorClubTools({
       if (url) {
         setLastUploadUrl(url);
         setExpanded(true);
+        setActiveSection('upload');
         await handleCopy('upload', url);
       }
     });
@@ -161,14 +196,16 @@ export default function AdminCreatorClubTools({
       setToolkitUrl('');
       setToolkitLabel('Idea de contenido');
       setShowToolkitForm(false);
+      setExpanded(true);
+      setActiveSection('toolkits');
     });
 
-  const handleClubPrimary = () => {
-    if (visibleClubUrl) {
-      setExpanded(true);
-      return handleCopy('club', visibleClubUrl);
+  const openSection = (section: ActiveSection) => {
+    setActiveSection(section);
+    setExpanded(true);
+    if (section === 'toolkits' && toolkitCount === 0) {
+      setShowToolkitForm(true);
     }
-    return handleGenerateClub();
   };
 
   const copyIcon = (key: string) => copied === key ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />;
@@ -196,35 +233,28 @@ export default function AdminCreatorClubTools({
         </button>
       </div>
 
-      <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-        <button
-          type="button"
-          disabled={loadingAction === 'club'}
-          onClick={handleClubPrimary}
-          className="inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-xl bg-gray-950 px-2 text-[11px] font-semibold text-white transition hover:bg-gray-800 disabled:opacity-50"
-          title={hasVisibleClubUrl ? 'Copiar link Club' : hasClubLink ? 'Recrear y copiar Club' : 'Generar y copiar Club'}
-        >
-          {loadingAction === 'club' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
-          <span className="truncate">{hasVisibleClubUrl ? 'Copiar Club' : hasClubLink ? 'Recrear Club' : 'Crear Club'}</span>
-        </button>
-        <button
-          type="button"
-          disabled={loadingAction === 'upload'}
-          onClick={handleGenerateUpload}
-          className="inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2 text-[11px] font-semibold text-gray-700 transition hover:border-gray-300 disabled:opacity-50"
-          title={hasUploadLink ? 'Regenerar y copiar upload' : 'Generar y copiar upload'}
-        >
-          {loadingAction === 'upload' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-          <span className="truncate">{hasUploadLink ? 'Reg. upload' : 'Crear upload'}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => { setExpanded(true); setShowToolkitForm(true); }}
-          className="col-span-2 inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-2 text-[11px] font-semibold text-gray-700 transition hover:border-gray-300 sm:col-span-1"
-        >
-          <Lightbulb className="h-3.5 w-3.5" />
-          <span className="truncate">Toolkit</span>
-        </button>
+      <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+        <OpenSectionButton
+          icon={<KeyRound className="h-3.5 w-3.5 text-gray-500" />}
+          title="Ver Club"
+          detail={hasVisibleClubUrl ? 'copiar o abrir link' : hasClubLink ? 'recrear legacy' : 'crear link'}
+          active={expanded && activeSection === 'club'}
+          onClick={() => openSection('club')}
+        />
+        <OpenSectionButton
+          icon={<Upload className="h-3.5 w-3.5 text-gray-500" />}
+          title="Ver upload"
+          detail={hasUploadLink ? 'copiar o gestionar' : 'crear link'}
+          active={expanded && activeSection === 'upload'}
+          onClick={() => openSection('upload')}
+        />
+        <OpenSectionButton
+          icon={<Lightbulb className="h-3.5 w-3.5 text-gray-500" />}
+          title="Ver ideas"
+          detail={toolkitCount > 0 ? `${toolkitCount} toolkit${toolkitCount === 1 ? '' : 's'}` : 'agregar toolkit'}
+          active={expanded && activeSection === 'toolkits'}
+          onClick={() => openSection('toolkits')}
+        />
       </div>
 
       {error && (
@@ -243,7 +273,7 @@ export default function AdminCreatorClubTools({
 
       {expanded && (
         <div className="mt-2 space-y-2 border-t border-gray-200 pt-2">
-          <div className="rounded-xl border border-gray-200 bg-white p-2">
+          <div className={`rounded-xl border bg-white p-2 transition ${activeSection === 'club' ? 'border-gray-900 shadow-sm' : 'border-gray-200'}`}>
             <div className="mb-1.5 flex items-center justify-between gap-2">
               <p className="text-[11px] font-semibold text-gray-900">Club privado</p>
               <MiniStatus active={hasClubLink} label={hasClubLink ? `••••${creator.portal_link?.token_last4}` : 'Sin link'} />
@@ -269,7 +299,7 @@ export default function AdminCreatorClubTools({
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-2">
+          <div className={`rounded-xl border bg-white p-2 transition ${activeSection === 'upload' ? 'border-gray-900 shadow-sm' : 'border-gray-200'}`}>
             <div className="mb-1.5 flex items-center justify-between gap-2">
               <p className="text-[11px] font-semibold text-gray-900">Upload</p>
               <MiniStatus active={hasUploadLink} label={hasUploadLink ? 'Activo' : 'Sin link'} />
@@ -293,7 +323,7 @@ export default function AdminCreatorClubTools({
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-2">
+          <div className={`rounded-xl border bg-white p-2 transition ${activeSection === 'toolkits' ? 'border-gray-900 shadow-sm' : 'border-gray-200'}`}>
             <div className="mb-1.5 flex items-center justify-between gap-2">
               <p className="text-[11px] font-semibold text-gray-900">Toolkits</p>
               <MiniStatus active={toolkitCount > 0} label={`${toolkitCount}`} />
