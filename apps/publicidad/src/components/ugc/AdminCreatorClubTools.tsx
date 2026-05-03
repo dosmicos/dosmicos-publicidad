@@ -329,8 +329,8 @@ export default function AdminCreatorClubTools({
 
       {expanded && (
         <div className="mt-2 border-t border-gray-100 pt-2">
-          {activeSection === 'club' && (
-            <div className={`rounded-xl border p-2 transition ${toneClasses.club.panel}`}>
+          <div className="grid gap-2 lg:grid-cols-3">
+            <div className={`rounded-xl border p-2 transition ${toneClasses.club.panel} ${activeSection === 'club' ? 'ring-1 ring-indigo-200' : ''}`}>
               <div className="mb-1.5 flex items-center justify-between gap-2">
                 <p className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-950">
                   <KeyRound className="h-3.5 w-3.5 text-indigo-600" /> Club privado
@@ -344,9 +344,9 @@ export default function AdminCreatorClubTools({
                   <IconButton title="Abrir Club" onClick={() => window.open(visibleClubUrl, '_blank', 'noopener,noreferrer')}><ExternalLink className="h-3.5 w-3.5" /></IconButton>
                 </div>
               ) : hasClubLink ? (
-                <p className="text-[11px] leading-snug text-amber-700">Link antiguo sin URL guardada. Recrea una vez y quedará visible siempre.</p>
+                <p className="min-h-8 text-[11px] leading-snug text-amber-700">Link antiguo sin URL guardada. Recrea una vez y quedará visible siempre.</p>
               ) : (
-                <p className="text-[11px] text-indigo-800/70">Sin link Club.</p>
+                <p className="min-h-8 text-[11px] text-indigo-800/70">Sin link Club.</p>
               )}
               <div className="mt-1.5 grid grid-cols-[1fr_auto] gap-1.5">
                 <button type="button" onClick={handleGenerateClub} disabled={loadingAction === 'club'} className={`h-8 rounded-lg px-2 text-[11px] font-semibold disabled:opacity-50 ${toneClasses.club.primary}`}>
@@ -357,10 +357,8 @@ export default function AdminCreatorClubTools({
                 </button>
               </div>
             </div>
-          )}
 
-          {activeSection === 'upload' && (
-            <div className={`rounded-xl border p-2 transition ${toneClasses.upload.panel}`}>
+            <div className={`rounded-xl border p-2 transition ${toneClasses.upload.panel} ${activeSection === 'upload' ? 'ring-1 ring-emerald-200' : ''}`}>
               <div className="mb-1.5 flex items-center justify-between gap-2">
                 <p className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-950">
                   <Upload className="h-3.5 w-3.5 text-emerald-600" /> Upload
@@ -374,7 +372,7 @@ export default function AdminCreatorClubTools({
                   <IconButton title="Abrir upload" onClick={() => window.open(lastUploadUrl || uploadUrl, '_blank', 'noopener,noreferrer')}><ExternalLink className="h-3.5 w-3.5" /></IconButton>
                 </div>
               ) : (
-                <p className="text-[11px] text-emerald-800/70">Sin upload.</p>
+                <p className="min-h-8 text-[11px] text-emerald-800/70">Sin upload.</p>
               )}
               <div className="mt-1.5 grid grid-cols-[1fr_auto] gap-1.5">
                 <button type="button" onClick={handleGenerateUpload} disabled={loadingAction === 'upload'} className={`h-8 rounded-lg px-2 text-[11px] font-semibold disabled:opacity-50 ${toneClasses.upload.primary}`}>
@@ -385,17 +383,15 @@ export default function AdminCreatorClubTools({
                 </button>
               </div>
             </div>
-          )}
 
-          {activeSection === 'toolkits' && (
-            <div className={`rounded-xl border p-2 transition ${toneClasses.ideas.panel}`}>
+            <div className={`rounded-xl border p-2 transition ${toneClasses.ideas.panel} ${activeSection === 'toolkits' ? 'ring-1 ring-amber-200' : ''}`}>
               <div className="mb-1.5 flex items-center justify-between gap-2">
                 <p className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-950">
                   <Lightbulb className="h-3.5 w-3.5 text-amber-600" /> Ideas / toolkits
                 </p>
                 <MiniStatus active={toolkitCount > 0} tone="ideas" label={`${toolkitCount}`} />
               </div>
-              {toolkits.length > 0 && (
+              {toolkits.length > 0 ? (
                 <div className="mb-1.5 space-y-1">
                   {toolkits.map((toolkit) => (
                     <div key={toolkit.id} className={`flex min-w-0 items-center gap-1.5 rounded-lg px-2 py-1.5 ${toneClasses.ideas.row}`}>
@@ -406,10 +402,12 @@ export default function AdminCreatorClubTools({
                     </div>
                   ))}
                 </div>
-              )}
+              ) : !showToolkitForm ? (
+                <p className="min-h-8 text-[11px] text-amber-800/70">Sin ideas asignadas.</p>
+              ) : null}
 
               {showToolkitForm && (
-                <div className="mb-1.5 grid gap-1.5 sm:grid-cols-[0.8fr_1.2fr]">
+                <div className="mb-1.5 grid gap-1.5">
                   <input
                     value={toolkitLabel}
                     onChange={(event) => setToolkitLabel(event.target.value)}
@@ -424,11 +422,11 @@ export default function AdminCreatorClubTools({
                   />
                 </div>
               )}
-              <div className="flex gap-1.5">
+              <div className="mt-1.5 flex gap-1.5">
                 <button
                   type="button"
                   disabled={loadingAction === 'toolkit' || (showToolkitForm && !toolkitUrl.trim())}
-                  onClick={showToolkitForm ? handleAddToolkit : () => setShowToolkitForm(true)}
+                  onClick={showToolkitForm ? handleAddToolkit : () => { setShowToolkitForm(true); setActiveSection('toolkits'); }}
                   className={`h-8 flex-1 rounded-lg px-2 text-[11px] font-semibold disabled:opacity-50 ${toneClasses.ideas.primary}`}
                 >
                   {showToolkitForm ? 'Guardar' : 'Agregar toolkit'}
@@ -440,7 +438,7 @@ export default function AdminCreatorClubTools({
                 )}
               </div>
             </div>
-          )}
+          </div>
         </div>
       )}
     </section>

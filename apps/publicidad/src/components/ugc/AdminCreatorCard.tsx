@@ -174,7 +174,7 @@ export default function AdminCreatorCard({
   return (
     <>
       <article className="rounded-2xl border border-gray-200 bg-white p-2.5 shadow-sm transition hover:border-gray-300 sm:p-3">
-        <div className="grid gap-2 lg:grid-cols-[minmax(220px,0.7fr)_minmax(360px,1.25fr)_minmax(300px,1fr)] lg:items-start">
+        <div className="grid gap-2 lg:grid-cols-[minmax(220px,0.65fr)_minmax(420px,1.35fr)] lg:items-start">
           <header className="flex min-w-0 items-start gap-2 lg:pt-1">
             <Avatar url={creator.avatar_url} name={creator.name} />
             <div className="min-w-0 flex-1">
@@ -358,7 +358,7 @@ export default function AdminCreatorCard({
             )}
           </div>
 
-          <div className="min-w-0">
+          <div className="min-w-0 lg:col-span-2">
             <AdminCreatorClubTools
               creator={creator}
               onGenerateClubLink={onGenerateClubLink}
