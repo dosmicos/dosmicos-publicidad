@@ -75,9 +75,13 @@ function CopyButton({ value, label = 'Copiar' }: { value: string; label?: string
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
   };
 
   return (
@@ -243,7 +247,7 @@ export default function CreatorPortalPage() {
 
         <section className="rounded-2xl border border-gray-100 p-5 mb-5">
           <p className="text-xs uppercase tracking-widest text-gray-400 font-medium mb-2">Subir contenido</p>
-          {upload?.upload_url ? (
+          {upload?.is_active && upload?.upload_url ? (
             <div className="space-y-3">
               <p className="text-gray-600 text-sm leading-relaxed">
                 Sube videos editados y sin editar cuando aplique. Mantén videos verticales de 15–30 segundos y buena calidad.
