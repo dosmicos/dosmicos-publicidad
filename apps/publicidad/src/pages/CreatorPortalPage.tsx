@@ -106,6 +106,41 @@ function MetricCard({ label, value, hint }: { label: string; value: string | num
   );
 }
 
+function CreatorAvatar({ url, name }: { url: string | null; name: string }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const cleanName = name?.trim() || '?';
+  const initial = cleanName[0]?.toUpperCase() || '?';
+  const palette = [
+    'from-orange-500 to-amber-300 text-white',
+    'from-slate-900 to-slate-600 text-white',
+    'from-rose-500 to-orange-400 text-white',
+    'from-violet-500 to-fuchsia-400 text-white',
+    'from-sky-500 to-cyan-400 text-white',
+  ];
+  const color = palette[cleanName.charCodeAt(0) % palette.length];
+
+  if (url && !imageFailed) {
+    return (
+      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-white bg-white shadow-sm ring-1 ring-orange-100">
+        <img
+          src={url}
+          alt={cleanName}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={() => setImageFailed(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${color} text-xl font-semibold tracking-tight shadow-sm ring-1 ring-orange-100`}>
+      {initial}
+    </div>
+  );
+}
+
 function InvalidPortalState() {
   return (
     <div className="min-h-screen bg-white">
@@ -203,13 +238,7 @@ export default function CreatorPortalPage() {
       <main className="max-w-lg mx-auto px-5 pt-7 pb-16">
         <section className="rounded-3xl border border-gray-100 p-5 bg-gradient-to-b from-orange-50 to-white mb-5">
           <div className="flex items-center gap-3">
-            {creator.avatar_url ? (
-              <img src={creator.avatar_url} alt={creator.name} className="w-14 h-14 rounded-full object-cover" />
-            ) : (
-              <div className="w-14 h-14 rounded-full bg-white border border-orange-100 flex items-center justify-center text-lg font-semibold text-gray-700">
-                {creator.name?.[0]?.toUpperCase()}
-              </div>
-            )}
+            <CreatorAvatar url={creator.avatar_url} name={creator.name} />
             <div className="min-w-0 flex-1">
               <p className="text-xs uppercase tracking-widest text-orange-500 font-medium mb-1">Club Dosmicos</p>
               <h1 className="text-gray-900 font-semibold text-lg truncate">Hola, {creator.name}</h1>
