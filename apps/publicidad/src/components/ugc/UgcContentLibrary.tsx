@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
-import { AlertCircle, Film, Image, Loader2, Plus, RefreshCw, Search, Tag } from 'lucide-react';
+import { AlertCircle, Film, Image, Loader2, Plus, RefreshCw, Search, Tag, X } from 'lucide-react';
 import { useUgcContentLibrary, type UgcContentAsset } from '@/hooks/useUgcContentLibrary';
 import UgcContentAssetCard from './UgcContentAssetCard';
 import UgcTagManagerModal from './UgcTagManagerModal';
@@ -70,7 +70,7 @@ export default function UgcContentLibrary() {
   const [creatorId, setCreatorId] = useState(ALL);
   const [campaignId, setCampaignId] = useState(ALL);
   const [mediaType, setMediaType] = useState<MediaFilter>(ALL);
-  const [tagId, setTagId] = useState(ALL);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [status, setStatus] = useState(ALL);
 
   const creators = useMemo(() => uniqueById(
@@ -94,6 +94,18 @@ export default function UgcContentLibrary() {
     untagged: assets.filter((asset) => asset.tags.length === 0).length,
   }), [assets]);
 
+  const selectedFilterTags = useMemo(
+    () => selectedTagIds
+      .map((id) => tags.find((tag) => tag.id === id))
+      .filter((tag): tag is NonNullable<typeof tag> => Boolean(tag)),
+    [selectedTagIds, tags]
+  );
+
+  const availableFilterTags = useMemo(
+    () => tags.filter((tag) => !selectedTagIds.includes(tag.id)),
+    [selectedTagIds, tags]
+  );
+
   const filteredAssets = useMemo(() => {
     const query = search.trim().toLowerCase();
     return assets.filter((asset) => {
@@ -101,11 +113,11 @@ export default function UgcContentLibrary() {
       if (creatorId !== ALL && asset.creator_id !== creatorId) return false;
       if (campaignId !== ALL && (asset.campaign_id || 'none') !== campaignId) return false;
       if (mediaType !== ALL && asset.media_type !== mediaType) return false;
-      if (tagId !== ALL && !asset.tags.some((tag) => tag.id === tagId)) return false;
+      if (selectedTagIds.length > 0 && !selectedTagIds.every((id) => asset.tags.some((tag) => tag.id === id))) return false;
       if (status !== ALL && asset.status !== status) return false;
       return true;
     });
-  }, [assets, campaignId, creatorId, mediaType, search, status, tagId]);
+  }, [assets, campaignId, creatorId, mediaType, search, selectedTagIds, status]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -116,12 +128,21 @@ export default function UgcContentLibrary() {
     }
   };
 
+  const addTagFilter = (tagId: string) => {
+    if (!tagId || selectedTagIds.includes(tagId)) return;
+    setSelectedTagIds((current) => [...current, tagId]);
+  };
+
+  const removeTagFilter = (tagId: string) => {
+    setSelectedTagIds((current) => current.filter((id) => id !== tagId));
+  };
+
   const resetFilters = () => {
     setSearch('');
     setCreatorId(ALL);
     setCampaignId(ALL);
     setMediaType(ALL);
-    setTagId(ALL);
+    setSelectedTagIds([]);
     setStatus(ALL);
   };
 
@@ -129,7 +150,7 @@ export default function UgcContentLibrary() {
     || creatorId !== ALL
     || campaignId !== ALL
     || mediaType !== ALL
-    || tagId !== ALL
+    || selectedTagIds.length > 0
     || status !== ALL;
 
   return (
@@ -139,7 +160,7 @@ export default function UgcContentLibrary() {
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Contenido recibido</p>
           <h2 className="mt-1 text-xl font-semibold tracking-tight text-gray-950">Biblioteca UGC</h2>
           <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Revisa videos y fotos subidos por creadoras, descárgalos y clasifícalos con etiquetas reutilizables.
+            Revisa videos y fotos subidos por creadoras, descárgalos y filtra por una o varias etiquetas combinadas.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex">
@@ -217,12 +238,12 @@ export default function UgcContentLibrary() {
           </select>
 
           <select
-            value={tagId}
-            onChange={(event) => setTagId(event.target.value)}
+            value=""
+            onChange={(event) => addTagFilter(event.target.value)}
             className="h-10 min-w-0 rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 outline-none"
           >
-            <option value={ALL}>Todas las etiquetas</option>
-            {tags.map((tag) => (
+            <option value="">{selectedTagIds.length === 0 ? 'Filtrar por etiquetas' : `+ etiqueta (${selectedTagIds.length})`}</option>
+            {availableFilterTags.map((tag) => (
               <option key={tag.id} value={tag.id}>{tag.name}</option>
             ))}
           </select>
@@ -237,6 +258,39 @@ export default function UgcContentLibrary() {
             ))}
           </select>
         </div>
+
+        {selectedFilterTags.length > 0 && (
+          <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-[11px] font-semibold text-gray-500">
+                Debe tener {selectedFilterTags.length === 1 ? 'esta etiqueta' : 'todas estas etiquetas'}:
+              </span>
+              {selectedFilterTags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white px-2 py-1 text-[11px] font-semibold text-gray-700 ring-1 ring-gray-200"
+                  title={tag.description || tag.name}
+                >
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} />
+                  <span className="truncate">{tag.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeTagFilter(tag.id)}
+                    className="rounded-full p-0.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                    aria-label={`Quitar filtro ${tag.name}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+            {selectedFilterTags.length > 1 && (
+              <p className="mt-1 text-[11px] font-medium text-gray-400">
+                Filtro AND: solo muestra contenido que tenga las {selectedFilterTags.length} etiquetas seleccionadas.
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="mt-3 flex flex-col gap-2 text-xs font-medium text-gray-400 sm:flex-row sm:items-center sm:justify-between">
           <p>Mostrando {filteredAssets.length} de {assets.length} asset{assets.length === 1 ? '' : 's'}.</p>

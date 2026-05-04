@@ -10,12 +10,14 @@ import {
   Search,
   History,
   ChevronDown,
+  Film,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { usePublicRanking } from '@/hooks/usePublicRanking';
 import { useUgcContentLibrary } from '@/hooks/useUgcContentLibrary';
 import AdminCreatorCard from '@/components/ugc/AdminCreatorCard';
+import UgcContentLibrary from '@/components/ugc/UgcContentLibrary';
 import ResetPeriodModal from '@/components/ugc/ResetPeriodModal';
 import RankingSection from '@/components/ugc/RankingSection';
 
@@ -26,7 +28,7 @@ const formatCOP = (n: number) =>
     minimumFractionDigits: 0,
   }).format(n);
 
-type Tab = 'creators' | 'ranking' | 'payouts';
+type Tab = 'creators' | 'content' | 'ranking' | 'payouts';
 type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link' | 'no_club' | 'no_upload';
 
 export default function AdminPage() {
@@ -200,9 +202,10 @@ export default function AdminPage() {
         </section>
 
         {/* Tabs */}
-        <div className="mb-4 grid grid-cols-3 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
+        <div className="mb-4 grid grid-cols-4 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
           {([
             { id: 'creators', icon: Users, label: 'Creadoras' },
+            { id: 'content', icon: Film, label: 'Contenido' },
             { id: 'ranking', icon: Trophy, label: 'Ranking' },
             { id: 'payouts', icon: History, label: 'Pagos' },
           ] as const).map(({ id, icon: Icon, label }) => (
@@ -319,6 +322,9 @@ export default function AdminPage() {
             )}
           </section>
         )}
+
+        {/* ── Tab: Contenido ── */}
+        {tab === 'content' && <UgcContentLibrary />}
 
         {/* ── Tab: Ranking ── */}
         {tab === 'ranking' && (
