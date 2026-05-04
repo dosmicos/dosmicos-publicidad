@@ -61,6 +61,7 @@ export default function UgcContentLibrary() {
     createTag,
     assignTag,
     removeTag,
+    deleteTag,
     downloadAsset,
   } = useUgcContentLibrary();
 
@@ -137,6 +138,11 @@ export default function UgcContentLibrary() {
     setSelectedTagIds((current) => current.filter((id) => id !== tagId));
   };
 
+  const handleDeleteTag = async (tagId: string) => {
+    await deleteTag(tagId);
+    setSelectedTagIds((current) => current.filter((id) => id !== tagId));
+  };
+
   const resetFilters = () => {
     setSearch('');
     setCreatorId(ALL);
@@ -179,7 +185,7 @@ export default function UgcContentLibrary() {
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-gray-950 px-3 text-xs font-semibold text-white transition hover:bg-gray-800"
           >
             <Plus className="h-3.5 w-3.5" />
-            Crear etiqueta
+            Crear / eliminar
           </button>
         </div>
       </div>
@@ -237,16 +243,25 @@ export default function UgcContentLibrary() {
             <option value="photo">Solo fotos</option>
           </select>
 
-          <select
-            value=""
-            onChange={(event) => addTagFilter(event.target.value)}
-            className="h-10 min-w-0 rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 outline-none"
-          >
-            <option value="">{selectedTagIds.length === 0 ? 'Filtrar por etiquetas' : `+ etiqueta (${selectedTagIds.length})`}</option>
-            {availableFilterTags.map((tag) => (
-              <option key={tag.id} value={tag.id}>{tag.name}</option>
-            ))}
-          </select>
+          <div className="flex min-w-0 gap-1.5">
+            <select
+              value=""
+              onChange={(event) => addTagFilter(event.target.value)}
+              className="h-10 min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 outline-none"
+            >
+              <option value="">{selectedTagIds.length === 0 ? 'Filtrar por etiquetas' : `+ etiqueta (${selectedTagIds.length})`}</option>
+              {availableFilterTags.map((tag) => (
+                <option key={tag.id} value={tag.id}>{tag.name}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setShowTagModal(true)}
+              className="h-10 shrink-0 rounded-xl border border-gray-200 bg-white px-2.5 text-[11px] font-semibold text-gray-600 transition hover:bg-gray-50 hover:text-gray-950"
+            >
+              Editar
+            </button>
+          </div>
 
           <select
             value={status}
@@ -356,6 +371,7 @@ export default function UgcContentLibrary() {
         tags={tags}
         onClose={() => setShowTagModal(false)}
         onCreateTag={createTag}
+        onDeleteTag={handleDeleteTag}
       />
     </section>
   );

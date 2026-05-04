@@ -131,6 +131,7 @@ interface AdminCreatorCardProps {
   contentLoading: boolean;
   contentError: string | null;
   onCreateContentTag: (name: string, color?: string, description?: string | null) => Promise<UgcContentTag | void>;
+  onDeleteContentTag?: (tagId: string) => Promise<void>;
   onAssignContentTag: (videoId: string, tagId: string, tag?: UgcContentTag) => Promise<void>;
   onRemoveContentTag: (videoId: string, tagId: string) => Promise<void>;
   onDownloadContentAsset: (asset: UgcContentAsset) => Promise<void>;
@@ -154,6 +155,7 @@ export default function AdminCreatorCard({
   contentLoading,
   contentError,
   onCreateContentTag,
+  onDeleteContentTag,
   onAssignContentTag,
   onRemoveContentTag,
   onDownloadContentAsset,
@@ -422,6 +424,7 @@ export default function AdminCreatorCard({
               loading={contentLoading}
               error={contentError}
               onCreateTag={onCreateContentTag}
+              onDeleteTag={onDeleteContentTag}
               onAssignTag={onAssignContentTag}
               onRemoveTag={onRemoveContentTag}
               onDownload={onDownloadContentAsset}

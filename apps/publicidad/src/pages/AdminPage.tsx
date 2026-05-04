@@ -313,6 +313,7 @@ export default function AdminPage() {
                     contentLoading={contentLibrary.loading}
                     contentError={contentLibrary.error}
                     onCreateContentTag={contentLibrary.createTag}
+                    onDeleteContentTag={contentLibrary.deleteTag}
                     onAssignContentTag={contentLibrary.assignTag}
                     onRemoveContentTag={contentLibrary.removeTag}
                     onDownloadContentAsset={contentLibrary.downloadAsset}

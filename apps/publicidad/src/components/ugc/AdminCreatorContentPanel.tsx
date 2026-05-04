@@ -10,6 +10,7 @@ interface Props {
   loading: boolean;
   error: string | null;
   onCreateTag: (name: string, color?: string, description?: string | null) => Promise<UgcContentTag | void>;
+  onDeleteTag?: (tagId: string) => Promise<void>;
   onAssignTag: (videoId: string, tagId: string, tag?: UgcContentTag) => Promise<void>;
   onRemoveTag: (videoId: string, tagId: string) => Promise<void>;
   onDownload: (asset: UgcContentAsset) => Promise<void>;
@@ -21,6 +22,7 @@ export default function AdminCreatorContentPanel({
   loading,
   error,
   onCreateTag,
+  onDeleteTag,
   onAssignTag,
   onRemoveTag,
   onDownload,
@@ -135,6 +137,7 @@ export default function AdminCreatorContentPanel({
         tags={tags}
         onClose={() => setShowTagModal(false)}
         onCreateTag={onCreateTag}
+        onDeleteTag={onDeleteTag}
       />
     </section>
   );

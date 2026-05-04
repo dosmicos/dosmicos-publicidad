@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Plus, Tag, X } from 'lucide-react';
+import { Plus, Tag, Trash2, X } from 'lucide-react';
 import type { UgcContentTag } from '@/hooks/useUgcContentLibrary';
 
 interface UgcTagManagerModalProps {
@@ -7,6 +7,7 @@ interface UgcTagManagerModalProps {
   tags: UgcContentTag[];
   onClose: () => void;
   onCreateTag: (name: string, color: string, description?: string | null) => Promise<UgcContentTag | void>;
+  onDeleteTag?: (tagId: string) => Promise<void>;
 }
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
@@ -16,11 +17,13 @@ export default function UgcTagManagerModal({
   tags,
   onClose,
   onCreateTag,
+  onDeleteTag,
 }: UgcTagManagerModalProps) {
   const [name, setName] = useState('');
   const [color, setColor] = useState('#111827');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deletingTagId, setDeletingTagId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   if (!open) return null;
@@ -54,6 +57,24 @@ export default function UgcTagManagerModal({
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteTag = async (tag: UgcContentTag) => {
+    if (!onDeleteTag || deletingTagId) return;
+    const confirmed = window.confirm(
+      `¿Eliminar la etiqueta "${tag.name}"? Se quitará del filtro y de todos los videos/fotos donde esté asignada.`
+    );
+    if (!confirmed) return;
+
+    setError('');
+    setDeletingTagId(tag.id);
+    try {
+      await onDeleteTag(tag.id);
+    } catch (err: any) {
+      setError(err?.message || 'No se pudo eliminar la etiqueta.');
+    } finally {
+      setDeletingTagId(null);
     }
   };
 
@@ -93,6 +114,21 @@ export default function UgcTagManagerModal({
                   >
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} />
                     <span className="truncate">{tag.name}</span>
+                    {onDeleteTag && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteTag(tag)}
+                        disabled={deletingTagId === tag.id}
+                        className="ml-0.5 rounded-full p-0.5 text-gray-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                        aria-label={`Eliminar etiqueta ${tag.name}`}
+                      >
+                        {deletingTagId === tag.id ? (
+                          <span className="block h-3 w-3 animate-pulse rounded-full bg-gray-300" />
+                        ) : (
+                          <Trash2 className="h-3 w-3" />
+                        )}
+                      </button>
+                    )}
                   </span>
                 ))}
               </div>

@@ -323,6 +323,34 @@ export function useUgcContentLibrary() {
     }
   };
 
+  const deleteTag = async (tagId: string) => {
+    const tagToDelete = tags.find((tag) => tag.id === tagId);
+    if (!tagToDelete) throw new Error('Etiqueta no encontrada.');
+
+    const previousTags = tags;
+    const previousAssets = assets;
+
+    setTags((current) => current.filter((tag) => tag.id !== tagId));
+    setAssets((current) => current.map((asset) => ({
+      ...asset,
+      tags: asset.tags.filter((tag) => tag.id !== tagId),
+    })));
+
+    const { error: rpcError } = await (supabase as any).rpc('update_ugc_content_tag', {
+      p_tag_id: tagId,
+      p_name: tagToDelete.name,
+      p_color: tagToDelete.color || '#111827',
+      p_description: tagToDelete.description || null,
+      p_is_active: false,
+    });
+
+    if (rpcError) {
+      setTags(previousTags);
+      setAssets(previousAssets);
+      throw rpcError;
+    }
+  };
+
   const downloadAsset = async (asset: UgcContentAsset) => {
     if (asset.storage_bucket && asset.storage_path) {
       const { data, error: downloadError } = await supabase.storage
@@ -360,6 +388,7 @@ export function useUgcContentLibrary() {
     createTag,
     assignTag,
     removeTag,
+    deleteTag,
     downloadAsset,
   };
 }
