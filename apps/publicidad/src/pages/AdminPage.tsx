@@ -11,13 +11,16 @@ import {
   History,
   ChevronDown,
   Film,
+  Wallet,
+  CheckCircle,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdminDashboard } from '@/hooks/useAdminDashboard';
+import { useAdminDashboard, type CreatorWithLink } from '@/hooks/useAdminDashboard';
 import { usePublicRanking } from '@/hooks/usePublicRanking';
 import { useUgcContentLibrary } from '@/hooks/useUgcContentLibrary';
 import AdminCreatorCard from '@/components/ugc/AdminCreatorCard';
 import UgcContentLibrary from '@/components/ugc/UgcContentLibrary';
+import PayoutModal from '@/components/ugc/PayoutModal';
 import ResetPeriodModal from '@/components/ugc/ResetPeriodModal';
 import RankingSection from '@/components/ugc/RankingSection';
 
@@ -30,6 +33,7 @@ const formatCOP = (n: number) =>
 
 type Tab = 'creators' | 'content' | 'ranking' | 'payouts';
 type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link' | 'no_club' | 'no_upload';
+type PayoutsSubtab = 'pending' | 'history';
 
 export default function AdminPage() {
   const { signOut } = useAuth();
@@ -73,6 +77,8 @@ export default function AdminPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<CreatorFilter>('all');
   const [payoutsCreatorId, setPayoutsCreatorId] = useState<string>('all');
+  const [payoutsSubtab, setPayoutsSubtab] = useState<PayoutsSubtab>('pending');
+  const [selectedPayoutCreator, setSelectedPayoutCreator] = useState<CreatorWithLink | null>(null);
   const [showCreatorPicker, setShowCreatorPicker] = useState(false);
 
   const handleSignOut = async () => {
@@ -112,6 +118,10 @@ export default function AdminPage() {
     0
   );
   const creatorsWithBalance = creators.filter((c) => (c.discount_link?.pending_balance ?? 0) > 0).length;
+  const pendingPayoutCreators = [...creators]
+    .filter((c) => (c.discount_link?.pending_balance ?? 0) > 0)
+    .sort((a, b) => (b.discount_link?.pending_balance ?? 0) - (a.discount_link?.pending_balance ?? 0));
+  const totalPaidHistory = payouts.reduce((sum, payout) => sum + payout.amount, 0);
 
   // Payouts tab: filtered by selected creator
   const creatorsWithPayouts = creators.filter((c) => payouts.some((p) => p.creator_id === c.id));
@@ -346,141 +356,277 @@ export default function AdminPage() {
 
         {/* ── Tab: Pagos ── */}
         {tab === 'payouts' && (
-          <section className="space-y-4">
-            {/* Creator picker */}
-            <div className="relative">
-              <button
-                onClick={() => setShowCreatorPicker((v) => !v)}
-                className="w-full flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 hover:border-gray-300 transition-colors"
-              >
-                <span>
-                  {selectedCreator ? (
-                    <span className="font-medium">{selectedCreator.name}</span>
-                  ) : (
-                    <span className="text-gray-500">Todas las creadoras</span>
-                  )}
-                </span>
-                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showCreatorPicker ? 'rotate-180' : ''}`} />
-              </button>
-
-              {showCreatorPicker && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-2xl border border-gray-200 shadow-lg z-10 max-h-64 overflow-y-auto">
-                  <button
-                    onClick={() => { setPayoutsCreatorId('all'); setShowCreatorPicker(false); }}
-                    className={`w-full text-left px-4 py-3 text-sm border-b border-gray-50 hover:bg-gray-50 transition-colors ${
-                      payoutsCreatorId === 'all' ? 'font-semibold text-gray-900' : 'text-gray-600'
-                    }`}
-                  >
-                    Todas las creadoras
-                    <span className="ml-2 text-xs text-gray-400">({payouts.length} pagos)</span>
-                  </button>
-                  {creatorsWithPayouts.map((c) => {
-                    const count = payouts.filter((p) => p.creator_id === c.id).length;
-                    const total = payouts
-                      .filter((p) => p.creator_id === c.id)
-                      .reduce((sum, p) => sum + p.amount, 0);
-                    return (
-                      <button
-                        key={c.id}
-                        onClick={() => { setPayoutsCreatorId(c.id); setShowCreatorPicker(false); }}
-                        className={`w-full text-left px-4 py-3 text-sm border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors flex items-center justify-between ${
-                          payoutsCreatorId === c.id ? 'font-semibold text-gray-900' : 'text-gray-700'
-                        }`}
-                      >
-                        <div>
-                          <span>{c.name}</span>
-                          {c.instagram_handle && (
-                            <span className="text-gray-400 text-xs ml-1">@{c.instagram_handle}</span>
-                          )}
-                        </div>
-                        <div className="text-right shrink-0 ml-3">
-                          <span className="text-green-600 text-xs font-medium">{formatCOP(total)}</span>
-                          <span className="text-gray-400 text-xs ml-1">· {count}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
+          <section className="space-y-3">
+            <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">Pagos UGC</p>
+                  <h2 className="mt-1 text-xl font-semibold tracking-tight text-gray-950">Saldos e historial</h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Revisa quién tiene saldo pendiente y consulta todos los pagos registrados.
+                  </p>
                 </div>
-              )}
-            </div>
-
-            {/* Payout total for selected creator */}
-            {selectedCreator && filteredPayouts.length > 0 && (
-              <div className="rounded-2xl border border-gray-100 p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {selectedCreator.avatar_url ? (
-                    <img src={selectedCreator.avatar_url} alt={selectedCreator.name} className="w-10 h-10 rounded-full object-cover" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium text-gray-600">
-                      {selectedCreator.name?.[0]?.toUpperCase()}
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-gray-900 font-semibold text-sm">{selectedCreator.name}</p>
-                    <p className="text-gray-400 text-xs">{filteredPayouts.length} pagos realizados</p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[520px]">
+                  <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">Pendiente</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-emerald-800">{formatCOP(totalPendingBalance)}</p>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Con saldo</p>
+                    <p className="mt-1 text-sm font-semibold text-gray-950">{creatorsWithBalance}</p>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Pagado</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-gray-950">{formatCOP(totalPaidHistory)}</p>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Registros</p>
+                    <p className="mt-1 text-sm font-semibold text-gray-950">{payouts.length}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-gray-900 font-semibold text-sm">
-                    {formatCOP(filteredPayouts.reduce((s, p) => s + p.amount, 0))}
-                  </p>
-                  <p className="text-gray-400 text-xs">total pagado</p>
-                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 rounded-xl border border-gray-200 bg-gray-50 p-1">
+                {([
+                  { id: 'pending', label: 'Saldos pendientes', count: creatorsWithBalance },
+                  { id: 'history', label: 'Historial de pagos', count: payouts.length },
+                ] as const).map(({ id, label, count }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setPayoutsSubtab(id)}
+                    className={`flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold transition ${
+                      payoutsSubtab === id
+                        ? 'bg-white text-gray-950 shadow-sm ring-1 ring-gray-200'
+                        : 'text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    {id === 'pending' ? <Wallet className="h-3.5 w-3.5" /> : <History className="h-3.5 w-3.5" />}
+                    <span className="truncate">{label}</span>
+                    <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-500">{count}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {payoutsSubtab === 'pending' && (
+              <div className="space-y-2">
+                {loading ? (
+                  <div className="flex justify-center py-16">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
+                  </div>
+                ) : pendingPayoutCreators.length === 0 ? (
+                  <div className="rounded-2xl border border-gray-200 bg-white py-12 text-center shadow-sm">
+                    <CheckCircle className="mx-auto mb-2 h-8 w-8 text-emerald-200" />
+                    <p className="text-sm font-medium text-gray-500">No hay saldos pendientes.</p>
+                    <p className="mt-1 text-xs text-gray-400">Cuando una UGC acumule comisión, aparecerá aquí.</p>
+                  </div>
+                ) : (
+                  pendingPayoutCreators.map((creator) => {
+                    const link = creator.discount_link;
+                    const creatorPayouts = payouts.filter((p) => p.creator_id === creator.id);
+                    return (
+                      <article
+                        key={creator.id}
+                        className="grid gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm lg:grid-cols-[minmax(220px,1fr)_minmax(280px,1.1fr)_auto] lg:items-center"
+                      >
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          {creator.avatar_url ? (
+                            <img src={creator.avatar_url} alt={creator.name} className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-gray-200" />
+                          ) : (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-600 ring-1 ring-gray-200">
+                              {creator.name?.[0]?.toUpperCase() || '?'}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-gray-950">{creator.name}</p>
+                            {creator.instagram_handle && (
+                              <p className="truncate text-xs text-gray-400">@{creator.instagram_handle}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-1.5">
+                          <div className="rounded-xl bg-emerald-50 px-2.5 py-2">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-emerald-600">Saldo</p>
+                            <p className="mt-0.5 truncate text-xs font-semibold text-emerald-800">{formatCOP(link?.pending_balance ?? 0)}</p>
+                          </div>
+                          <div className="rounded-xl bg-gray-50 px-2.5 py-2">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">Comisión</p>
+                            <p className="mt-0.5 truncate text-xs font-semibold text-gray-900">{formatCOP(link?.total_commission ?? 0)}</p>
+                          </div>
+                          <div className="rounded-xl bg-gray-50 px-2.5 py-2">
+                            <p className="text-[9px] font-semibold uppercase tracking-wide text-gray-400">Pagado</p>
+                            <p className="mt-0.5 truncate text-xs font-semibold text-gray-900">{formatCOP(link?.total_paid_out ?? 0)}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 lg:justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPayoutsCreatorId(creator.id);
+                              setPayoutsSubtab('history');
+                            }}
+                            className="h-9 flex-1 rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 lg:flex-none"
+                          >
+                            Historial {creatorPayouts.length > 0 ? `(${creatorPayouts.length})` : ''}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPayoutCreator(creator)}
+                            disabled={!link || (link.pending_balance ?? 0) <= 0}
+                            className="h-9 flex-1 rounded-xl bg-gray-950 px-3 text-xs font-semibold text-white transition hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 lg:flex-none"
+                          >
+                            Registrar pago
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })
+                )}
               </div>
             )}
 
-            {/* Payments list */}
-            {loading ? (
-              <div className="flex justify-center py-16">
-                <div className="w-6 h-6 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
-              </div>
-            ) : filteredPayouts.length === 0 ? (
-              <div className="text-center py-12">
-                <History className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                <p className="text-gray-400 text-sm">
-                  {selectedCreator ? 'Sin pagos para esta creadora.' : 'No hay pagos registrados aún.'}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {filteredPayouts.map((payout) => {
-                  const creator = creators.find((c) => c.id === payout.creator_id);
-                  return (
-                    <div
-                      key={payout.id}
-                      className="flex items-center gap-3 rounded-2xl border border-gray-100 px-4 py-3"
-                    >
-                      {!selectedCreator && (
-                        <>
-                          {creator?.avatar_url ? (
-                            <img src={creator.avatar_url} alt={creator.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
-                          ) : (
-                            <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium text-gray-600 shrink-0">
-                              {(creator?.name ?? '?')[0].toUpperCase()}
-                            </div>
-                          )}
-                        </>
+            {payoutsSubtab === 'history' && (
+              <div className="space-y-3">
+                {/* Creator picker */}
+                <div className="relative rounded-2xl border border-gray-200 bg-white p-2.5 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreatorPicker((v) => !v)}
+                    className="flex h-10 w-full items-center justify-between rounded-xl border border-gray-200 px-3 text-sm text-gray-900 transition-colors hover:border-gray-300"
+                  >
+                    <span>
+                      {selectedCreator ? (
+                        <span className="font-medium">{selectedCreator.name}</span>
+                      ) : (
+                        <span className="text-gray-500">Todas las creadoras</span>
                       )}
-                      <div className="flex-1 min-w-0">
-                        {!selectedCreator && (
-                          <p className="text-gray-900 text-sm font-medium truncate">
-                            {creator?.name ?? 'Desconocida'}
-                          </p>
-                        )}
-                        <p className={`text-gray-400 text-xs ${selectedCreator ? '' : ''}`}>
-                          {new Date(payout.created_at).toLocaleDateString('es-CO', {
-                            day: 'numeric', month: 'short', year: 'numeric',
-                          })}
-                          <span className="capitalize ml-1">· {payout.payout_type}</span>
-                          {payout.notes ? ` · ${payout.notes}` : ''}
-                        </p>
-                      </div>
-                      <p className="text-green-600 text-sm font-semibold shrink-0">
-                        {formatCOP(payout.amount)}
-                      </p>
+                    </span>
+                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${showCreatorPicker ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {showCreatorPicker && (
+                    <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-lg">
+                      <button
+                        type="button"
+                        onClick={() => { setPayoutsCreatorId('all'); setShowCreatorPicker(false); }}
+                        className={`w-full border-b border-gray-50 px-4 py-3 text-left text-sm transition-colors hover:bg-gray-50 ${
+                          payoutsCreatorId === 'all' ? 'font-semibold text-gray-900' : 'text-gray-600'
+                        }`}
+                      >
+                        Todas las creadoras
+                        <span className="ml-2 text-xs text-gray-400">({payouts.length} pagos)</span>
+                      </button>
+                      {creatorsWithPayouts.map((c) => {
+                        const count = payouts.filter((p) => p.creator_id === c.id).length;
+                        const total = payouts
+                          .filter((p) => p.creator_id === c.id)
+                          .reduce((sum, p) => sum + p.amount, 0);
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => { setPayoutsCreatorId(c.id); setShowCreatorPicker(false); }}
+                            className={`flex w-full items-center justify-between border-b border-gray-50 px-4 py-3 text-left text-sm transition-colors last:border-0 hover:bg-gray-50 ${
+                              payoutsCreatorId === c.id ? 'font-semibold text-gray-900' : 'text-gray-700'
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <span className="truncate">{c.name}</span>
+                              {c.instagram_handle && (
+                                <span className="ml-1 text-xs text-gray-400">@{c.instagram_handle}</span>
+                              )}
+                            </div>
+                            <div className="ml-3 shrink-0 text-right">
+                              <span className="text-xs font-medium text-green-600">{formatCOP(total)}</span>
+                              <span className="ml-1 text-xs text-gray-400">· {count}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  )}
+                </div>
+
+                {/* Payout total for selected creator */}
+                {selectedCreator && filteredPayouts.length > 0 && (
+                  <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      {selectedCreator.avatar_url ? (
+                        <img src={selectedCreator.avatar_url} alt={selectedCreator.name} className="h-10 w-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600">
+                          {selectedCreator.name?.[0]?.toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{selectedCreator.name}</p>
+                        <p className="text-xs text-gray-400">{filteredPayouts.length} pagos realizados</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {formatCOP(filteredPayouts.reduce((s, p) => s + p.amount, 0))}
+                      </p>
+                      <p className="text-xs text-gray-400">total pagado</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Payments list */}
+                {loading ? (
+                  <div className="flex justify-center py-16">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
+                  </div>
+                ) : filteredPayouts.length === 0 ? (
+                  <div className="rounded-2xl border border-gray-200 bg-white py-12 text-center shadow-sm">
+                    <History className="mx-auto mb-2 h-8 w-8 text-gray-200" />
+                    <p className="text-sm text-gray-400">
+                      {selectedCreator ? 'Sin pagos para esta creadora.' : 'No hay pagos registrados aún.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredPayouts.map((payout) => {
+                      const creator = creators.find((c) => c.id === payout.creator_id);
+                      return (
+                        <div
+                          key={payout.id}
+                          className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm"
+                        >
+                          {!selectedCreator && (
+                            creator?.avatar_url ? (
+                              <img src={creator.avatar_url} alt={creator.name} className="h-9 w-9 shrink-0 rounded-full object-cover" />
+                            ) : (
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600">
+                                {(creator?.name ?? '?')[0].toUpperCase()}
+                              </div>
+                            )
+                          )}
+                          <div className="min-w-0 flex-1">
+                            {!selectedCreator && (
+                              <p className="truncate text-sm font-medium text-gray-900">
+                                {creator?.name ?? 'Desconocida'}
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-400">
+                              {new Date(payout.created_at).toLocaleDateString('es-CO', {
+                                day: 'numeric', month: 'short', year: 'numeric',
+                              })}
+                              <span className="ml-1 capitalize">· {payout.payout_type}</span>
+                              {payout.notes ? ` · ${payout.notes}` : ''}
+                            </p>
+                          </div>
+                          <p className="shrink-0 text-sm font-semibold text-green-600">
+                            {formatCOP(payout.amount)}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -489,6 +635,16 @@ export default function AdminPage() {
 
         <div className="pb-8" />
       </main>
+
+      {selectedPayoutCreator?.discount_link && (
+        <PayoutModal
+          creatorName={selectedPayoutCreator.name}
+          pendingBalance={selectedPayoutCreator.discount_link.pending_balance}
+          linkId={selectedPayoutCreator.discount_link.id}
+          onClose={() => setSelectedPayoutCreator(null)}
+          onConfirm={registerPayout}
+        />
+      )}
 
       {showResetModal && (
         <ResetPeriodModal
