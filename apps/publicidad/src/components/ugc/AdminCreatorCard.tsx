@@ -14,7 +14,7 @@ import {
   History,
   BadgePercent,
 } from 'lucide-react';
-import type { CreatorWithLink, PayoutRecord } from '@/hooks/useAdminDashboard';
+import type { AttributedOrder, CreatorWithLink, PayoutRecord } from '@/hooks/useAdminDashboard';
 import type { UgcContentAsset, UgcContentTag } from '@/hooks/useUgcContentLibrary';
 import PayoutModal from './PayoutModal';
 import CreateLinkModal from './CreateLinkModal';
@@ -28,6 +28,18 @@ const formatCOP = (n: number) =>
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(n);
+
+const formatOrderDate = (value: string) =>
+  new Date(value).toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+const formatOrderNumber = (value: string | null) => {
+  if (!value) return '—';
+  return value.startsWith('#') ? value : `#${value}`;
+};
 
 const copyToClipboard = async (value: string) => {
   try {
@@ -113,6 +125,37 @@ function Metric({ icon, label, value, tone = 'gray' }: { icon: ReactNode; label:
   );
 }
 
+function AttributedOrdersList({ orders }: { orders: AttributedOrder[] }) {
+  if (orders.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-gray-200 bg-white px-3 py-3 text-center text-[11px] text-gray-400">
+        Sin pedidos atribuidos todavía.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <div className="grid grid-cols-[0.9fr_0.9fr_1fr_1fr] gap-2 border-b border-gray-100 bg-gray-50 px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-wide text-gray-400">
+        <span>Pedido</span>
+        <span>Fecha</span>
+        <span className="text-right">Venta</span>
+        <span className="text-right">Comisión</span>
+      </div>
+      <div className="max-h-44 overflow-y-auto divide-y divide-gray-100">
+        {orders.map((order) => (
+          <div key={order.id} className="grid grid-cols-[0.9fr_0.9fr_1fr_1fr] gap-2 px-2.5 py-2 text-[11px]">
+            <span className="truncate font-semibold text-gray-800">{formatOrderNumber(order.shopify_order_number)}</span>
+            <span className="truncate text-gray-400">{formatOrderDate(order.order_date)}</span>
+            <span className="truncate text-right text-gray-600">{formatCOP(order.order_total)}</span>
+            <span className="truncate text-right font-semibold text-emerald-700">{formatCOP(order.commission_amount)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface AdminCreatorCardProps {
   creator: CreatorWithLink;
   creatorPayouts: PayoutRecord[];
@@ -172,9 +215,11 @@ export default function AdminCreatorCard({
   const [savingRate, setSavingRate] = useState(false);
   const [actionError, setActionError] = useState('');
   const [showPayouts, setShowPayouts] = useState(false);
+  const [showOrders, setShowOrders] = useState(false);
 
   const link = creator.discount_link;
   const shareUrl = link ? `https://ads.dosmicos.com/ugc/${link.redirect_token}` : '';
+  const attributedOrders = link?.attributed_orders ?? [];
 
   const handleCopy = async () => {
     if (!shareUrl) return;
@@ -337,7 +382,7 @@ export default function AdminCreatorCard({
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-1.5 sm:w-56">
+                    <div className="grid grid-cols-3 gap-1.5 sm:w-72">
                       <button
                         type="button"
                         onClick={() => setShowPayoutModal(true)}
@@ -349,16 +394,41 @@ export default function AdminCreatorCard({
                       </button>
                       <button
                         type="button"
+                        onClick={() => setShowOrders((v) => !v)}
+                        className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white px-2 text-[11px] font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
+                        title="Ver pedidos atribuidos"
+                      >
+                        <ShoppingBag className="h-3.5 w-3.5" />
+                        ({attributedOrders.length})
+                        {showOrders ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => setShowPayouts((v) => !v)}
                         className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white px-2 text-[11px] font-medium text-gray-600 hover:border-gray-300 hover:text-gray-900"
+                        title="Ver pagos registrados"
                       >
                         <History className="h-3.5 w-3.5" />
-                        {creatorPayouts.length > 0 ? `(${creatorPayouts.length})` : 'Hist.'}
+                        ({creatorPayouts.length})
                         {showPayouts ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                       </button>
                     </div>
                   </div>
                 </section>
+
+                {showOrders && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between px-1">
+                      <p className="text-[11px] font-semibold text-gray-700">Pedidos atribuidos</p>
+                      {attributedOrders.length > 0 && (
+                        <p className="text-[10px] text-gray-400">
+                          {attributedOrders.length} de {link.total_orders} pedidos
+                        </p>
+                      )}
+                    </div>
+                    <AttributedOrdersList orders={attributedOrders} />
+                  </div>
+                )}
 
                 {showPayouts && (
                   <div className="overflow-hidden rounded-xl border border-gray-200">

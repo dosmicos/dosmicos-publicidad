@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface AttributedOrder {
+  id: string;
+  discount_link_id: string;
+  shopify_order_number: string | null;
+  order_total: number;
+  discount_amount: number;
+  commission_amount: number;
+  order_date: string;
+}
+
 export interface DiscountLink {
   id: string;
   redirect_token: string;
@@ -13,6 +23,7 @@ export interface DiscountLink {
   pending_balance: number;
   is_active: boolean;
   shopify_price_rule_id: string | null;
+  attributed_orders: AttributedOrder[];
 }
 
 export interface CreatorPortalLinkMeta {
@@ -139,6 +150,7 @@ export function useAdminDashboard() {
                   (activeLink.total_commission || 0) - (activeLink.total_paid_out || 0),
                   0
                 )),
+                attributed_orders: [],
               }
             : null,
           portal_link: null,
@@ -148,6 +160,33 @@ export function useAdminDashboard() {
       });
 
       const creatorIds = mapped.map((creator) => creator.id);
+      const discountLinkIds = mapped
+        .map((creator) => creator.discount_link?.id)
+        .filter((id): id is string => Boolean(id));
+
+      if (discountLinkIds.length > 0) {
+        const { data: attributedOrders, error: attributedOrdersError } = await (supabase as any)
+          .from('ugc_attributed_orders')
+          .select('id, discount_link_id, shopify_order_number, order_total, discount_amount, commission_amount, order_date')
+          .eq('organization_id', currentOrgId)
+          .in('discount_link_id', discountLinkIds)
+          .order('order_date', { ascending: false });
+
+        if (attributedOrdersError) throw attributedOrdersError;
+
+        const ordersByLink = new Map<string, AttributedOrder[]>();
+        (attributedOrders || []).forEach((order: AttributedOrder) => {
+          const current = ordersByLink.get(order.discount_link_id) || [];
+          current.push(order);
+          ordersByLink.set(order.discount_link_id, current);
+        });
+
+        mapped.forEach((creator) => {
+          if (creator.discount_link) {
+            creator.discount_link.attributed_orders = ordersByLink.get(creator.discount_link.id) || [];
+          }
+        });
+      }
 
       // 4. Fetch optional Club portal data defensively. If the migration is not
       // applied yet, admin still loads and discount links keep working.
