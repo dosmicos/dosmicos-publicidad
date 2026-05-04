@@ -15,9 +15,11 @@ import {
   BadgePercent,
 } from 'lucide-react';
 import type { CreatorWithLink, PayoutRecord } from '@/hooks/useAdminDashboard';
+import type { UgcContentAsset, UgcContentTag } from '@/hooks/useUgcContentLibrary';
 import PayoutModal from './PayoutModal';
 import CreateLinkModal from './CreateLinkModal';
 import AdminCreatorClubTools from './AdminCreatorClubTools';
+import AdminCreatorContentPanel from './AdminCreatorContentPanel';
 
 const formatCOP = (n: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -124,6 +126,14 @@ interface AdminCreatorCardProps {
   onDeactivateUploadLink: (tokenId: string) => Promise<void>;
   onAddToolkit: (creatorId: string, toolkitUrl: string, label?: string) => Promise<void>;
   onDeactivateToolkit: (toolkitId: string) => Promise<void>;
+  contentAssets: UgcContentAsset[];
+  contentTags: UgcContentTag[];
+  contentLoading: boolean;
+  contentError: string | null;
+  onCreateContentTag: (name: string, color?: string, description?: string | null) => Promise<void>;
+  onAssignContentTag: (videoId: string, tagId: string) => Promise<void>;
+  onRemoveContentTag: (videoId: string, tagId: string) => Promise<void>;
+  onDownloadContentAsset: (asset: UgcContentAsset) => Promise<void>;
 }
 
 export default function AdminCreatorCard({
@@ -139,6 +149,14 @@ export default function AdminCreatorCard({
   onDeactivateUploadLink,
   onAddToolkit,
   onDeactivateToolkit,
+  contentAssets,
+  contentTags,
+  contentLoading,
+  contentError,
+  onCreateContentTag,
+  onAssignContentTag,
+  onRemoveContentTag,
+  onDownloadContentAsset,
 }: AdminCreatorCardProps) {
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState('');
@@ -388,7 +406,7 @@ export default function AdminCreatorCard({
             )}
           </div>
 
-          <div className="min-w-0 lg:col-span-2">
+          <div className="min-w-0 space-y-2 lg:col-span-2">
             <AdminCreatorClubTools
               creator={creator}
               onGenerateClubLink={onGenerateClubLink}
@@ -397,6 +415,16 @@ export default function AdminCreatorCard({
               onDeactivateUploadLink={onDeactivateUploadLink}
               onAddToolkit={onAddToolkit}
               onDeactivateToolkit={onDeactivateToolkit}
+            />
+            <AdminCreatorContentPanel
+              assets={contentAssets}
+              tags={contentTags}
+              loading={contentLoading}
+              error={contentError}
+              onCreateTag={onCreateContentTag}
+              onAssignTag={onAssignContentTag}
+              onRemoveTag={onRemoveContentTag}
+              onDownload={onDownloadContentAsset}
             />
           </div>
         </div>

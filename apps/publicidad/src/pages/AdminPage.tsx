@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LogOut,
@@ -10,15 +10,14 @@ import {
   Search,
   History,
   ChevronDown,
-  Film,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { usePublicRanking } from '@/hooks/usePublicRanking';
+import { useUgcContentLibrary } from '@/hooks/useUgcContentLibrary';
 import AdminCreatorCard from '@/components/ugc/AdminCreatorCard';
 import ResetPeriodModal from '@/components/ugc/ResetPeriodModal';
 import RankingSection from '@/components/ugc/RankingSection';
-import UgcContentLibrary from '@/components/ugc/UgcContentLibrary';
 
 const formatCOP = (n: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -27,7 +26,7 @@ const formatCOP = (n: number) =>
     minimumFractionDigits: 0,
   }).format(n);
 
-type Tab = 'creators' | 'ranking' | 'payouts' | 'content';
+type Tab = 'creators' | 'ranking' | 'payouts';
 type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link' | 'no_club' | 'no_upload';
 
 export default function AdminPage() {
@@ -54,6 +53,17 @@ export default function AdminPage() {
   } = useAdminDashboard();
 
   const { rankingByCommission, loading: rankingLoading } = usePublicRanking('dosmicos');
+  const contentLibrary = useUgcContentLibrary();
+
+  const contentByCreator = useMemo(() => {
+    const byCreator = new Map<string, typeof contentLibrary.assets>();
+    contentLibrary.assets.forEach((asset) => {
+      const current = byCreator.get(asset.creator_id) || [];
+      current.push(asset);
+      byCreator.set(asset.creator_id, current);
+    });
+    return byCreator;
+  }, [contentLibrary.assets]);
 
   const [tab, setTab] = useState<Tab>('creators');
   const [showResetModal, setShowResetModal] = useState(false);
@@ -70,8 +80,11 @@ export default function AdminPage() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
+    try {
+      await Promise.all([refetch(), contentLibrary.refetch({ silent: true })]);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const formattedStartDate = rankingStartedAt
@@ -187,12 +200,11 @@ export default function AdminPage() {
         </section>
 
         {/* Tabs */}
-        <div className="mb-4 grid grid-cols-4 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
+        <div className="mb-4 grid grid-cols-3 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
           {([
             { id: 'creators', icon: Users, label: 'Creadoras' },
             { id: 'ranking', icon: Trophy, label: 'Ranking' },
             { id: 'payouts', icon: History, label: 'Pagos' },
-            { id: 'content', icon: Film, label: 'Contenido' },
           ] as const).map(({ id, icon: Icon, label }) => (
             <button
               key={id}
@@ -293,6 +305,14 @@ export default function AdminPage() {
                     onDeactivateUploadLink={deactivateUploadToken}
                     onAddToolkit={addToolkitAssignment}
                     onDeactivateToolkit={deactivateToolkitAssignment}
+                    contentAssets={contentByCreator.get(creator.id) || []}
+                    contentTags={contentLibrary.tags}
+                    contentLoading={contentLibrary.loading}
+                    contentError={contentLibrary.error}
+                    onCreateContentTag={contentLibrary.createTag}
+                    onAssignContentTag={contentLibrary.assignTag}
+                    onRemoveContentTag={contentLibrary.removeTag}
+                    onDownloadContentAsset={contentLibrary.downloadAsset}
                   />
                 ))}
               </div>
@@ -459,8 +479,6 @@ export default function AdminPage() {
           </section>
         )}
 
-        {/* ── Tab: Contenido ── */}
-        {tab === 'content' && <UgcContentLibrary />}
 
         <div className="pb-8" />
       </main>

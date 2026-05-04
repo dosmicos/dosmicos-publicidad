@@ -20,6 +20,8 @@ interface Props {
   onAssignTag: (videoId: string, tagId: string) => Promise<void>;
   onRemoveTag: (videoId: string, tagId: string) => Promise<void>;
   onDownload: (asset: UgcContentAsset) => Promise<void>;
+  variant?: 'default' | 'compact';
+  hideCreator?: boolean;
 }
 
 const platformLabel: Record<string, string> = {
@@ -107,6 +109,8 @@ export default function UgcContentAssetCard({
   onAssignTag,
   onRemoveTag,
   onDownload,
+  variant = 'default',
+  hideCreator = false,
 }: Props) {
   const { toast } = useToast();
   const [selectedTagId, setSelectedTagId] = useState('');
@@ -122,6 +126,7 @@ export default function UgcContentAssetCard({
   const handle = asset.creator?.instagram_handle;
   const assetUrl = asset.preview_url || asset.video_url || '';
   const publicUrl = asset.video_url || asset.preview_url || '';
+  const isCompact = variant === 'compact';
 
   const handleAssign = async () => {
     if (!selectedTagId) return;
@@ -182,9 +187,9 @@ export default function UgcContentAssetCard({
   };
 
   return (
-    <article className="min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
-      <div className="grid gap-3 sm:grid-cols-[136px_minmax(0,1fr)]">
-        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-gray-100 sm:aspect-[3/4]">
+    <article className={`min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm ${isCompact ? 'p-2' : 'p-3'}`}>
+      <div className={isCompact ? 'grid gap-2 sm:grid-cols-[96px_minmax(0,1fr)]' : 'grid gap-3 sm:grid-cols-[136px_minmax(0,1fr)]'}>
+        <div className={isCompact ? 'relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-gray-100 sm:aspect-square' : 'relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-gray-100 sm:aspect-[3/4]'}>
           {assetUrl ? (
             asset.media_type === 'photo' ? (
               <img
@@ -213,19 +218,29 @@ export default function UgcContentAssetCard({
           </span>
         </div>
 
-        <div className="min-w-0 space-y-2.5">
-          <div className="flex min-w-0 items-start gap-2">
-            <Avatar url={asset.creator?.avatar_url || null} name={creatorName} />
-            <div className="min-w-0 flex-1">
+        <div className={isCompact ? 'min-w-0 space-y-2' : 'min-w-0 space-y-2.5'}>
+          {hideCreator ? (
+            <div className="min-w-0">
               <div className="flex min-w-0 items-center justify-between gap-2">
-                <p className="truncate text-sm font-semibold text-gray-950">{creatorName}</p>
-                <span className="shrink-0 text-[11px] font-medium text-gray-400">{formatDate(asset.created_at)}</span>
+                <p className="truncate text-xs font-semibold text-gray-950">{asset.campaign?.name || 'Sin campaña'}</p>
+                <span className="shrink-0 text-[10px] font-medium text-gray-400">{formatDate(asset.created_at)}</span>
               </div>
-              <p className="truncate text-xs text-gray-400">
-                {handle ? `@${handle}` : 'Sin handle'} · {asset.campaign?.name || 'Sin campaña'}
-              </p>
+              <p className="truncate text-[11px] text-gray-400">{asset.original_filename || (asset.media_type === 'photo' ? 'Foto subida' : 'Video subido')}</p>
             </div>
-          </div>
+          ) : (
+            <div className="flex min-w-0 items-start gap-2">
+              <Avatar url={asset.creator?.avatar_url || null} name={creatorName} />
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-center justify-between gap-2">
+                  <p className="truncate text-sm font-semibold text-gray-950">{creatorName}</p>
+                  <span className="shrink-0 text-[11px] font-medium text-gray-400">{formatDate(asset.created_at)}</span>
+                </div>
+                <p className="truncate text-xs text-gray-400">
+                  {handle ? `@${handle}` : 'Sin handle'} · {asset.campaign?.name || 'Sin campaña'}
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-1.5 text-[11px] font-medium text-gray-500">
             <span className="rounded-full bg-gray-100 px-2 py-0.5">{platformLabel[asset.platform || ''] || asset.platform || 'Sin plataforma'}</span>
@@ -248,7 +263,7 @@ export default function UgcContentAssetCard({
             </div>
           )}
 
-          <div className="space-y-2 rounded-xl border border-gray-100 bg-gray-50 p-2">
+          <div className={isCompact ? 'space-y-1.5 rounded-xl border border-gray-100 bg-gray-50 p-1.5' : 'space-y-2 rounded-xl border border-gray-100 bg-gray-50 p-2'}>
             <div className="flex flex-wrap gap-1.5">
               {asset.tags.length === 0 ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-medium text-gray-400 ring-1 ring-gray-200">
