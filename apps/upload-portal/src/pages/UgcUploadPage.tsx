@@ -79,7 +79,11 @@ function generateId(): string {
 }
 
 function getMediaType(file: File): "video" | "photo" {
-  return file.type.startsWith("image/") ? "photo" : "video";
+  if (file.type.startsWith("image/")) return "photo";
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  return ext && ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(ext)
+    ? "photo"
+    : "video";
 }
 
 // ============================================================
@@ -274,6 +278,12 @@ export default function UgcUploadPage({ token, validation }: Props) {
             p_video_url: urlData.publicUrl,
             p_platform: video.platform,
             p_notes: video.notes || null,
+            p_media_type: video.mediaType,
+            p_original_filename: video.file.name,
+            p_file_size_bytes: video.file.size,
+            p_mime_type: video.file.type || null,
+            p_storage_bucket: bucketName,
+            p_storage_path: fileName,
           }
         );
 
