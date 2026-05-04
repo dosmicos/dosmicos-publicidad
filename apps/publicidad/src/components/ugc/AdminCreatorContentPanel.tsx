@@ -40,6 +40,8 @@ export default function AdminCreatorContentPanel({
   const latest = assets[0];
   const shouldShowBody = expanded || (assets.length > 0 && assets.length <= 2);
 
+  if (assets.length === 0 && !error) return null;
+
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-2 shadow-sm">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

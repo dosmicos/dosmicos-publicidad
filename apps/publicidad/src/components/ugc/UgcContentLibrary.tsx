@@ -51,7 +51,12 @@ function Metric({ icon, label, value }: { icon: ReactNode; label: string; value:
   );
 }
 
-export default function UgcContentLibrary() {
+interface UgcContentLibraryProps {
+  library?: ReturnType<typeof useUgcContentLibrary>;
+}
+
+export default function UgcContentLibrary({ library }: UgcContentLibraryProps) {
+  const ownLibrary = useUgcContentLibrary({ enabled: !library });
   const {
     assets,
     tags,
@@ -63,7 +68,7 @@ export default function UgcContentLibrary() {
     removeTag,
     deleteTag,
     downloadAsset,
-  } = useUgcContentLibrary();
+  } = library || ownLibrary;
 
   const [showTagModal, setShowTagModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);

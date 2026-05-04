@@ -105,11 +105,18 @@ const fallbackFilename = (asset: UgcContentAsset) => {
   return cleaned.includes('.') ? cleaned : `${cleaned}.${extensionForAsset(asset)}`;
 };
 
-export function useUgcContentLibrary() {
+interface UseUgcContentLibraryOptions {
+  enabled?: boolean;
+  includePreviewUrls?: boolean;
+}
+
+export function useUgcContentLibrary(options: UseUgcContentLibraryOptions = {}) {
+  const enabled = options.enabled ?? true;
+  const includePreviewUrls = options.includePreviewUrls ?? true;
   const [assets, setAssets] = useState<UgcContentAsset[]>([]);
   const [tags, setTags] = useState<UgcContentTag[]>([]);
   const [orgId, setOrgId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAll = useCallback(async (options?: { silent?: boolean }) => {
@@ -230,7 +237,7 @@ export function useUgcContentLibrary() {
         assignmentsByVideo.set(assignment.video_id, current);
       });
 
-      const signedPreviewUrls = await getSignedPreviewUrls(baseAssets);
+      const signedPreviewUrls = includePreviewUrls ? await getSignedPreviewUrls(baseAssets) : new Map<string, string>();
 
       setTags(normalizedTags);
       setAssets(baseAssets.map((asset) => ({
@@ -245,11 +252,15 @@ export function useUgcContentLibrary() {
     } finally {
       if (!options?.silent) setLoading(false);
     }
-  }, []);
+  }, [includePreviewUrls]);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     fetchAll();
-  }, [fetchAll]);
+  }, [enabled, fetchAll]);
 
   const createTag = async (name: string, color = '#111827', description?: string | null): Promise<UgcContentTag> => {
     const { data, error: rpcError } = await (supabase as any).rpc('create_ugc_content_tag', {

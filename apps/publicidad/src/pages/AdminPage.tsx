@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LogOut,
@@ -35,6 +35,9 @@ type Tab = 'creators' | 'content' | 'ranking' | 'payouts';
 type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link' | 'no_club' | 'no_upload';
 type PayoutsSubtab = 'pending' | 'history';
 
+const CREATOR_PAGE_SIZE = 30;
+const HISTORY_PAGE_SIZE = 50;
+
 export default function AdminPage() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
@@ -59,17 +62,6 @@ export default function AdminPage() {
   } = useAdminDashboard();
 
   const { rankingByCommission, loading: rankingLoading } = usePublicRanking('dosmicos');
-  const contentLibrary = useUgcContentLibrary();
-
-  const contentByCreator = useMemo(() => {
-    const byCreator = new Map<string, typeof contentLibrary.assets>();
-    contentLibrary.assets.forEach((asset) => {
-      const current = byCreator.get(asset.creator_id) || [];
-      current.push(asset);
-      byCreator.set(asset.creator_id, current);
-    });
-    return byCreator;
-  }, [contentLibrary.assets]);
 
   const [tab, setTab] = useState<Tab>('creators');
   const [showResetModal, setShowResetModal] = useState(false);
@@ -80,6 +72,20 @@ export default function AdminPage() {
   const [payoutsSubtab, setPayoutsSubtab] = useState<PayoutsSubtab>('pending');
   const [selectedPayoutCreator, setSelectedPayoutCreator] = useState<CreatorWithLink | null>(null);
   const [showCreatorPicker, setShowCreatorPicker] = useState(false);
+  const [visibleCreatorCount, setVisibleCreatorCount] = useState(CREATOR_PAGE_SIZE);
+  const [visibleHistoryCount, setVisibleHistoryCount] = useState(HISTORY_PAGE_SIZE);
+
+  const contentLibrary = useUgcContentLibrary({ includePreviewUrls: tab === 'content' });
+
+  const contentByCreator = useMemo(() => {
+    const byCreator = new Map<string, typeof contentLibrary.assets>();
+    contentLibrary.assets.forEach((asset) => {
+      const current = byCreator.get(asset.creator_id) || [];
+      current.push(asset);
+      byCreator.set(asset.creator_id, current);
+    });
+    return byCreator;
+  }, [contentLibrary.assets]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -95,41 +101,100 @@ export default function AdminPage() {
     }
   };
 
+  useEffect(() => {
+    setVisibleCreatorCount(CREATOR_PAGE_SIZE);
+  }, [filter, search]);
+
+  useEffect(() => {
+    setVisibleHistoryCount(HISTORY_PAGE_SIZE);
+  }, [payoutsCreatorId, payoutsSubtab]);
+
   const formattedStartDate = rankingStartedAt
     ? new Intl.DateTimeFormat('es-CO', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(rankingStartedAt))
     : '—';
 
-  const filteredCreators = creators.filter((c) => {
-    const matchesSearch =
-      !search ||
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      (c.instagram_handle || '').toLowerCase().includes(search.toLowerCase());
-    if (!matchesSearch) return false;
-    if (filter === 'with_balance') return (c.discount_link?.pending_balance ?? 0) > 0;
-    if (filter === 'with_link') return !!c.discount_link;
-    if (filter === 'no_link') return !c.discount_link;
-    if (filter === 'no_club') return !c.portal_link;
-    if (filter === 'no_upload') return !c.upload_token;
-    return true;
-  });
+  const creatorsById = useMemo(() => new Map(creators.map((creator) => [creator.id, creator])), [creators]);
 
-  const totalPendingBalance = creators.reduce(
+  const payoutsByCreator = useMemo(() => {
+    const grouped = new Map<string, typeof payouts>();
+    payouts.forEach((payout) => {
+      const current = grouped.get(payout.creator_id) || [];
+      current.push(payout);
+      grouped.set(payout.creator_id, current);
+    });
+    return grouped;
+  }, [payouts]);
+
+  const payoutStatsByCreator = useMemo(() => {
+    const stats = new Map<string, { count: number; total: number }>();
+    payoutsByCreator.forEach((creatorPayouts, creatorId) => {
+      stats.set(creatorId, {
+        count: creatorPayouts.length,
+        total: creatorPayouts.reduce((sum, payout) => sum + payout.amount, 0),
+      });
+    });
+    return stats;
+  }, [payoutsByCreator]);
+
+  const filteredCreators = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return creators.filter((c) => {
+      const matchesSearch =
+        !query ||
+        c.name.toLowerCase().includes(query) ||
+        (c.instagram_handle || '').toLowerCase().includes(query);
+      if (!matchesSearch) return false;
+      if (filter === 'with_balance') return (c.discount_link?.pending_balance ?? 0) > 0;
+      if (filter === 'with_link') return !!c.discount_link;
+      if (filter === 'no_link') return !c.discount_link;
+      if (filter === 'no_club') return !c.portal_link;
+      if (filter === 'no_upload') return !c.upload_token;
+      return true;
+    });
+  }, [creators, filter, search]);
+
+  const visibleCreators = useMemo(
+    () => filteredCreators.slice(0, visibleCreatorCount),
+    [filteredCreators, visibleCreatorCount]
+  );
+
+  const totalPendingBalance = useMemo(() => creators.reduce(
     (sum, c) => sum + (c.discount_link?.pending_balance ?? 0),
     0
-  );
-  const creatorsWithBalance = creators.filter((c) => (c.discount_link?.pending_balance ?? 0) > 0).length;
-  const pendingPayoutCreators = [...creators]
-    .filter((c) => (c.discount_link?.pending_balance ?? 0) > 0)
-    .sort((a, b) => (b.discount_link?.pending_balance ?? 0) - (a.discount_link?.pending_balance ?? 0));
-  const totalPaidHistory = payouts.reduce((sum, payout) => sum + payout.amount, 0);
+  ), [creators]);
 
-  // Payouts tab: filtered by selected creator
-  const creatorsWithPayouts = creators.filter((c) => payouts.some((p) => p.creator_id === c.id));
-  const filteredPayouts = payoutsCreatorId === 'all'
-    ? payouts
-    : payouts.filter((p) => p.creator_id === payoutsCreatorId);
+  const creatorsWithBalance = useMemo(
+    () => creators.filter((c) => (c.discount_link?.pending_balance ?? 0) > 0).length,
+    [creators]
+  );
+
+  const pendingPayoutCreators = useMemo(() => [...creators]
+    .filter((c) => (c.discount_link?.pending_balance ?? 0) > 0)
+    .sort((a, b) => (b.discount_link?.pending_balance ?? 0) - (a.discount_link?.pending_balance ?? 0)), [creators]);
+
+  const totalPaidHistory = useMemo(
+    () => payouts.reduce((sum, payout) => sum + payout.amount, 0),
+    [payouts]
+  );
+
+  const creatorsWithPayouts = useMemo(
+    () => creators.filter((c) => payoutStatsByCreator.has(c.id)),
+    [creators, payoutStatsByCreator]
+  );
+
+  const filteredPayouts = useMemo(() => (
+    payoutsCreatorId === 'all'
+      ? payouts
+      : payoutsByCreator.get(payoutsCreatorId) || []
+  ), [payouts, payoutsByCreator, payoutsCreatorId]);
+
+  const visiblePayouts = useMemo(
+    () => filteredPayouts.slice(0, visibleHistoryCount),
+    [filteredPayouts, visibleHistoryCount]
+  );
+
   const selectedCreator = payoutsCreatorId !== 'all'
-    ? creators.find((c) => c.id === payoutsCreatorId)
+    ? creatorsById.get(payoutsCreatorId)
     : null;
 
   return (
@@ -303,11 +368,11 @@ export default function AdminPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {filteredCreators.map((creator) => (
+                {visibleCreators.map((creator) => (
                   <AdminCreatorCard
                     key={creator.id}
                     creator={creator}
-                    creatorPayouts={payouts.filter((p) => p.creator_id === creator.id)}
+                    creatorPayouts={payoutsByCreator.get(creator.id) || []}
                     onRegisterPayout={registerPayout}
                     onCreateLink={createDiscountLink}
                     onDeleteLink={deleteDiscountLink}
@@ -329,13 +394,22 @@ export default function AdminPage() {
                     onDownloadContentAsset={contentLibrary.downloadAsset}
                   />
                 ))}
+                {visibleCreatorCount < filteredCreators.length && (
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCreatorCount((count) => count + CREATOR_PAGE_SIZE)}
+                    className="h-10 w-full rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-600 transition hover:bg-gray-50 hover:text-gray-950"
+                  >
+                    Mostrar {Math.min(CREATOR_PAGE_SIZE, filteredCreators.length - visibleCreatorCount)} más · {visibleCreatorCount} de {filteredCreators.length}
+                  </button>
+                )}
               </div>
             )}
           </section>
         )}
 
         {/* ── Tab: Contenido ── */}
-        {tab === 'content' && <UgcContentLibrary />}
+        {tab === 'content' && <UgcContentLibrary library={contentLibrary} />}
 
         {/* ── Tab: Ranking ── */}
         {tab === 'ranking' && (
@@ -424,7 +498,7 @@ export default function AdminPage() {
                 ) : (
                   pendingPayoutCreators.map((creator) => {
                     const link = creator.discount_link;
-                    const creatorPayouts = payouts.filter((p) => p.creator_id === creator.id);
+                    const creatorPayouts = payoutsByCreator.get(creator.id) || [];
                     return (
                       <article
                         key={creator.id}
@@ -520,10 +594,9 @@ export default function AdminPage() {
                         <span className="ml-2 text-xs text-gray-400">({payouts.length} pagos)</span>
                       </button>
                       {creatorsWithPayouts.map((c) => {
-                        const count = payouts.filter((p) => p.creator_id === c.id).length;
-                        const total = payouts
-                          .filter((p) => p.creator_id === c.id)
-                          .reduce((sum, p) => sum + p.amount, 0);
+                        const stats = payoutStatsByCreator.get(c.id) || { count: 0, total: 0 };
+                        const count = stats.count;
+                        const total = stats.total;
                         return (
                           <button
                             key={c.id}
@@ -589,8 +662,8 @@ export default function AdminPage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {filteredPayouts.map((payout) => {
-                      const creator = creators.find((c) => c.id === payout.creator_id);
+                    {visiblePayouts.map((payout) => {
+                      const creator = creatorsById.get(payout.creator_id);
                       return (
                         <div
                           key={payout.id}
@@ -625,6 +698,15 @@ export default function AdminPage() {
                         </div>
                       );
                     })}
+                    {visibleHistoryCount < filteredPayouts.length && (
+                      <button
+                        type="button"
+                        onClick={() => setVisibleHistoryCount((count) => count + HISTORY_PAGE_SIZE)}
+                        className="h-10 w-full rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-600 transition hover:bg-gray-50 hover:text-gray-950"
+                      >
+                        Mostrar {Math.min(HISTORY_PAGE_SIZE, filteredPayouts.length - visibleHistoryCount)} pagos más · {visibleHistoryCount} de {filteredPayouts.length}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
