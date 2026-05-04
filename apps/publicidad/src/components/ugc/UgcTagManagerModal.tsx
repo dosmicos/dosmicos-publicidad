@@ -6,7 +6,7 @@ interface UgcTagManagerModalProps {
   open: boolean;
   tags: UgcContentTag[];
   onClose: () => void;
-  onCreateTag: (name: string, color: string, description?: string | null) => Promise<void>;
+  onCreateTag: (name: string, color: string, description?: string | null) => Promise<UgcContentTag | void>;
 }
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;

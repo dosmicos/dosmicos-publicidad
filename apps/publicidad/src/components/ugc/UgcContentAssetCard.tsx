@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type MouseEvent } from 'react';
 import {
   Check,
   Copy,
@@ -19,6 +19,7 @@ interface Props {
   tags: UgcContentTag[];
   onAssignTag: (videoId: string, tagId: string) => Promise<void>;
   onRemoveTag: (videoId: string, tagId: string) => Promise<void>;
+  onCreateTag?: (name: string, color?: string, description?: string | null) => Promise<UgcContentTag | void>;
   onDownload: (asset: UgcContentAsset) => Promise<void>;
   variant?: 'default' | 'compact';
   hideCreator?: boolean;
@@ -108,12 +109,15 @@ export default function UgcContentAssetCard({
   tags,
   onAssignTag,
   onRemoveTag,
+  onCreateTag,
   onDownload,
   variant = 'default',
   hideCreator = false,
 }: Props) {
   const { toast } = useToast();
   const [selectedTagId, setSelectedTagId] = useState('');
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#111827');
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -127,6 +131,10 @@ export default function UgcContentAssetCard({
   const assetUrl = asset.preview_url || asset.video_url || '';
   const publicUrl = asset.video_url || asset.preview_url || '';
   const isCompact = variant === 'compact';
+  const cleanNewTagName = newTagName.trim();
+  const existingTagForNewName = cleanNewTagName
+    ? availableTags.find((tag) => tag.name.trim().toLowerCase() === cleanNewTagName.toLowerCase())
+    : undefined;
 
   const handleAssign = async () => {
     if (!selectedTagId) return;
@@ -139,6 +147,40 @@ export default function UgcContentAssetCard({
       toast({ title: 'No se pudo agregar', description: err?.message, variant: 'destructive' });
     } finally {
       setBusyAction(null);
+    }
+  };
+
+  const handleCreateAndAssign = async () => {
+    if (!cleanNewTagName) return;
+    setBusyAction('create-tag');
+    try {
+      const tag = existingTagForNewName || await onCreateTag?.(cleanNewTagName, newTagColor, null);
+      if (!tag?.id) throw new Error('No se recibió el ID de la etiqueta creada.');
+
+      await onAssignTag(asset.id, tag.id);
+      setNewTagName('');
+      setNewTagColor('#111827');
+      toast({ title: existingTagForNewName ? 'Etiqueta agregada' : 'Etiqueta creada y agregada' });
+    } catch (err: any) {
+      const message = err?.message || 'No se pudo crear/agregar la etiqueta.';
+      toast({
+        title: 'No se pudo etiquetar',
+        description: message.toLowerCase().includes('authorized') ? 'Tu usuario no tiene permiso para crear etiquetas UGC.' : message,
+        variant: 'destructive',
+      });
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const handleVideoClick = (event: MouseEvent<HTMLVideoElement>) => {
+    const video = event.currentTarget;
+    if (video.paused) {
+      void video.play().catch(() => {
+        toast({ title: 'No se pudo reproducir', description: 'Intenta usar el botón de play del video.', variant: 'destructive' });
+      });
+    } else {
+      video.pause();
     }
   };
 
@@ -202,8 +244,10 @@ export default function UgcContentAssetCard({
               <video
                 src={assetUrl}
                 controls
+                playsInline
                 preload="metadata"
-                className="h-full w-full bg-black object-contain"
+                onClick={handleVideoClick}
+                className="h-full w-full cursor-pointer bg-black object-contain"
               />
             )
           ) : (
@@ -300,7 +344,7 @@ export default function UgcContentAssetCard({
                 disabled={availableTags.length === 0 || busyAction === 'assign'}
                 className="min-w-0 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 outline-none disabled:text-gray-400"
               >
-                <option value="">{availableTags.length === 0 ? 'Sin etiquetas disponibles' : 'Agregar etiqueta'}</option>
+                <option value="">{availableTags.length === 0 ? 'No hay etiquetas libres' : 'Agregar etiqueta existente'}</option>
                 {availableTags.map((tag) => (
                   <option key={tag.id} value={tag.id}>{tag.name}</option>
                 ))}
@@ -315,6 +359,41 @@ export default function UgcContentAssetCard({
                 Agregar
               </button>
             </div>
+
+            {onCreateTag && (
+              <div className="grid grid-cols-[minmax(0,1fr)_34px_auto] gap-1.5">
+                <input
+                  type="text"
+                  value={newTagName}
+                  onChange={(event) => setNewTagName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      void handleCreateAndAssign();
+                    }
+                  }}
+                  placeholder="Crear etiqueta aquí..."
+                  className="min-w-0 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-medium text-gray-700 outline-none placeholder:text-gray-400 focus:border-gray-950"
+                />
+                <input
+                  type="color"
+                  value={newTagColor}
+                  onChange={(event) => setNewTagColor(event.target.value)}
+                  disabled={busyAction === 'create-tag'}
+                  aria-label="Color de etiqueta"
+                  className="h-[31px] w-[34px] rounded-lg border border-gray-200 bg-white p-0.5 disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateAndAssign}
+                  disabled={!cleanNewTagName || busyAction === 'create-tag'}
+                  className="inline-flex items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-40"
+                >
+                  {busyAction === 'create-tag' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                  {existingTagForNewName ? 'Usar' : 'Crear'}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-3 gap-1.5">

@@ -9,7 +9,7 @@ interface Props {
   tags: UgcContentTag[];
   loading: boolean;
   error: string | null;
-  onCreateTag: (name: string, color?: string, description?: string | null) => Promise<void>;
+  onCreateTag: (name: string, color?: string, description?: string | null) => Promise<UgcContentTag | void>;
   onAssignTag: (videoId: string, tagId: string) => Promise<void>;
   onRemoveTag: (videoId: string, tagId: string) => Promise<void>;
   onDownload: (asset: UgcContentAsset) => Promise<void>;
@@ -123,6 +123,7 @@ export default function AdminCreatorContentPanel({
               hideCreator
               onAssignTag={onAssignTag}
               onRemoveTag={onRemoveTag}
+              onCreateTag={onCreateTag}
               onDownload={onDownload}
             />
           ))}

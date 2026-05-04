@@ -47,6 +47,14 @@ interface UgcVideoTagAssignmentRow {
 const normalizeMediaType = (value: unknown): 'video' | 'photo' =>
   value === 'photo' ? 'photo' : 'video';
 
+const normalizeTag = (tag: any): UgcContentTag => ({
+  id: tag.id,
+  name: tag.name,
+  color: tag.color || '#111827',
+  description: tag.description ?? null,
+  is_active: Boolean(tag.is_active ?? true),
+});
+
 async function getSignedPreviewUrls(assets: UgcContentAsset[]) {
   const signedByKey = new Map<string, string>();
   const groups = new Map<string, UgcContentAsset[]>();
@@ -132,13 +140,7 @@ export function useUgcContentLibrary() {
 
       if (tagsError) throw tagsError;
 
-      const normalizedTags: UgcContentTag[] = (tagRows || []).map((tag: any) => ({
-        id: tag.id,
-        name: tag.name,
-        color: tag.color || '#111827',
-        description: tag.description ?? null,
-        is_active: Boolean(tag.is_active),
-      }));
+      const normalizedTags: UgcContentTag[] = (tagRows || []).map(normalizeTag);
 
       const { data: videoRows, error: videosError } = await (supabase as any)
         .from('ugc_videos')
@@ -249,14 +251,20 @@ export function useUgcContentLibrary() {
     fetchAll();
   }, [fetchAll]);
 
-  const createTag = async (name: string, color = '#111827', description?: string | null) => {
-    const { error: rpcError } = await (supabase as any).rpc('create_ugc_content_tag', {
+  const createTag = async (name: string, color = '#111827', description?: string | null): Promise<UgcContentTag> => {
+    const { data, error: rpcError } = await (supabase as any).rpc('create_ugc_content_tag', {
       p_name: name,
       p_color: color,
       p_description: description || null,
     });
     if (rpcError) throw rpcError;
+
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row?.id) throw new Error('La etiqueta se creó, pero Supabase no devolvió el ID. Actualiza e inténtalo de nuevo.');
+
+    const createdTag = normalizeTag(row);
     await fetchAll({ silent: true });
+    return createdTag;
   };
 
   const assignTag = async (videoId: string, tagId: string) => {

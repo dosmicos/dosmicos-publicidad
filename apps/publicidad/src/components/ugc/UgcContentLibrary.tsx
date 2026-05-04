@@ -290,6 +290,7 @@ export default function UgcContentLibrary() {
               tags={tags}
               onAssignTag={assignTag}
               onRemoveTag={removeTag}
+              onCreateTag={createTag}
               onDownload={downloadAsset}
             />
           ))}
