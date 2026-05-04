@@ -131,7 +131,7 @@ interface AdminCreatorCardProps {
   contentLoading: boolean;
   contentError: string | null;
   onCreateContentTag: (name: string, color?: string, description?: string | null) => Promise<UgcContentTag | void>;
-  onAssignContentTag: (videoId: string, tagId: string) => Promise<void>;
+  onAssignContentTag: (videoId: string, tagId: string, tag?: UgcContentTag) => Promise<void>;
   onRemoveContentTag: (videoId: string, tagId: string) => Promise<void>;
   onDownloadContentAsset: (asset: UgcContentAsset) => Promise<void>;
 }

@@ -10,7 +10,7 @@ interface Props {
   loading: boolean;
   error: string | null;
   onCreateTag: (name: string, color?: string, description?: string | null) => Promise<UgcContentTag | void>;
-  onAssignTag: (videoId: string, tagId: string) => Promise<void>;
+  onAssignTag: (videoId: string, tagId: string, tag?: UgcContentTag) => Promise<void>;
   onRemoveTag: (videoId: string, tagId: string) => Promise<void>;
   onDownload: (asset: UgcContentAsset) => Promise<void>;
 }

@@ -263,26 +263,64 @@ export function useUgcContentLibrary() {
     if (!row?.id) throw new Error('La etiqueta se creó, pero Supabase no devolvió el ID. Actualiza e inténtalo de nuevo.');
 
     const createdTag = normalizeTag(row);
-    await fetchAll({ silent: true });
+    setTags((current) => {
+      const withoutDuplicate = current.filter((tag) => tag.id !== createdTag.id);
+      return [...withoutDuplicate, createdTag].sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    });
     return createdTag;
   };
 
-  const assignTag = async (videoId: string, tagId: string) => {
+  const assignTag = async (videoId: string, tagId: string, tagOverride?: UgcContentTag) => {
+    const tagToApply = tagOverride || tags.find((tag) => tag.id === tagId);
+
+    if (tagToApply) {
+      setAssets((current) => current.map((asset) => {
+        if (asset.id !== videoId || asset.tags.some((tag) => tag.id === tagId)) return asset;
+        return { ...asset, tags: [...asset.tags, tagToApply] };
+      }));
+    }
+
     const { error: rpcError } = await (supabase as any).rpc('assign_ugc_content_tag', {
       p_video_id: videoId,
       p_tag_id: tagId,
     });
-    if (rpcError) throw rpcError;
-    await fetchAll({ silent: true });
+
+    if (rpcError) {
+      if (tagToApply) {
+        setAssets((current) => current.map((asset) => (
+          asset.id === videoId
+            ? { ...asset, tags: asset.tags.filter((tag) => tag.id !== tagId) }
+            : asset
+        )));
+      }
+      throw rpcError;
+    }
   };
 
   const removeTag = async (videoId: string, tagId: string) => {
+    const assetBeforeChange = assets.find((asset) => asset.id === videoId);
+    const removedTag = assetBeforeChange?.tags.find((tag) => tag.id === tagId);
+
+    setAssets((current) => current.map((asset) => (
+      asset.id === videoId
+        ? { ...asset, tags: asset.tags.filter((tag) => tag.id !== tagId) }
+        : asset
+    )));
+
     const { error: rpcError } = await (supabase as any).rpc('remove_ugc_content_tag', {
       p_video_id: videoId,
       p_tag_id: tagId,
     });
-    if (rpcError) throw rpcError;
-    await fetchAll({ silent: true });
+
+    if (rpcError) {
+      if (removedTag) {
+        setAssets((current) => current.map((asset) => {
+          if (asset.id !== videoId || asset.tags.some((tag) => tag.id === tagId)) return asset;
+          return { ...asset, tags: [...asset.tags, removedTag] };
+        }));
+      }
+      throw rpcError;
+    }
   };
 
   const downloadAsset = async (asset: UgcContentAsset) => {

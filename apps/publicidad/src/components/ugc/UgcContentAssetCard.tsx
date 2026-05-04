@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 interface Props {
   asset: UgcContentAsset;
   tags: UgcContentTag[];
-  onAssignTag: (videoId: string, tagId: string) => Promise<void>;
+  onAssignTag: (videoId: string, tagId: string, tag?: UgcContentTag) => Promise<void>;
   onRemoveTag: (videoId: string, tagId: string) => Promise<void>;
   onCreateTag?: (name: string, color?: string, description?: string | null) => Promise<UgcContentTag | void>;
   onDownload: (asset: UgcContentAsset) => Promise<void>;
@@ -161,7 +161,7 @@ export default function UgcContentAssetCard({
       const tag = existingTagForNewName || await onCreateTag?.(cleanNewTagName, newTagColor, null);
       if (!tag?.id) throw new Error('No se recibió el ID de la etiqueta creada.');
 
-      await onAssignTag(asset.id, tag.id);
+      await onAssignTag(asset.id, tag.id, tag);
       setNewTagName('');
       setNewTagColor('#111827');
       toast({ title: existingTagForNewName ? 'Etiqueta agregada' : 'Etiqueta creada y agregada' });
