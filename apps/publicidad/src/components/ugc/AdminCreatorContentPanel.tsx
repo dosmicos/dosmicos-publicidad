@@ -38,7 +38,7 @@ export default function AdminCreatorContentPanel({
   }), [assets]);
 
   const latest = assets[0];
-  const shouldShowBody = expanded || (assets.length > 0 && assets.length <= 2);
+  const shouldShowBody = expanded;
 
   if (assets.length === 0 && !error) return null;
 
