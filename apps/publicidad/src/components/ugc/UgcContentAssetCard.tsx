@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Check,
   Copy,
@@ -7,8 +7,6 @@ import {
   FileImage,
   FileVideo,
   Loader2,
-  Pause,
-  Play,
   Plus,
   Tag,
   X,
@@ -117,13 +115,11 @@ export default function UgcContentAssetCard({
   hideCreator = false,
 }: Props) {
   const { toast } = useToast();
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [selectedTagId, setSelectedTagId] = useState('');
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#111827');
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
 
   const availableTags = useMemo(
     () => tags.filter((tag) => !asset.tags.some((current) => current.id === tag.id)),
@@ -174,27 +170,6 @@ export default function UgcContentAssetCard({
       });
     } finally {
       setBusyAction(null);
-    }
-  };
-
-  const toggleVideoPlayback = async () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    try {
-      if (video.paused) {
-        await video.play();
-        setIsPlaying(true);
-      } else {
-        video.pause();
-        setIsPlaying(false);
-      }
-    } catch {
-      toast({
-        title: 'No se pudo reproducir aquí',
-        description: 'Usa Abrir o Descargar; algunos videos del celular no se reproducen directo en el navegador.',
-        variant: 'destructive',
-      });
     }
   };
 
@@ -257,38 +232,12 @@ export default function UgcContentAssetCard({
             ) : (
               <>
                 <video
-                  ref={videoRef}
                   src={assetUrl}
                   controls
                   playsInline
                   preload="metadata"
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                  onEnded={() => setIsPlaying(false)}
                   className="h-full w-full cursor-pointer bg-black object-contain"
                 />
-                {!isPlaying && (
-                  <button
-                    type="button"
-                    onClick={() => void toggleVideoPlayback()}
-                    className="absolute inset-0 z-10 flex items-center justify-center bg-black/10 transition hover:bg-black/20"
-                    aria-label="Reproducir video"
-                  >
-                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-gray-950 shadow-lg ring-1 ring-black/10">
-                      <Play className="ml-0.5 h-5 w-5 fill-current" />
-                    </span>
-                  </button>
-                )}
-                {isPlaying && (
-                  <button
-                    type="button"
-                    onClick={() => void toggleVideoPlayback()}
-                    className="absolute right-2 bottom-2 z-10 hidden h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur transition hover:bg-black/70 sm:inline-flex"
-                    aria-label="Pausar video"
-                  >
-                    <Pause className="h-3.5 w-3.5 fill-current" />
-                  </button>
-                )}
               </>
             )
           ) : (

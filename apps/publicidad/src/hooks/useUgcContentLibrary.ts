@@ -105,6 +105,20 @@ const fallbackFilename = (asset: UgcContentAsset) => {
   return cleaned.includes('.') ? cleaned : `${cleaned}.${extensionForAsset(asset)}`;
 };
 
+const inferStorageFromUrl = (value: string | null | undefined): { bucket: string; path: string } | null => {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    const match = url.pathname.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+)$/);
+    if (!match) return null;
+    const bucket = decodeURIComponent(match[1] || '');
+    const path = decodeURIComponent(match[2] || '');
+    return bucket && path ? { bucket, path } : null;
+  } catch {
+    return null;
+  }
+};
+
 interface UseUgcContentLibraryOptions {
   enabled?: boolean;
   includePreviewUrls?: boolean;
@@ -183,35 +197,38 @@ export function useUgcContentLibrary(options: UseUgcContentLibraryOptions = {}) 
 
       if (videosError) throw videosError;
 
-      const baseAssets: UgcContentAsset[] = (videoRows || []).map((row: any) => ({
-        id: row.id,
-        creator_id: row.creator_id,
-        campaign_id: row.campaign_id ?? null,
-        organization_id: row.organization_id,
-        video_url: row.video_url ?? null,
-        status: row.status || 'pendiente',
-        platform: row.platform ?? null,
-        feedback: row.feedback ?? null,
-        created_at: row.created_at,
-        media_type: normalizeMediaType(row.media_type),
-        original_filename: row.original_filename ?? null,
-        file_size_bytes: typeof row.file_size_bytes === 'number' ? row.file_size_bytes : row.file_size_bytes ? Number(row.file_size_bytes) : null,
-        mime_type: row.mime_type ?? null,
-        storage_bucket: row.storage_bucket ?? null,
-        storage_path: row.storage_path ?? null,
-        preview_url: null,
-        creator: row.creator ? {
-          id: row.creator.id,
-          name: row.creator.name,
-          instagram_handle: row.creator.instagram_handle ?? null,
-          avatar_url: row.creator.avatar_url ?? null,
-        } : null,
-        campaign: row.campaign ? {
-          id: row.campaign.id,
-          name: row.campaign.name,
-        } : null,
-        tags: [],
-      }));
+      const baseAssets: UgcContentAsset[] = (videoRows || []).map((row: any) => {
+        const inferredStorage = inferStorageFromUrl(row.video_url ?? null);
+        return {
+          id: row.id,
+          creator_id: row.creator_id,
+          campaign_id: row.campaign_id ?? null,
+          organization_id: row.organization_id,
+          video_url: row.video_url ?? null,
+          status: row.status || 'pendiente',
+          platform: row.platform ?? null,
+          feedback: row.feedback ?? null,
+          created_at: row.created_at,
+          media_type: normalizeMediaType(row.media_type),
+          original_filename: row.original_filename ?? null,
+          file_size_bytes: typeof row.file_size_bytes === 'number' ? row.file_size_bytes : row.file_size_bytes ? Number(row.file_size_bytes) : null,
+          mime_type: row.mime_type ?? null,
+          storage_bucket: row.storage_bucket ?? inferredStorage?.bucket ?? null,
+          storage_path: row.storage_path ?? inferredStorage?.path ?? null,
+          preview_url: null,
+          creator: row.creator ? {
+            id: row.creator.id,
+            name: row.creator.name,
+            instagram_handle: row.creator.instagram_handle ?? null,
+            avatar_url: row.creator.avatar_url ?? null,
+          } : null,
+          campaign: row.campaign ? {
+            id: row.campaign.id,
+            name: row.campaign.name,
+          } : null,
+          tags: [],
+        };
+      });
 
       const videoIds = baseAssets.map((asset) => asset.id);
       let assignments: UgcVideoTagAssignmentRow[] = [];
