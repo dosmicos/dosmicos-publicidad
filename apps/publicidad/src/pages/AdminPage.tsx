@@ -13,6 +13,7 @@ import {
   Film,
   Wallet,
   CheckCircle,
+  Lightbulb,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminDashboard, type CreatorWithLink } from '@/hooks/useAdminDashboard';
@@ -33,6 +34,7 @@ const formatCOP = (n: number) =>
 
 type Tab = 'creators' | 'content' | 'ranking' | 'payouts';
 type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link' | 'no_club' | 'no_upload';
+type CreatorIdeaFilter = 'all' | 'none' | string;
 type PayoutsSubtab = 'pending' | 'history';
 
 const CREATOR_PAGE_SIZE = 30;
@@ -68,6 +70,7 @@ export default function AdminPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<CreatorFilter>('all');
+  const [ideaFilter, setIdeaFilter] = useState<CreatorIdeaFilter>('all');
   const [payoutsCreatorId, setPayoutsCreatorId] = useState<string>('all');
   const [payoutsSubtab, setPayoutsSubtab] = useState<PayoutsSubtab>('pending');
   const [selectedPayoutCreator, setSelectedPayoutCreator] = useState<CreatorWithLink | null>(null);
@@ -103,7 +106,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     setVisibleCreatorCount(CREATOR_PAGE_SIZE);
-  }, [filter, search]);
+  }, [filter, ideaFilter, search]);
 
   useEffect(() => {
     setVisibleHistoryCount(HISTORY_PAGE_SIZE);
@@ -136,6 +139,21 @@ export default function AdminPage() {
     return stats;
   }, [payoutsByCreator]);
 
+  const ideaFilterOptions = useMemo(() => {
+    const options = new Map<string, number>();
+    creators.forEach((creator) => {
+      (creator.toolkits || []).forEach((toolkit) => {
+        const label = (toolkit.label || 'Idea de contenido').trim();
+        if (!label) return;
+        options.set(label, (options.get(label) || 0) + 1);
+      });
+    });
+
+    return [...options.entries()]
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'es', { numeric: true, sensitivity: 'base' }));
+  }, [creators]);
+
   const filteredCreators = useMemo(() => {
     const query = search.trim().toLowerCase();
     return creators.filter((c) => {
@@ -144,14 +162,23 @@ export default function AdminPage() {
         c.name.toLowerCase().includes(query) ||
         (c.instagram_handle || '').toLowerCase().includes(query);
       if (!matchesSearch) return false;
-      if (filter === 'with_balance') return (c.discount_link?.pending_balance ?? 0) > 0;
-      if (filter === 'with_link') return !!c.discount_link;
-      if (filter === 'no_link') return !c.discount_link;
-      if (filter === 'no_club') return !c.portal_link;
-      if (filter === 'no_upload') return !c.upload_token;
+      const matchesStatusFilter =
+        filter === 'all' ||
+        (filter === 'with_balance' && (c.discount_link?.pending_balance ?? 0) > 0) ||
+        (filter === 'with_link' && !!c.discount_link) ||
+        (filter === 'no_link' && !c.discount_link) ||
+        (filter === 'no_club' && !c.portal_link) ||
+        (filter === 'no_upload' && !c.upload_token);
+      if (!matchesStatusFilter) return false;
+
+      if (ideaFilter === 'none') return (c.toolkits?.length ?? 0) === 0;
+      if (ideaFilter !== 'all') {
+        return (c.toolkits || []).some((toolkit) => (toolkit.label || 'Idea de contenido').trim() === ideaFilter);
+      }
+
       return true;
     });
-  }, [creators, filter, search]);
+  }, [creators, filter, ideaFilter, search]);
 
   const visibleCreators = useMemo(
     () => filteredCreators.slice(0, visibleCreatorCount),
@@ -304,7 +331,7 @@ export default function AdminPage() {
         {tab === 'creators' && (
           <section className="space-y-3">
             <div className="rounded-2xl border border-gray-200 bg-white p-2.5 shadow-sm sm:p-3">
-              <div className="grid gap-3 lg:grid-cols-[minmax(280px,1fr)_auto] lg:items-center">
+              <div className="grid gap-2 lg:grid-cols-[minmax(220px,1fr)_auto_minmax(210px,260px)] lg:items-center">
                 <div className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
                   <Search className="h-4 w-4 shrink-0 text-gray-400" />
                   <input
@@ -338,6 +365,21 @@ export default function AdminPage() {
                     </button>
                   ))}
                 </div>
+                <label className="flex h-10 min-w-0 items-center gap-2 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-amber-900">
+                  <Lightbulb className="h-4 w-4 shrink-0 text-amber-500" />
+                  <select
+                    value={ideaFilter}
+                    onChange={(event) => setIdeaFilter(event.target.value)}
+                    className="min-w-0 flex-1 bg-transparent text-xs font-semibold outline-none"
+                    title="Filtrar por idea asignada"
+                  >
+                    <option value="all">Todas las ideas</option>
+                    <option value="none">Sin ideas asignadas</option>
+                    {ideaFilterOptions.map(({ label, count }) => (
+                      <option key={label} value={label}>{label} ({count})</option>
+                    ))}
+                  </select>
+                </label>
               </div>
               <p className="mt-3 text-xs font-medium text-gray-400">
                 Mostrando {filteredCreators.length} de {creators.length} creadora{creators.length === 1 ? '' : 's'}.
@@ -363,7 +405,7 @@ export default function AdminPage() {
               <div className="text-center py-12">
                 <Users className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                 <p className="text-gray-400 text-sm">
-                  {search || filter !== 'all' ? 'Sin resultados.' : 'No hay creadoras registradas.'}
+                  {search || filter !== 'all' || ideaFilter !== 'all' ? 'Sin resultados.' : 'No hay creadoras registradas.'}
                 </p>
               </div>
             ) : (
