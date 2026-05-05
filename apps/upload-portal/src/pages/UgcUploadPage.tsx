@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import * as tus from "tus-js-client";
-import { supabase } from "@/lib/supabase";
+import { SUPABASE_ANON_KEY, SUPABASE_URL, supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -220,11 +220,11 @@ export default function UgcUploadPage({ token, validation }: Props) {
         // Upload file using TUS resumable protocol
         await new Promise<void>((resolve, reject) => {
           const upload = new tus.Upload(video.file, {
-            endpoint: `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/upload/resumable`,
+            endpoint: `${SUPABASE_URL}/storage/v1/upload/resumable`,
             retryDelays: [0, 1000, 3000, 5000],
             headers: {
-              authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-              apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+              authorization: `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`,
+              apikey: SUPABASE_ANON_KEY,
             },
             uploadDataDuringCreation: true,
             removeFingerprintOnSuccess: true,
