@@ -218,7 +218,7 @@ export default function AdminCreatorCard({
   const [showOrders, setShowOrders] = useState(false);
 
   const link = creator.discount_link;
-  const shareUrl = link ? `https://ads.dosmicos.com/ugc/${link.redirect_token}` : '';
+  const shareUrl = link ? `https://club.dosmicos.com/ugc/${link.redirect_token}` : '';
   const attributedOrders = link?.attributed_orders ?? [];
 
   const handleCopy = async () => {
