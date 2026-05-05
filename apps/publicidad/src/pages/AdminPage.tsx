@@ -34,7 +34,7 @@ const formatCOP = (n: number) =>
 
 type Tab = 'creators' | 'content' | 'ranking' | 'payouts';
 type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link' | 'no_club' | 'no_upload';
-type CreatorIdeaFilter = 'all' | 'none' | string;
+type CreatorIdeaFilter = 'all' | 'with' | 'none' | string;
 type PayoutsSubtab = 'pending' | 'history';
 
 const CREATOR_PAGE_SIZE = 30;
@@ -78,7 +78,7 @@ export default function AdminPage() {
   const [visibleCreatorCount, setVisibleCreatorCount] = useState(CREATOR_PAGE_SIZE);
   const [visibleHistoryCount, setVisibleHistoryCount] = useState(HISTORY_PAGE_SIZE);
 
-  const contentLibrary = useUgcContentLibrary({ includePreviewUrls: tab === 'content' });
+  const contentLibrary = useUgcContentLibrary({ includePreviewUrls: true });
 
   const contentByCreator = useMemo(() => {
     const byCreator = new Map<string, typeof contentLibrary.assets>();
@@ -142,16 +142,26 @@ export default function AdminPage() {
   const ideaFilterOptions = useMemo(() => {
     const options = new Map<string, number>();
     creators.forEach((creator) => {
+      const creatorIdeaLabels = new Set<string>();
       (creator.toolkits || []).forEach((toolkit) => {
         const label = (toolkit.label || 'Idea de contenido').trim();
         if (!label) return;
-        options.set(label, (options.get(label) || 0) + 1);
+        creatorIdeaLabels.add(label);
       });
+      creatorIdeaLabels.forEach((label) => options.set(label, (options.get(label) || 0) + 1));
     });
 
     return [...options.entries()]
       .map(([label, count]) => ({ label, count }))
       .sort((a, b) => a.label.localeCompare(b.label, 'es', { numeric: true, sensitivity: 'base' }));
+  }, [creators]);
+
+  const ideaFilterStats = useMemo(() => {
+    const withIdeas = creators.filter((creator) => (creator.toolkits?.length ?? 0) > 0).length;
+    return {
+      withIdeas,
+      withoutIdeas: creators.length - withIdeas,
+    };
   }, [creators]);
 
   const filteredCreators = useMemo(() => {
@@ -171,9 +181,12 @@ export default function AdminPage() {
         (filter === 'no_upload' && !c.upload_token);
       if (!matchesStatusFilter) return false;
 
-      if (ideaFilter === 'none') return (c.toolkits?.length ?? 0) === 0;
-      if (ideaFilter !== 'all') {
-        return (c.toolkits || []).some((toolkit) => (toolkit.label || 'Idea de contenido').trim() === ideaFilter);
+      const assignedIdeaCount = c.toolkits?.length ?? 0;
+      if (ideaFilter === 'with') return assignedIdeaCount > 0;
+      if (ideaFilter === 'none') return assignedIdeaCount === 0;
+      if (ideaFilter.startsWith('idea:')) {
+        const selectedIdea = ideaFilter.slice('idea:'.length);
+        return (c.toolkits || []).some((toolkit) => (toolkit.label || 'Idea de contenido').trim() === selectedIdea);
       }
 
       return true;
@@ -374,9 +387,10 @@ export default function AdminPage() {
                     title="Filtrar por idea asignada"
                   >
                     <option value="all">Todas las ideas</option>
-                    <option value="none">Sin ideas asignadas</option>
+                    <option value="with">Con ideas asignadas ({ideaFilterStats.withIdeas})</option>
+                    <option value="none">Sin ideas asignadas ({ideaFilterStats.withoutIdeas})</option>
                     {ideaFilterOptions.map(({ label, count }) => (
-                      <option key={label} value={label}>{label} ({count})</option>
+                      <option key={label} value={`idea:${label}`}>{label} ({count})</option>
                     ))}
                   </select>
                 </label>

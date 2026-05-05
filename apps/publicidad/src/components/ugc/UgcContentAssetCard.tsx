@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type MouseEvent } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   Check,
   Copy,
@@ -190,13 +190,12 @@ export default function UgcContentAssetCard({
         setIsPlaying(false);
       }
     } catch {
-      toast({ title: 'No se pudo reproducir', description: 'Intenta usar el botón de play del video.', variant: 'destructive' });
+      toast({
+        title: 'No se pudo reproducir aquí',
+        description: 'Usa Abrir o Descargar; algunos videos del celular no se reproducen directo en el navegador.',
+        variant: 'destructive',
+      });
     }
-  };
-
-  const handleVideoClick = (event: MouseEvent<HTMLVideoElement>) => {
-    event.preventDefault();
-    void toggleVideoPlayback();
   };
 
   const handleRemove = async (tagId: string) => {
@@ -263,7 +262,6 @@ export default function UgcContentAssetCard({
                   controls
                   playsInline
                   preload="metadata"
-                  onClick={handleVideoClick}
                   onPlay={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
                   onEnded={() => setIsPlaying(false)}
