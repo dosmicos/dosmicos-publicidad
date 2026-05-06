@@ -251,13 +251,11 @@ export default function UgcUploadPage({ token, validation }: Props) {
             },
           });
 
-          // Check for previous uploads to resume
-          upload.findPreviousUploads().then((previousUploads) => {
-            if (previousUploads.length > 0) {
-              upload.resumeFromPreviousUpload(previousUploads[0]);
-            }
-            upload.start();
-          });
+          // Do not resume browser-cached TUS uploads here.
+          // The objectName includes Date.now(), so resuming a previous upload can
+          // store the file under an old objectName while the DB row is saved with
+          // the new objectName, leaving admin preview/download pointing to 404.
+          upload.start();
         });
 
         setVideoQueue((prev) =>
