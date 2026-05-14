@@ -119,6 +119,15 @@ const inferStorageFromUrl = (value: string | null | undefined): { bucket: string
   }
 };
 
+const isSupabasePublicObjectUrl = (value: string | null | undefined): boolean => {
+  if (!value) return false;
+  try {
+    return new URL(value).pathname.includes('/storage/v1/object/public/');
+  } catch {
+    return false;
+  }
+};
+
 interface UseUgcContentLibraryOptions {
   enabled?: boolean;
   includePreviewUrls?: boolean;
@@ -257,13 +266,21 @@ export function useUgcContentLibrary(options: UseUgcContentLibraryOptions = {}) 
       const signedPreviewUrls = includePreviewUrls ? await getSignedPreviewUrls(baseAssets) : new Map<string, string>();
 
       setTags(normalizedTags);
-      setAssets(baseAssets.map((asset) => ({
-        ...asset,
-        preview_url: asset.storage_bucket && asset.storage_path
-          ? signedPreviewUrls.get(`${asset.storage_bucket}:${asset.storage_path}`) || asset.video_url
-          : asset.video_url,
-        tags: assignmentsByVideo.get(asset.id) || [],
-      })));
+      setAssets(baseAssets.map((asset) => {
+        const signedPreviewUrl = asset.storage_bucket && asset.storage_path
+          ? signedPreviewUrls.get(`${asset.storage_bucket}:${asset.storage_path}`) || null
+          : null;
+        const stablePublicUrl = isSupabasePublicObjectUrl(asset.video_url) ? asset.video_url : null;
+
+        return {
+          ...asset,
+          // Prefer the stored public Storage URL when available. Signed URLs expire
+          // after one hour; if the admin tab stays open, photo previews become
+          // broken images even though the uploaded object still exists.
+          preview_url: stablePublicUrl || signedPreviewUrl || asset.video_url,
+          tags: assignmentsByVideo.get(asset.id) || [],
+        };
+      }));
     } catch (err: any) {
       setError(err?.message || 'Error al cargar biblioteca de contenido');
     } finally {

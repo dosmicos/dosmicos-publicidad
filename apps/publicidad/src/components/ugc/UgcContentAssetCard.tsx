@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Check,
   Copy,
@@ -120,6 +120,7 @@ export default function UgcContentAssetCard({
   const [newTagColor, setNewTagColor] = useState('#111827');
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [previewFailed, setPreviewFailed] = useState(false);
 
   const availableTags = useMemo(
     () => tags.filter((tag) => !asset.tags.some((current) => current.id === tag.id)),
@@ -128,13 +129,19 @@ export default function UgcContentAssetCard({
 
   const creatorName = asset.creator?.name || 'Creadora desconocida';
   const handle = asset.creator?.instagram_handle;
-  const assetUrl = asset.preview_url || asset.video_url || '';
+  const primaryAssetUrl = asset.preview_url || asset.video_url || '';
+  const fallbackAssetUrl = asset.video_url && asset.video_url !== primaryAssetUrl ? asset.video_url : '';
+  const assetUrl = previewFailed ? fallbackAssetUrl : primaryAssetUrl;
   const publicUrl = asset.video_url || asset.preview_url || '';
   const isCompact = variant === 'compact';
   const cleanNewTagName = newTagName.trim();
   const existingTagForNewName = cleanNewTagName
     ? availableTags.find((tag) => tag.name.trim().toLowerCase() === cleanNewTagName.toLowerCase())
     : undefined;
+
+  useEffect(() => {
+    setPreviewFailed(false);
+  }, [asset.id, asset.preview_url, asset.video_url]);
 
   const handleAssign = async () => {
     if (!selectedTagId) return;
@@ -228,6 +235,13 @@ export default function UgcContentAssetCard({
                 alt={asset.original_filename || `UGC ${creatorName}`}
                 className="h-full w-full object-cover"
                 loading="lazy"
+                onError={() => {
+                  if (!previewFailed && fallbackAssetUrl) {
+                    setPreviewFailed(true);
+                    return;
+                  }
+                  setPreviewFailed(true);
+                }}
               />
             ) : (
               <>
