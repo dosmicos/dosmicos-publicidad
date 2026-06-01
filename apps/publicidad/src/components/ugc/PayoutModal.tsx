@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Wallet } from 'lucide-react';
+import { X, Wallet, Copy, Check, KeyRound } from 'lucide-react';
 
 const formatCOP = (n: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -15,6 +15,7 @@ interface PayoutModalProps {
   creatorName: string;
   pendingBalance: number;
   linkId: string;
+  breB?: string | null;
   onClose: () => void;
   onConfirm: (linkId: string, amount: number) => Promise<void>;
 }
@@ -23,6 +24,7 @@ export default function PayoutModal({
   creatorName,
   pendingBalance,
   linkId,
+  breB,
   onClose,
   onConfirm,
 }: PayoutModalProps) {
@@ -30,6 +32,24 @@ export default function PayoutModal({
   const [amount, setAmount] = useState(payableBalance.toString());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [copiedBreB, setCopiedBreB] = useState(false);
+  const [copyError, setCopyError] = useState(false);
+
+  const trimmedBreB = breB?.trim() ?? '';
+  const hasBreB = trimmedBreB.length > 0;
+
+  const handleCopyBreB = async () => {
+    if (!hasBreB) return;
+    try {
+      await navigator.clipboard.writeText(trimmedBreB);
+      setCopiedBreB(true);
+      setCopyError(false);
+      setTimeout(() => setCopiedBreB(false), 2000);
+    } catch {
+      setCopyError(true);
+      setTimeout(() => setCopyError(false), 3000);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +99,41 @@ export default function PayoutModal({
           <p className="text-gray-500 text-xs mb-0.5">Saldo disponible</p>
           <p className="text-green-700 text-xl font-bold">{formatCOP(payableBalance)}</p>
         </div>
+
+        {/* Llave Bre-B */}
+        {hasBreB ? (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5">
+              <KeyRound className="h-4 w-4 text-gray-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-gray-400 text-[10px] uppercase tracking-wide leading-tight">Llave Bre-B</p>
+                <p className="text-gray-900 text-sm font-mono truncate">{trimmedBreB}</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopyBreB}
+                className="shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+                title="Copiar llave Bre-B"
+              >
+                {copiedBreB ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            {copyError && (
+              <p className="text-amber-600 text-xs mt-1.5">
+                No se pudo copiar — selecciona el texto manualmente.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5">
+            <KeyRound className="h-4 w-4 text-gray-300 shrink-0" />
+            <p className="text-gray-400 text-xs">Sin llave Bre-B registrada</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

@@ -779,6 +779,7 @@ export default function AdminPage() {
           creatorName={selectedPayoutCreator.name}
           pendingBalance={selectedPayoutCreator.discount_link.pending_balance}
           linkId={selectedPayoutCreator.discount_link.id}
+          breB={selectedPayoutCreator.bre_b}
           onClose={() => setSelectedPayoutCreator(null)}
           onConfirm={registerPayout}
         />

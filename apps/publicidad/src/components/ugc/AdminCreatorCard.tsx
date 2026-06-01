@@ -508,6 +508,7 @@ export default function AdminCreatorCard({
           creatorName={creator.name}
           pendingBalance={link.pending_balance}
           linkId={link.id}
+          breB={creator.bre_b}
           onClose={() => setShowPayoutModal(false)}
           onConfirm={onRegisterPayout}
         />

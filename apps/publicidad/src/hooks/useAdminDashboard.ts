@@ -59,6 +59,7 @@ export interface CreatorWithLink {
   name: string;
   instagram_handle: string;
   avatar_url: string | null;
+  bre_b: string | null;
   discount_link: DiscountLink | null;
   portal_link?: CreatorPortalLinkMeta | null;
   upload_token?: CreatorUploadTokenMeta | null;
@@ -117,6 +118,7 @@ export function useAdminDashboard() {
           name,
           instagram_handle,
           avatar_url,
+          bre_b,
           ugc_discount_links!ugc_discount_links_creator_id_fkey (
             id,
             redirect_token,
@@ -143,6 +145,7 @@ export function useAdminDashboard() {
           name: c.name,
           instagram_handle: c.instagram_handle,
           avatar_url: c.avatar_url,
+          bre_b: c.bre_b ?? null,
           discount_link: activeLink
             ? {
                 ...activeLink,
