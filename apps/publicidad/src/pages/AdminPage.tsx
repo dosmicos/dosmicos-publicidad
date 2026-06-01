@@ -14,6 +14,7 @@ import {
   Wallet,
   CheckCircle,
   Lightbulb,
+  KeyRound,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminDashboard, type CreatorWithLink } from '@/hooks/useAdminDashboard';
@@ -572,6 +573,17 @@ export default function AdminPage() {
                             <p className="truncate text-sm font-semibold text-gray-950">{creator.name}</p>
                             {creator.instagram_handle && (
                               <p className="truncate text-xs text-gray-400">@{creator.instagram_handle}</p>
+                            )}
+                            {creator.bre_b?.trim() ? (
+                              <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                                <KeyRound className="h-2.5 w-2.5 shrink-0" />
+                                <span className="truncate">{creator.bre_b.trim()}</span>
+                              </span>
+                            ) : (
+                              <span className="mt-1 inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                                <KeyRound className="h-2.5 w-2.5 shrink-0" />
+                                Sin llave Bre-B
+                              </span>
                             )}
                           </div>
                         </div>

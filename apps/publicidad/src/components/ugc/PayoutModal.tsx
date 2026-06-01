@@ -107,7 +107,7 @@ export default function PayoutModal({
               <KeyRound className="h-4 w-4 text-gray-400 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-gray-400 text-[10px] uppercase tracking-wide leading-tight">Llave Bre-B</p>
-                <p className="text-gray-900 text-sm font-mono truncate">{trimmedBreB}</p>
+                <p className="text-gray-900 text-base font-semibold tracking-wide truncate">{trimmedBreB}</p>
               </div>
               <button
                 type="button"
