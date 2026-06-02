@@ -227,7 +227,16 @@ export default function UgcContentAssetCard({
                 src={assetUrl}
                 alt={asset.original_filename || `UGC ${creatorName}`}
                 className="h-full w-full object-cover"
-                loading="lazy"
+                decoding="async"
+                onError={(event) => {
+                  // El bucket es público: si la URL firmada falla o expira,
+                  // caemos a la URL pública (video_url) que no caduca.
+                  const el = event.currentTarget;
+                  const fallback = asset.video_url || '';
+                  if (fallback && el.src !== fallback) {
+                    el.src = fallback;
+                  }
+                }}
               />
             ) : (
               <>
