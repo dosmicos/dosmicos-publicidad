@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import LoginPage from '@/pages/LoginPage';
 import UgcDashboardPage from '@/pages/UgcDashboardPage';
 import CreatorPortalPage from '@/pages/CreatorPortalPage';
+import ContentBriefPage from '@/pages/ContentBriefPage';
 import AdminPage from '@/pages/AdminPage';
 
 const LoadingScreen = () => (
@@ -43,6 +44,7 @@ function AppRoutes() {
       {/* Public routes */}
       <Route path="/" element={<UgcDashboardPage />} />
       <Route path="/c/:token" element={<CreatorPortalPage />} />
+      <Route path="/ideas/:slug" element={<ContentBriefPage />} />
       <Route path="/login" element={user ? <Navigate to="/admin" replace /> : <LoginPage />} />
 
       {/* Protected admin route */}
