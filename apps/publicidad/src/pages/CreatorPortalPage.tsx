@@ -280,7 +280,7 @@ export default function CreatorPortalPage() {
           {upload?.is_active && upload?.upload_url ? (
             <div className="space-y-3">
               <p className="text-gray-600 text-sm leading-relaxed">
-                Sube videos editados y sin editar cuando aplique. Mantén videos verticales de 15–30 segundos y buena calidad.
+                Puedes subir fotos y videos. Comparte las fotos que tomes con los productos y los videos que hagas: videos verticales de 15–30 segundos y buena calidad.
               </p>
               <a href={upload.upload_url} className="block w-full rounded-xl bg-gray-900 text-white text-sm font-medium text-center py-3.5 hover:bg-gray-700 transition-colors">
                 Subir contenido
