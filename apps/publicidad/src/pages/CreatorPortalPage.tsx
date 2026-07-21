@@ -229,8 +229,8 @@ export default function CreatorPortalPage() {
       <header className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-100">
         <div className="max-w-lg mx-auto px-5 h-14 flex items-center justify-center relative">
           <img src="/logo-dosmicos.png" alt="Dosmicos" className="h-8 object-contain" />
-          <Link to="/" className="absolute right-5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
-            Ranking
+          <Link to="/login" className="absolute right-5 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            Admin
           </Link>
         </div>
       </header>
