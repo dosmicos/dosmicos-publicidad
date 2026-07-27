@@ -15,11 +15,8 @@ import {
   BadgePercent,
 } from 'lucide-react';
 import type { AttributedOrder, CreatorWithLink, PayoutRecord } from '@/hooks/useAdminDashboard';
-import type { UgcContentAsset, UgcContentTag } from '@/hooks/useUgcContentLibrary';
 import PayoutModal from './PayoutModal';
 import CreateLinkModal from './CreateLinkModal';
-import AdminCreatorClubTools from './AdminCreatorClubTools';
-import AdminCreatorContentPanel from './AdminCreatorContentPanel';
 
 const formatCOP = (n: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -104,9 +101,12 @@ function Avatar({ url, name }: { url: string | null; name: string }) {
   );
 }
 
-function StatusBadge({ active, children }: { active: boolean; children: ReactNode }) {
+function StatusBadge({ active, title, children }: { active: boolean; title?: string; children: ReactNode }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+    <span
+      title={title}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}
+    >
       <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-emerald-500' : 'bg-gray-300'}`} />
       {children}
     </span>
@@ -163,21 +163,6 @@ interface AdminCreatorCardProps {
   onCreateLink: (creatorId: string, discountValue: number, commissionRate: number) => Promise<void>;
   onDeleteLink: (linkId: string) => Promise<void>;
   onUpdateCommission: (linkId: string, rate: number) => Promise<void>;
-  onGenerateClubLink: (creatorId: string) => Promise<string | undefined>;
-  onRevokeClubLink: (creatorId: string) => Promise<void>;
-  onGenerateUploadLink: (creatorId: string) => Promise<string | undefined>;
-  onDeactivateUploadLink: (tokenId: string) => Promise<void>;
-  onAddToolkit: (creatorId: string, toolkitUrl: string, label?: string) => Promise<void>;
-  onDeactivateToolkit: (toolkitId: string) => Promise<void>;
-  contentAssets: UgcContentAsset[];
-  contentTags: UgcContentTag[];
-  contentLoading: boolean;
-  contentError: string | null;
-  onCreateContentTag: (name: string, color?: string, description?: string | null) => Promise<UgcContentTag | void>;
-  onDeleteContentTag?: (tagId: string) => Promise<void>;
-  onAssignContentTag: (videoId: string, tagId: string, tag?: UgcContentTag) => Promise<void>;
-  onRemoveContentTag: (videoId: string, tagId: string) => Promise<void>;
-  onDownloadContentAsset: (asset: UgcContentAsset) => Promise<void>;
 }
 
 export default function AdminCreatorCard({
@@ -187,21 +172,6 @@ export default function AdminCreatorCard({
   onCreateLink,
   onDeleteLink,
   onUpdateCommission,
-  onGenerateClubLink,
-  onRevokeClubLink,
-  onGenerateUploadLink,
-  onDeactivateUploadLink,
-  onAddToolkit,
-  onDeactivateToolkit,
-  contentAssets,
-  contentTags,
-  contentLoading,
-  contentError,
-  onCreateContentTag,
-  onDeleteContentTag,
-  onAssignContentTag,
-  onRemoveContentTag,
-  onDownloadContentAsset,
 }: AdminCreatorCardProps) {
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState('');
@@ -220,6 +190,7 @@ export default function AdminCreatorCard({
   const link = creator.discount_link;
   const shareUrl = link ? `https://club.dosmicos.com/ugc/${link.redirect_token}` : '';
   const attributedOrders = link?.attributed_orders ?? [];
+  const ideaCount = creator.toolkits?.length ?? 0;
 
   const handleCopy = async () => {
     if (!shareUrl) return;
@@ -287,10 +258,27 @@ export default function AdminCreatorCard({
                 )}
               </div>
               <div className="mt-1.5 flex flex-wrap gap-1">
-                <StatusBadge active={!!link}>Descuento</StatusBadge>
-                <StatusBadge active={!!creator.portal_link}>Club</StatusBadge>
-                <StatusBadge active={!!creator.upload_token}>Upload</StatusBadge>
-                <StatusBadge active={(creator.toolkits?.length ?? 0) > 0}>{creator.toolkits?.length ?? 0} ideas</StatusBadge>
+                <StatusBadge active={!!link} title={link ? 'Descuento clientes activo' : 'Sin descuento clientes'}>
+                  Descuento
+                </StatusBadge>
+                <StatusBadge
+                  active={!!creator.portal_link}
+                  title={creator.portal_link ? 'Link del Club activo' : 'Sin link del Club'}
+                >
+                  Club
+                </StatusBadge>
+                <StatusBadge
+                  active={!!creator.upload_token}
+                  title={creator.upload_token ? 'Link de upload activo' : 'Sin link de upload'}
+                >
+                  Upload
+                </StatusBadge>
+                <StatusBadge
+                  active={ideaCount > 0}
+                  title={ideaCount > 0 ? `${ideaCount} idea${ideaCount === 1 ? '' : 's'} asignada${ideaCount === 1 ? '' : 's'}` : 'Sin ideas asignadas'}
+                >
+                  {ideaCount} idea{ideaCount === 1 ? '' : 's'}
+                </StatusBadge>
               </div>
             </div>
           </header>
@@ -476,29 +464,6 @@ export default function AdminCreatorCard({
             {actionError && (
               <p className="rounded-xl border border-red-100 bg-red-50 px-2.5 py-2 text-[11px] text-red-600">{actionError}</p>
             )}
-          </div>
-
-          <div className="min-w-0 space-y-2 lg:col-span-2">
-            <AdminCreatorClubTools
-              creator={creator}
-              onGenerateClubLink={onGenerateClubLink}
-              onRevokeClubLink={onRevokeClubLink}
-              onGenerateUploadLink={onGenerateUploadLink}
-              onDeactivateUploadLink={onDeactivateUploadLink}
-              onAddToolkit={onAddToolkit}
-              onDeactivateToolkit={onDeactivateToolkit}
-            />
-            <AdminCreatorContentPanel
-              assets={contentAssets}
-              tags={contentTags}
-              loading={contentLoading}
-              error={contentError}
-              onCreateTag={onCreateContentTag}
-              onDeleteTag={onDeleteContentTag}
-              onAssignTag={onAssignContentTag}
-              onRemoveTag={onRemoveContentTag}
-              onDownload={onDownloadContentAsset}
-            />
           </div>
         </div>
       </article>

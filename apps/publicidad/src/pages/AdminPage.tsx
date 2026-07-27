@@ -10,18 +10,14 @@ import {
   Search,
   History,
   ChevronDown,
-  Film,
   Wallet,
   CheckCircle,
-  Lightbulb,
   KeyRound,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminDashboard, type CreatorWithLink } from '@/hooks/useAdminDashboard';
 import { usePublicRanking } from '@/hooks/usePublicRanking';
-import { useUgcContentLibrary } from '@/hooks/useUgcContentLibrary';
 import AdminCreatorCard from '@/components/ugc/AdminCreatorCard';
-import UgcContentLibrary from '@/components/ugc/UgcContentLibrary';
 import PayoutModal from '@/components/ugc/PayoutModal';
 import ResetPeriodModal from '@/components/ugc/ResetPeriodModal';
 import RankingSection from '@/components/ugc/RankingSection';
@@ -33,9 +29,8 @@ const formatCOP = (n: number) =>
     minimumFractionDigits: 0,
   }).format(n);
 
-type Tab = 'creators' | 'content' | 'ranking' | 'payouts';
-type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link' | 'no_club' | 'no_upload';
-type CreatorIdeaFilter = 'all' | 'with' | 'none' | string;
+type Tab = 'creators' | 'ranking' | 'payouts';
+type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link';
 type PayoutsSubtab = 'pending' | 'history';
 
 const CREATOR_PAGE_SIZE = 30;
@@ -56,12 +51,6 @@ export default function AdminPage() {
     createDiscountLink,
     deleteDiscountLink,
     updateCommissionRate,
-    generateClubPortalLink,
-    revokeClubPortalLink,
-    generateUploadToken,
-    deactivateUploadToken,
-    addToolkitAssignment,
-    deactivateToolkitAssignment,
   } = useAdminDashboard();
 
   const { rankingByCommission, loading: rankingLoading } = usePublicRanking('dosmicos');
@@ -71,25 +60,12 @@ export default function AdminPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<CreatorFilter>('all');
-  const [ideaFilter, setIdeaFilter] = useState<CreatorIdeaFilter>('all');
   const [payoutsCreatorId, setPayoutsCreatorId] = useState<string>('all');
   const [payoutsSubtab, setPayoutsSubtab] = useState<PayoutsSubtab>('pending');
   const [selectedPayoutCreator, setSelectedPayoutCreator] = useState<CreatorWithLink | null>(null);
   const [showCreatorPicker, setShowCreatorPicker] = useState(false);
   const [visibleCreatorCount, setVisibleCreatorCount] = useState(CREATOR_PAGE_SIZE);
   const [visibleHistoryCount, setVisibleHistoryCount] = useState(HISTORY_PAGE_SIZE);
-
-  const contentLibrary = useUgcContentLibrary({ includePreviewUrls: true });
-
-  const contentByCreator = useMemo(() => {
-    const byCreator = new Map<string, typeof contentLibrary.assets>();
-    contentLibrary.assets.forEach((asset) => {
-      const current = byCreator.get(asset.creator_id) || [];
-      current.push(asset);
-      byCreator.set(asset.creator_id, current);
-    });
-    return byCreator;
-  }, [contentLibrary.assets]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -99,7 +75,7 @@ export default function AdminPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([refetch(), contentLibrary.refetch({ silent: true })]);
+      await refetch();
     } finally {
       setRefreshing(false);
     }
@@ -107,7 +83,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     setVisibleCreatorCount(CREATOR_PAGE_SIZE);
-  }, [filter, ideaFilter, search]);
+  }, [filter, search]);
 
   useEffect(() => {
     setVisibleHistoryCount(HISTORY_PAGE_SIZE);
@@ -140,31 +116,6 @@ export default function AdminPage() {
     return stats;
   }, [payoutsByCreator]);
 
-  const ideaFilterOptions = useMemo(() => {
-    const options = new Map<string, number>();
-    creators.forEach((creator) => {
-      const creatorIdeaLabels = new Set<string>();
-      (creator.toolkits || []).forEach((toolkit) => {
-        const label = (toolkit.label || 'Idea de contenido').trim();
-        if (!label) return;
-        creatorIdeaLabels.add(label);
-      });
-      creatorIdeaLabels.forEach((label) => options.set(label, (options.get(label) || 0) + 1));
-    });
-
-    return [...options.entries()]
-      .map(([label, count]) => ({ label, count }))
-      .sort((a, b) => a.label.localeCompare(b.label, 'es', { numeric: true, sensitivity: 'base' }));
-  }, [creators]);
-
-  const ideaFilterStats = useMemo(() => {
-    const withIdeas = creators.filter((creator) => (creator.toolkits?.length ?? 0) > 0).length;
-    return {
-      withIdeas,
-      withoutIdeas: creators.length - withIdeas,
-    };
-  }, [creators]);
-
   const filteredCreators = useMemo(() => {
     const query = search.trim().toLowerCase();
     return creators.filter((c) => {
@@ -173,26 +124,15 @@ export default function AdminPage() {
         c.name.toLowerCase().includes(query) ||
         (c.instagram_handle || '').toLowerCase().includes(query);
       if (!matchesSearch) return false;
-      const matchesStatusFilter =
+
+      return (
         filter === 'all' ||
         (filter === 'with_balance' && (c.discount_link?.pending_balance ?? 0) > 0) ||
         (filter === 'with_link' && !!c.discount_link) ||
-        (filter === 'no_link' && !c.discount_link) ||
-        (filter === 'no_club' && !c.portal_link) ||
-        (filter === 'no_upload' && !c.upload_token);
-      if (!matchesStatusFilter) return false;
-
-      const assignedIdeaCount = c.toolkits?.length ?? 0;
-      if (ideaFilter === 'with') return assignedIdeaCount > 0;
-      if (ideaFilter === 'none') return assignedIdeaCount === 0;
-      if (ideaFilter.startsWith('idea:')) {
-        const selectedIdea = ideaFilter.slice('idea:'.length);
-        return (c.toolkits || []).some((toolkit) => (toolkit.label || 'Idea de contenido').trim() === selectedIdea);
-      }
-
-      return true;
+        (filter === 'no_link' && !c.discount_link)
+      );
     });
-  }, [creators, filter, ideaFilter, search]);
+  }, [creators, filter, search]);
 
   const visibleCreators = useMemo(
     () => filteredCreators.slice(0, visibleCreatorCount),
@@ -318,10 +258,9 @@ export default function AdminPage() {
         </section>
 
         {/* Tabs */}
-        <div className="mb-4 grid grid-cols-4 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
+        <div className="mb-4 grid grid-cols-3 rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
           {([
             { id: 'creators', icon: Users, label: 'Creadoras' },
-            { id: 'content', icon: Film, label: 'Contenido' },
             { id: 'ranking', icon: Trophy, label: 'Ranking' },
             { id: 'payouts', icon: History, label: 'Pagos' },
           ] as const).map(({ id, icon: Icon, label }) => (
@@ -345,7 +284,7 @@ export default function AdminPage() {
         {tab === 'creators' && (
           <section className="space-y-3">
             <div className="rounded-2xl border border-gray-200 bg-white p-2.5 shadow-sm sm:p-3">
-              <div className="grid gap-2 lg:grid-cols-[minmax(220px,1fr)_auto_minmax(210px,260px)] lg:items-center">
+              <div className="grid gap-2 lg:grid-cols-[minmax(220px,1fr)_auto] lg:items-center">
                 <div className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
                   <Search className="h-4 w-4 shrink-0 text-gray-400" />
                   <input
@@ -362,8 +301,6 @@ export default function AdminPage() {
                     { id: 'with_link', label: 'Con descuento' },
                     { id: 'with_balance', label: 'Con saldo' },
                     { id: 'no_link', label: 'Sin descuento' },
-                    { id: 'no_club', label: 'Sin Club' },
-                    { id: 'no_upload', label: 'Sin upload' },
                   ] as const).map(({ id, label }) => (
                     <button
                       key={id}
@@ -379,22 +316,6 @@ export default function AdminPage() {
                     </button>
                   ))}
                 </div>
-                <label className="flex h-10 min-w-0 items-center gap-2 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-amber-900">
-                  <Lightbulb className="h-4 w-4 shrink-0 text-amber-500" />
-                  <select
-                    value={ideaFilter}
-                    onChange={(event) => setIdeaFilter(event.target.value)}
-                    className="min-w-0 flex-1 bg-transparent text-xs font-semibold outline-none"
-                    title="Filtrar por idea asignada"
-                  >
-                    <option value="all">Todas las ideas</option>
-                    <option value="with">Con ideas asignadas ({ideaFilterStats.withIdeas})</option>
-                    <option value="none">Sin ideas asignadas ({ideaFilterStats.withoutIdeas})</option>
-                    {ideaFilterOptions.map(({ label, count }) => (
-                      <option key={label} value={`idea:${label}`}>{label} ({count})</option>
-                    ))}
-                  </select>
-                </label>
               </div>
               <p className="mt-3 text-xs font-medium text-gray-400">
                 Mostrando {filteredCreators.length} de {creators.length} creadora{creators.length === 1 ? '' : 's'}.
@@ -420,7 +341,7 @@ export default function AdminPage() {
               <div className="text-center py-12">
                 <Users className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                 <p className="text-gray-400 text-sm">
-                  {search || filter !== 'all' || ideaFilter !== 'all' ? 'Sin resultados.' : 'No hay creadoras registradas.'}
+                  {search || filter !== 'all' ? 'Sin resultados.' : 'No hay creadoras registradas.'}
                 </p>
               </div>
             ) : (
@@ -434,21 +355,6 @@ export default function AdminPage() {
                     onCreateLink={createDiscountLink}
                     onDeleteLink={deleteDiscountLink}
                     onUpdateCommission={updateCommissionRate}
-                    onGenerateClubLink={generateClubPortalLink}
-                    onRevokeClubLink={revokeClubPortalLink}
-                    onGenerateUploadLink={generateUploadToken}
-                    onDeactivateUploadLink={deactivateUploadToken}
-                    onAddToolkit={addToolkitAssignment}
-                    onDeactivateToolkit={deactivateToolkitAssignment}
-                    contentAssets={contentByCreator.get(creator.id) || []}
-                    contentTags={contentLibrary.tags}
-                    contentLoading={contentLibrary.loading}
-                    contentError={contentLibrary.error}
-                    onCreateContentTag={contentLibrary.createTag}
-                    onDeleteContentTag={contentLibrary.deleteTag}
-                    onAssignContentTag={contentLibrary.assignTag}
-                    onRemoveContentTag={contentLibrary.removeTag}
-                    onDownloadContentAsset={contentLibrary.downloadAsset}
                   />
                 ))}
                 {visibleCreatorCount < filteredCreators.length && (
@@ -464,9 +370,6 @@ export default function AdminPage() {
             )}
           </section>
         )}
-
-        {/* ── Tab: Contenido ── */}
-        {tab === 'content' && <UgcContentLibrary library={contentLibrary} />}
 
         {/* ── Tab: Ranking ── */}
         {tab === 'ranking' && (
