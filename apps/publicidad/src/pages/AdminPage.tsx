@@ -13,13 +13,15 @@ import {
   Wallet,
   CheckCircle,
   KeyRound,
+  CalendarClock,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminDashboard, type CreatorWithLink } from '@/hooks/useAdminDashboard';
-import { usePublicRanking } from '@/hooks/usePublicRanking';
+import { useRankingPeriods, type RankingPeriod } from '@/hooks/useRankingPeriods';
 import AdminCreatorCard from '@/components/ugc/AdminCreatorCard';
 import PayoutModal from '@/components/ugc/PayoutModal';
 import ResetPeriodModal from '@/components/ugc/ResetPeriodModal';
+import ScheduleResetModal from '@/components/ugc/ScheduleResetModal';
 import RankingSection from '@/components/ugc/RankingSection';
 
 const formatCOP = (n: number) =>
@@ -28,6 +30,19 @@ const formatCOP = (n: number) =>
     currency: 'COP',
     minimumFractionDigits: 0,
   }).format(n);
+
+const formatPeriodDate = (iso: string) =>
+  new Intl.DateTimeFormat('es-CO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'America/Bogota',
+  }).format(new Date(iso));
+
+const periodOptionLabel = (p: RankingPeriod) =>
+  p.is_current
+    ? `Actual · desde ${formatPeriodDate(p.started_at)}`
+    : `${formatPeriodDate(p.started_at)} → ${formatPeriodDate(p.ended_at as string)}`;
 
 type Tab = 'creators' | 'ranking' | 'payouts';
 type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link';
@@ -51,12 +66,24 @@ export default function AdminPage() {
     createDiscountLink,
     deleteDiscountLink,
     updateCommissionRate,
+    rankingSchedule,
+    saveRankingSchedule,
   } = useAdminDashboard();
 
-  const { rankingByCommission, loading: rankingLoading } = usePublicRanking('dosmicos');
+  const {
+    periods,
+    selectedId: selectedPeriodId,
+    setSelectedId: setSelectedPeriodId,
+    selectedPeriod,
+    rankingByCommission,
+    loadingPeriods,
+    loadingRanking,
+    refetch: refetchPeriods,
+  } = useRankingPeriods('dosmicos');
 
   const [tab, setTab] = useState<Tab>('creators');
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<CreatorFilter>('all');
@@ -75,10 +102,16 @@ export default function AdminPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await refetch();
+      await Promise.all([refetch(), refetchPeriods()]);
     } finally {
       setRefreshing(false);
     }
+  };
+
+  // Reiniciar cierra el período actual y abre uno nuevo: hay que recargar la lista.
+  const handleResetPeriod = async () => {
+    await resetRankingPeriod();
+    await refetchPeriods();
   };
 
   useEffect(() => {
@@ -92,6 +125,22 @@ export default function AdminPage() {
   const formattedStartDate = rankingStartedAt
     ? new Intl.DateTimeFormat('es-CO', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(rankingStartedAt))
     : '—';
+
+  const formattedNextReset = rankingSchedule.nextResetAt
+    ? new Intl.DateTimeFormat('es-CO', {
+        day: 'numeric',
+        month: 'short',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: 'America/Bogota',
+      }).format(new Date(rankingSchedule.nextResetAt))
+    : null;
+
+  const periodRangeLabel = selectedPeriod
+    ? selectedPeriod.is_current
+      ? `Desde el ${formatPeriodDate(selectedPeriod.started_at)} hasta hoy.`
+      : `Del ${formatPeriodDate(selectedPeriod.started_at)} al ${formatPeriodDate(selectedPeriod.ended_at as string)}.`
+    : 'Sin períodos registrados.';
 
   const creatorsById = useMemo(() => new Map(creators.map((creator) => [creator.id, creator])), [creators]);
 
@@ -219,14 +268,29 @@ export default function AdminPage() {
                   Links de clientes separados de links Club/upload para UGC.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowResetModal(true)}
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                Reiniciar ranking
-              </button>
+              <div className="flex shrink-0 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowScheduleModal(true)}
+                  className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border px-3 text-xs font-semibold transition ${
+                    rankingSchedule.mode === 'off'
+                      ? 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                      : 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:border-indigo-300'
+                  }`}
+                  title="Programar el reinicio automático del ranking"
+                >
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  Programar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(true)}
+                  className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-gray-50"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Reiniciar ranking
+                </button>
+              </div>
             </div>
           </div>
 
@@ -237,6 +301,15 @@ export default function AdminPage() {
                 <p className="text-[10px] font-medium uppercase tracking-wide">Ranking desde</p>
               </div>
               <p className="mt-1 text-sm font-semibold text-gray-950">{formattedStartDate}</p>
+              {formattedNextReset && (
+                <p className="mt-1 inline-flex max-w-full items-center gap-1 rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700">
+                  <CalendarClock className="h-2.5 w-2.5 shrink-0" />
+                  <span className="truncate">
+                    Reinicia {formattedNextReset}
+                    {rankingSchedule.mode === 'monthly' ? ' · mensual' : ''}
+                  </span>
+                </p>
+              )}
             </div>
             {!loading && (
               <>
@@ -373,14 +446,61 @@ export default function AdminPage() {
 
         {/* ── Tab: Ranking ── */}
         {tab === 'ranking' && (
-          <section>
-            <div className="mb-5">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">Período actual</p>
-              <h2 className="text-gray-900 text-xl font-semibold">Ranking de comisiones</h2>
+          <section className="space-y-3">
+            <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">
+                    {selectedPeriod && !selectedPeriod.is_current ? 'Período cerrado' : 'Período actual'}
+                  </p>
+                  <h2 className="mt-1 text-xl font-semibold tracking-tight text-gray-950">Ranking de comisiones</h2>
+                  <p className="mt-1 text-sm text-gray-500">{periodRangeLabel}</p>
+                </div>
+                <label className="min-w-0 lg:w-80">
+                  <span className="mb-1.5 block text-[11px] font-medium text-gray-500">Ver período</span>
+                  <select
+                    value={selectedPeriodId ?? ''}
+                    onChange={(event) => setSelectedPeriodId(event.target.value)}
+                    disabled={loadingPeriods || periods.length === 0}
+                    className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-900 outline-none focus:border-gray-400 disabled:opacity-50"
+                  >
+                    {periods.map((p) => (
+                      <option key={p.id} value={p.id}>{periodOptionLabel(p)}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              {selectedPeriod && (
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Pedidos</p>
+                    <p className="mt-1 text-sm font-semibold text-gray-950">{selectedPeriod.orders_in_period}</p>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Comisión</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-gray-950">
+                      {formatCOP(selectedPeriod.commission_in_period)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Estado</p>
+                    <p className="mt-1 text-sm font-semibold text-gray-950">
+                      {selectedPeriod.is_current ? 'En curso' : 'Cerrado'}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-            {rankingLoading ? (
+
+            {loadingPeriods || loadingRanking ? (
               <div className="flex justify-center py-16">
-                <div className="w-6 h-6 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
+              </div>
+            ) : periods.length === 0 ? (
+              <div className="rounded-2xl border border-gray-200 bg-white py-12 text-center shadow-sm">
+                <Trophy className="mx-auto mb-2 h-8 w-8 text-gray-200" />
+                <p className="text-sm text-gray-400">Todavía no hay períodos registrados.</p>
               </div>
             ) : (
               <RankingSection ranking={rankingByCommission} />
@@ -704,7 +824,15 @@ export default function AdminPage() {
         <ResetPeriodModal
           currentStartDate={rankingStartedAt}
           onClose={() => setShowResetModal(false)}
-          onConfirm={resetRankingPeriod}
+          onConfirm={handleResetPeriod}
+        />
+      )}
+
+      {showScheduleModal && (
+        <ScheduleResetModal
+          schedule={rankingSchedule}
+          onClose={() => setShowScheduleModal(false)}
+          onConfirm={saveRankingSchedule}
         />
       )}
     </div>

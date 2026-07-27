@@ -61,7 +61,8 @@ export default function ResetPeriodModal({
           <div className="flex items-start gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-amber-800 text-sm">
-              El ranking del período actual se reiniciará a cero. Los datos históricos se conservan.
+              El período actual se cierra y queda guardado en el historial. El ranking arranca de cero
+              y no se borra ningún dato.
             </p>
           </div>
         </div>

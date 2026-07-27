@@ -75,10 +75,26 @@ export interface PayoutRecord {
   created_at: string;
 }
 
+export type RankingResetMode = 'off' | 'once' | 'monthly';
+
+export interface RankingSchedule {
+  mode: RankingResetMode;
+  day: number | null;
+  nextResetAt: string | null;
+}
+
+const EMPTY_SCHEDULE: RankingSchedule = { mode: 'off', day: null, nextResetAt: null };
+
+interface RpcError { message: string }
+const rpcClient = supabase as unknown as {
+  rpc(fn: string, args?: Record<string, unknown>): PromiseLike<{ error: RpcError | null }>;
+};
+
 export function useAdminDashboard() {
   const [creators, setCreators] = useState<CreatorWithLink[]>([]);
   const [payouts, setPayouts] = useState<PayoutRecord[]>([]);
   const [rankingStartedAt, setRankingStartedAt] = useState<string | null>(null);
+  const [rankingSchedule, setRankingSchedule] = useState<RankingSchedule>(EMPTY_SCHEDULE);
   const [orgId, setOrgId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -109,6 +125,14 @@ export function useAdminDashboard() {
         .single();
       const startedAt = orgData?.settings?.ugc_ranking_started_at ?? null;
       setRankingStartedAt(startedAt);
+
+      const rawMode = orgData?.settings?.ugc_ranking_reset_mode;
+      const rawDay = orgData?.settings?.ugc_ranking_reset_day;
+      setRankingSchedule({
+        mode: rawMode === 'once' || rawMode === 'monthly' ? rawMode : 'off',
+        day: typeof rawDay === 'number' ? rawDay : null,
+        nextResetAt: orgData?.settings?.ugc_ranking_next_reset_at ?? null,
+      });
 
       // 3. Fetch creators with their active discount links
       const { data: creatorsData, error: creatorsError } = await (supabase as any)
@@ -285,6 +309,23 @@ export function useAdminDashboard() {
     await fetchAll({ silent: true });
   };
 
+  // Schedule (or clear) an automatic ranking reset
+  const saveRankingSchedule = async (
+    mode: RankingResetMode,
+    day: number | null,
+    at: string | null
+  ) => {
+    if (!orgId) throw new Error('Org no disponible');
+    const { error } = await rpcClient.rpc('set_ugc_ranking_schedule', {
+      p_org_id: orgId,
+      p_mode: mode,
+      p_day: mode === 'monthly' ? day : null,
+      p_at: mode === 'once' ? at : null,
+    });
+    if (error) throw new Error(error.message);
+    await fetchAll({ silent: true });
+  };
+
   // Register payout
   const registerPayout = async (linkId: string, amount: number) => {
     if (!orgId) throw new Error('Org no disponible');
@@ -422,11 +463,13 @@ export function useAdminDashboard() {
     creators,
     payouts,
     rankingStartedAt,
+    rankingSchedule,
     orgId,
     loading,
     error,
     refetch: fetchAll,
     resetRankingPeriod,
+    saveRankingSchedule,
     registerPayout,
     updateCommissionRate,
     createDiscountLink,
