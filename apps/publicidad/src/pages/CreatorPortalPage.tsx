@@ -406,6 +406,16 @@ export default function CreatorPortalPage() {
                       {acceptingId === toolkit.id ? 'Guardando…' : 'Entendido, haré esta idea'}
                     </button>
                   )}
+                  {upload?.is_active && upload.upload_url
+                    && toolkit.status
+                    && !['assigned', 'viewed', 'cancelled'].includes(toolkit.status) && (
+                    <a
+                      href={`${upload.upload_url}${upload.upload_url.includes('?') ? '&' : '?'}assignment=${encodeURIComponent(toolkit.id)}${toolkit.campaign_id ? `&campaign=${encodeURIComponent(toolkit.campaign_id)}` : ''}`}
+                      className="mt-3 block w-full rounded-xl border border-gray-900 py-3 text-center text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
+                    >
+                      Subir contenido de esta idea
+                    </a>
+                  )}
                 </article>
               ) : (
                 <a
