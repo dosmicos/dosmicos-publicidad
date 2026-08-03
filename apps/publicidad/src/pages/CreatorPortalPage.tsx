@@ -40,12 +40,44 @@ interface PortalUpload {
   max_uploads?: number | null;
 }
 
+type PortalAssignmentStatus =
+  | 'assigned'
+  | 'viewed'
+  | 'accepted'
+  | 'submitted'
+  | 'approved'
+  | 'tested'
+  | 'completed'
+  | 'cancelled';
+
+const assignmentStatusLabel: Partial<Record<PortalAssignmentStatus, string>> = {
+  accepted: 'Aceptada ✓',
+  submitted: 'Entregada',
+  approved: 'Aprobada',
+  tested: 'Usada en ads',
+  completed: 'Completada',
+  cancelled: 'Cancelada',
+};
+
 interface PortalToolkit {
   id: string;
   label: string;
   url: string;
   campaign_id: string | null;
   sort_order: number;
+  week_start?: string | null;
+  status?: PortalAssignmentStatus | null;
+  due_at?: string | null;
+  slot?: 'primary' | 'secondary' | null;
+  brief?: {
+    id: string;
+    title: string;
+    hook: string;
+    proof: string;
+    format: string;
+    cta: string | null;
+    guardrails: string[];
+  } | null;
 }
 
 interface PortalOrder {
@@ -169,6 +201,8 @@ export default function CreatorPortalPage() {
   const [portal, setPortal] = useState<CreatorPortalPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [ideaError, setIdeaError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -201,6 +235,30 @@ export default function CreatorPortalPage() {
   const upload = portal?.upload || null;
   const toolkits = portal?.toolkits || [];
   const recentOrders = portal?.recent_orders || [];
+
+  const acceptIdea = async (assignmentId: string) => {
+    setAcceptingId(assignmentId);
+    setIdeaError(null);
+    try {
+      const { data, error: rpcError } = await publicSupabase.rpc<boolean>('track_ugc_toolkit_assignment_event', {
+        p_token: token,
+        p_assignment_id: assignmentId,
+        p_event_type: 'accepted',
+      });
+      if (rpcError || data !== true) {
+        setIdeaError('No pudimos guardar la confirmación. Inténtalo de nuevo.');
+        return;
+      }
+      setPortal((current) => current ? {
+        ...current,
+        toolkits: (current.toolkits || []).map((toolkit) => toolkit.id === assignmentId ? { ...toolkit, status: 'accepted' } : toolkit),
+      } : current);
+    } catch {
+      setIdeaError('No pudimos guardar la confirmación. Revisa tu conexión e inténtalo de nuevo.');
+    } finally {
+      setAcceptingId(null);
+    }
+  };
 
   const creatorRanking = useMemo(() => {
     if (!creator) return null;
@@ -294,18 +352,75 @@ export default function CreatorPortalPage() {
         <section className="rounded-2xl border border-orange-100 bg-orange-50 p-5 mb-5">
           <p className="text-xs uppercase tracking-widest text-orange-500 font-medium mb-2">Idea de contenido</p>
           {toolkits.length > 0 ? (
-            <div className="space-y-2">
-              {toolkits.map((toolkit) => (
+            <div className="space-y-3">
+              {toolkits.map((toolkit) => toolkit.brief ? (
+                <article key={toolkit.id} className="rounded-2xl border border-orange-100 bg-white p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-widest text-orange-700">
+                        {toolkit.slot === 'secondary' ? 'Riff adicional' : 'Idea principal'}
+                      </p>
+                      <h3 className="mt-1 text-base font-semibold text-gray-900">{toolkit.brief.title}</h3>
+                      {toolkit.week_start && (
+                        <p className="mt-1 text-xs text-gray-600">
+                          Semana del {new Date(`${toolkit.week_start}T12:00:00`).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}
+                        </p>
+                      )}
+                    </div>
+                    {toolkit.status && assignmentStatusLabel[toolkit.status] && (
+                      <span role="status" aria-live="polite" className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                        {assignmentStatusLabel[toolkit.status]}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-3 space-y-3 text-sm leading-relaxed text-gray-600">
+                    <div className="rounded-xl bg-orange-50 px-3 py-2.5">
+                      <p className="text-xs font-medium uppercase tracking-widest text-orange-700">Hook sugerido</p>
+                      <p className="mt-1 font-medium text-gray-900">“{toolkit.brief.hook}”</p>
+                    </div>
+                    <p><strong className="text-gray-900">Qué demostrar:</strong> {toolkit.brief.proof}</p>
+                    <p><strong className="text-gray-900">Formato:</strong> {toolkit.brief.format}</p>
+                    {toolkit.brief.cta && <p><strong className="text-gray-900">Cierre:</strong> {toolkit.brief.cta}</p>}
+                    {toolkit.brief.guardrails?.length > 0 && (
+                      <div>
+                        <p className="mb-1.5 text-xs font-semibold text-gray-900">Cuidados importantes</p>
+                        <ul className="flex flex-wrap gap-1.5" aria-label="Cuidados importantes">
+                          {toolkit.brief.guardrails.map((guardrail, index) => (
+                            <li key={`${guardrail}-${index}`} className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700">{guardrail}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {toolkit.due_at && (
+                      <p className="text-xs text-gray-600">Entrega sugerida: {new Date(toolkit.due_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}</p>
+                    )}
+                  </div>
+                  {(toolkit.status === 'assigned' || toolkit.status === 'viewed') && (
+                    <button
+                      type="button"
+                      onClick={() => acceptIdea(toolkit.id)}
+                      disabled={acceptingId !== null}
+                      aria-busy={acceptingId === toolkit.id}
+                      className="mt-4 w-full rounded-xl bg-gray-900 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-60"
+                    >
+                      {acceptingId === toolkit.id ? 'Guardando…' : 'Entendido, haré esta idea'}
+                    </button>
+                  )}
+                </article>
+              ) : (
                 <a
                   key={toolkit.id}
                   href={toolkit.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="block rounded-xl bg-white border border-orange-100 px-4 py-3 text-sm font-medium text-gray-900 hover:border-orange-200 transition-colors"
+                  className="block rounded-xl border border-orange-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 transition-colors hover:border-orange-200"
                 >
                   {toolkit.label || 'Idea de contenido'} →
                 </a>
               ))}
+              {ideaError && (
+                <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{ideaError}</p>
+              )}
             </div>
           ) : (
             <p className="text-gray-600 text-sm">Aún no tienes toolkit asignado. Mientras tanto, enfócate en mostrar uso real del producto y cerrar con tu link.</p>
