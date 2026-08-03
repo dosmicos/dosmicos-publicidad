@@ -41,8 +41,8 @@ const formatPeriodDate = (iso: string) =>
 
 const periodOptionLabel = (p: RankingPeriod) =>
   p.is_current
-    ? `Actual · desde ${formatPeriodDate(p.started_at)}`
-    : `${formatPeriodDate(p.started_at)} → ${formatPeriodDate(p.ended_at as string)}`;
+    ? `Actual · ${p.metric === 'content' ? 'contenido' : 'comisiones'} · desde ${formatPeriodDate(p.started_at)}`
+    : `${p.metric === 'content' ? 'Contenido' : 'Comisiones'} · ${formatPeriodDate(p.started_at)} → ${formatPeriodDate(p.ended_at as string)}`;
 
 type Tab = 'creators' | 'ranking' | 'payouts';
 type CreatorFilter = 'all' | 'with_balance' | 'with_link' | 'no_link';
@@ -75,6 +75,7 @@ export default function AdminPage() {
     selectedId: selectedPeriodId,
     setSelectedId: setSelectedPeriodId,
     selectedPeriod,
+    rankingByContent,
     rankingByCommission,
     loadingPeriods,
     loadingRanking,
@@ -141,6 +142,9 @@ export default function AdminPage() {
       ? `Desde el ${formatPeriodDate(selectedPeriod.started_at)} hasta hoy.`
       : `Del ${formatPeriodDate(selectedPeriod.started_at)} al ${formatPeriodDate(selectedPeriod.ended_at as string)}.`
     : 'Sin períodos registrados.';
+  const selectedMetric = selectedPeriod?.metric ?? 'content';
+  const displayedRanking = selectedMetric === 'content' ? rankingByContent : rankingByCommission;
+  const currentPeriodMetric = periods.find((period) => period.is_current)?.metric ?? 'content';
 
   const creatorsById = useMemo(() => new Map(creators.map((creator) => [creator.id, creator])), [creators]);
 
@@ -453,7 +457,9 @@ export default function AdminPage() {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">
                     {selectedPeriod && !selectedPeriod.is_current ? 'Período cerrado' : 'Período actual'}
                   </p>
-                  <h2 className="mt-1 text-xl font-semibold tracking-tight text-gray-950">Ranking de comisiones</h2>
+                  <h2 className="mt-1 text-xl font-semibold tracking-tight text-gray-950">
+                    Ranking de {selectedMetric === 'content' ? 'contenido' : 'comisiones'}
+                  </h2>
                   <p className="mt-1 text-sm text-gray-500">{periodRangeLabel}</p>
                 </div>
                 <label className="min-w-0 lg:w-80">
@@ -473,16 +479,31 @@ export default function AdminPage() {
 
               {selectedPeriod && (
                 <div className="mt-3 grid grid-cols-3 gap-2">
-                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Pedidos</p>
-                    <p className="mt-1 text-sm font-semibold text-gray-950">{selectedPeriod.orders_in_period}</p>
-                  </div>
-                  <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Comisión</p>
-                    <p className="mt-1 truncate text-sm font-semibold text-gray-950">
-                      {formatCOP(selectedPeriod.commission_in_period)}
-                    </p>
-                  </div>
+                  {selectedMetric === 'content' ? (
+                    <>
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Piezas clasificadas</p>
+                        <p className="mt-1 text-sm font-semibold text-gray-950">{selectedPeriod.eligible_content_count}</p>
+                      </div>
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Creadoras con piezas</p>
+                        <p className="mt-1 text-sm font-semibold text-gray-950">{selectedPeriod.eligible_creators_count}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Pedidos</p>
+                        <p className="mt-1 text-sm font-semibold text-gray-950">{selectedPeriod.orders_in_period}</p>
+                      </div>
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Comisión</p>
+                        <p className="mt-1 truncate text-sm font-semibold text-gray-950">
+                          {formatCOP(selectedPeriod.commission_in_period)}
+                        </p>
+                      </div>
+                    </>
+                  )}
                   <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Estado</p>
                     <p className="mt-1 text-sm font-semibold text-gray-950">
@@ -503,7 +524,7 @@ export default function AdminPage() {
                 <p className="text-sm text-gray-400">Todavía no hay períodos registrados.</p>
               </div>
             ) : (
-              <RankingSection ranking={rankingByCommission} />
+              <RankingSection ranking={displayedRanking} metric={selectedMetric} />
             )}
           </section>
         )}
@@ -823,6 +844,7 @@ export default function AdminPage() {
       {showResetModal && (
         <ResetPeriodModal
           currentStartDate={rankingStartedAt}
+          currentMetric={currentPeriodMetric}
           onClose={() => setShowResetModal(false)}
           onConfirm={handleResetPeriod}
         />

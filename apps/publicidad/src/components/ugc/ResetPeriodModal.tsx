@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { X, AlertTriangle, RotateCcw } from 'lucide-react';
+import type { RankingMetric } from '@/hooks/useRankingPeriods';
 
 interface ResetPeriodModalProps {
   currentStartDate: string | null;
+  currentMetric: RankingMetric;
   onClose: () => void;
   onConfirm: () => Promise<void>;
 }
 
 export default function ResetPeriodModal({
   currentStartDate,
+  currentMetric,
   onClose,
   onConfirm,
 }: ResetPeriodModalProps) {
@@ -21,8 +24,8 @@ export default function ResetPeriodModal({
     try {
       await onConfirm();
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Error al reiniciar período');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al reiniciar período');
     } finally {
       setLoading(false);
     }
@@ -53,7 +56,7 @@ export default function ResetPeriodModal({
           </div>
           <div>
             <h3 className="text-gray-900 font-bold">Reiniciar Ranking</h3>
-            <p className="text-gray-500 text-sm">Nuevo período de comisiones</p>
+            <p className="text-gray-500 text-sm">Nuevo período de contenido</p>
           </div>
         </div>
 
@@ -61,8 +64,9 @@ export default function ResetPeriodModal({
           <div className="flex items-start gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-amber-800 text-sm">
-              El período actual se cierra y queda guardado en el historial. El ranking arranca de cero
-              y no se borra ningún dato.
+              El período actual de {currentMetric === 'content' ? 'contenido' : 'comisiones'} se cierra
+              y queda guardado en el historial. Se abre un período de contenido vacío, sin arrastrar
+              ninguna selección de piezas. No se borra ningún dato histórico.
             </p>
           </div>
         </div>
