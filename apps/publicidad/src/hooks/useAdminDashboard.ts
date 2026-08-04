@@ -302,7 +302,7 @@ export function useAdminDashboard() {
   // Reset ranking period
   const resetRankingPeriod = async () => {
     if (!orgId) return;
-    const { error } = await (supabase as any).rpc('reset_ugc_ranking_period', {
+    const { error } = await (supabase as any).rpc('reset_ugc_content_ranking_period', {
       p_org_id: orgId,
     });
     if (error) throw error;

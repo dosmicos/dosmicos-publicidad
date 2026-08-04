@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { usePublicRanking } from '@/hooks/usePublicRanking';
+import { usePublicRanking, type RankingEntry } from '@/hooks/usePublicRanking';
 import RankingSection from '@/components/ugc/RankingSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
@@ -45,17 +45,20 @@ const WEEKLY_CHALLENGE = {
   ],
 };
 
-function getProgressToTopFive(creator: CreatorResult | null, ranking: CreatorResult[]) {
+function getProgressToTopFive(creator: CreatorResult | null, ranking: RankingEntry[]) {
   if (!creator || ranking.length === 0) return null;
+  const creatorEntry = ranking.find((entry) => (
+    entry.instagram_handle === creator.instagram_handle
+    && entry.creator_name === creator.creator_name
+  ));
   const topFive = ranking
-    .filter((entry) => entry.commission_in_period > 0)
-    .sort((a, b) => b.commission_in_period - a.commission_in_period)
+    .filter((entry) => entry.eligible_content_count > 0)
+    .sort((a, b) => b.eligible_content_count - a.eligible_content_count)
     .slice(0, 5);
-  const current = creator.commission_in_period || 0;
-  const threshold = topFive.length >= 5 ? topFive[topFive.length - 1].commission_in_period : 1;
+  const current = creatorEntry?.eligible_content_count ?? 0;
+  const threshold = topFive.length >= 5 ? topFive[topFive.length - 1].eligible_content_count : 0;
   const missing = Math.max(threshold - current + 1, 0);
-  const rank = ranking.findIndex((entry) => entry.instagram_handle === creator.instagram_handle && entry.creator_name === creator.creator_name) + 1;
-  return { missing, rank: rank || null };
+  return { missing, rank: creatorEntry?.rank ?? null };
 }
 
 function StatTooltip({ text }: { text: string }) {
@@ -83,7 +86,7 @@ function StatTooltip({ text }: { text: string }) {
 }
 
 export default function UgcDashboardPage() {
-  const { rankingByCommission, balancesByAmount, loading: rankingLoading } = usePublicRanking('dosmicos-org');
+  const { rankingByContent, balancesByAmount, loading: rankingLoading } = usePublicRanking('dosmicos-org');
   const { user } = useAuth();
 
   const [code, setCode] = useState('');
@@ -95,7 +98,7 @@ export default function UgcDashboardPage() {
   const [payoutsLoading, setPayoutsLoading] = useState(false);
 
   const isUnlocked = !!user || !!creator;
-  const creatorProgress = getProgressToTopFive(creator, rankingByCommission);
+  const creatorProgress = getProgressToTopFive(creator, rankingByContent);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,14 +229,14 @@ export default function UgcDashboardPage() {
               <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">
                 Período actual
               </p>
-              <h2 className="text-gray-900 text-xl font-semibold">Ranking de comisiones</h2>
+              <h2 className="text-gray-900 text-xl font-semibold">Ranking de contenido</h2>
             </div>
             {rankingLoading ? (
               <div className="flex justify-center py-8">
                 <div className="w-5 h-5 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
               </div>
             ) : (
-              <RankingSection ranking={rankingByCommission} />
+              <RankingSection ranking={rankingByContent} metric="content" />
             )}
           </section>
         </div>
@@ -337,13 +340,14 @@ export default function UgcDashboardPage() {
                     </ul>
                     <div className="rounded-xl bg-white border border-orange-100 px-4 py-3 text-sm text-gray-600">
                       {creatorProgress?.missing === 0 ? (
-                        <span>🔥 Vas en el top. Sigue moviendo tu link para mantenerte arriba.</span>
+                        <span>🔥 Vas en el top. Sigue creando piezas que clasifiquen para mantenerte arriba.</span>
                       ) : creatorProgress ? (
                         <span>
-                          Te faltan aprox. <strong className="text-gray-900">{formatCOP(creatorProgress.missing)}</strong> en comisiones para pelear top 5.
+                          Te faltan <strong className="text-gray-900">{creatorProgress.missing}</strong>{' '}
+                          {creatorProgress.missing === 1 ? 'pieza clasificada' : 'piezas clasificadas'} para pelear top 5.
                         </span>
                       ) : (
-                        <span>Cada compra suma a tu ranking y a tu saldo pendiente.</span>
+                        <span>Cada pieza que clasifique suma a tu ranking. Tus comisiones y saldo se mantienen aparte.</span>
                       )}
                     </div>
                   </div>
@@ -430,9 +434,9 @@ export default function UgcDashboardPage() {
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">
                     Período actual
                   </p>
-                  <h2 className="text-gray-900 text-xl font-semibold">Ranking de comisiones</h2>
+                  <h2 className="text-gray-900 text-xl font-semibold">Ranking de contenido</h2>
                 </div>
-                <RankingSection ranking={rankingByCommission} />
+                <RankingSection ranking={rankingByContent} metric="content" />
               </section>
             </div>
           )}

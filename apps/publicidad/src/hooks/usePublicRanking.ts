@@ -7,7 +7,9 @@ export interface RankingEntry {
   avatar_url: string | null;
   orders_in_period: number;
   commission_in_period: number;
+  eligible_content_count: number;
   pending_balance: number;
+  metric: 'commission' | 'content';
   rank: number;
 }
 
@@ -28,7 +30,7 @@ export function usePublicRanking(orgSlug = 'dosmicos-org') {
     setError(null);
     try {
       const { data: rows, error: rpcError } = await publicSupabase.rpc<RankingEntry[]>(
-        'get_ugc_public_ranking',
+        'get_ugc_public_content_ranking',
         { p_org_slug: orgSlug }
       );
       if (rpcError) throw rpcError;
@@ -48,9 +50,21 @@ export function usePublicRanking(orgSlug = 'dosmicos-org') {
     (a, b) => b.commission_in_period - a.commission_in_period
   );
 
+  const rankingByContent = [...data].sort(
+    (a, b) => b.eligible_content_count - a.eligible_content_count || a.rank - b.rank
+  );
+
   const balancesByAmount = [...data]
     .filter((e) => e.pending_balance > 0)
     .sort((a, b) => b.pending_balance - a.pending_balance);
 
-  return { data, rankingByCommission, balancesByAmount, loading, error, refetch: fetch };
+  return {
+    data,
+    rankingByContent,
+    rankingByCommission,
+    balancesByAmount,
+    loading,
+    error,
+    refetch: fetch,
+  };
 }

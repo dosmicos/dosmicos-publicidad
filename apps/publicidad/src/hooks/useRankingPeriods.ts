@@ -2,13 +2,18 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { RankingEntry } from '@/hooks/usePublicRanking';
 
+export type RankingMetric = 'commission' | 'content';
+
 export interface RankingPeriod {
   id: string;
   started_at: string;
   ended_at: string | null;
   is_current: boolean;
+  metric: RankingMetric;
   orders_in_period: number;
   commission_in_period: number;
+  eligible_content_count: number;
+  eligible_creators_count: number;
 }
 
 interface SupabaseRpcError { message: string }
@@ -35,7 +40,7 @@ export function useRankingPeriods(orgSlug = 'dosmicos') {
     setError(null);
     try {
       const { data, error: rpcError } = await rpc.rpc<RankingPeriod[]>(
-        'list_ugc_ranking_periods',
+        'list_ugc_content_ranking_periods',
         { p_org_slug: orgSlug }
       );
       if (rpcError) throw rpcError;
@@ -68,7 +73,7 @@ export function useRankingPeriods(orgSlug = 'dosmicos') {
     (async () => {
       try {
         const { data, error: rpcError } = await rpc.rpc<RankingEntry[]>(
-          'get_ugc_ranking_for_period',
+          'get_ugc_content_ranking_for_period',
           { p_period_id: selectedId }
         );
         if (cancelled) return;
@@ -93,11 +98,16 @@ export function useRankingPeriods(orgSlug = 'dosmicos') {
     (a, b) => b.commission_in_period - a.commission_in_period
   );
 
+  const rankingByContent = [...ranking].sort(
+    (a, b) => b.eligible_content_count - a.eligible_content_count || a.rank - b.rank
+  );
+
   return {
     periods,
     selectedId,
     setSelectedId,
     selectedPeriod,
+    rankingByContent,
     rankingByCommission,
     loadingPeriods,
     loadingRanking,

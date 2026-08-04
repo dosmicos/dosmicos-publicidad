@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import type { RankingEntry } from '@/hooks/usePublicRanking';
+import type { RankingMetric } from '@/hooks/useRankingPeriods';
 
 const formatCOP = (n: number) =>
   new Intl.NumberFormat('es-CO', {
@@ -35,25 +36,42 @@ function Avatar({ url, name, size = 'sm' }: { url: string | null; name: string; 
   );
 }
 
-export default function RankingSection({ ranking }: { ranking: RankingEntry[] }) {
+interface RankingSectionProps {
+  ranking: RankingEntry[];
+  metric?: RankingMetric;
+}
+
+const contentLabel = (count: number) =>
+  `${count} ${count === 1 ? 'pieza clasificada' : 'piezas clasificadas'}`;
+
+export default function RankingSection({ ranking, metric = 'commission' }: RankingSectionProps) {
   if (ranking.length === 0) {
     return (
       <div className="py-14 text-center">
         <p className="text-2xl mb-3">🏁</p>
         <p className="text-gray-900 font-medium text-sm">Sin datos aún</p>
-        <p className="text-gray-400 text-xs mt-1">El ranking se actualizará con las primeras compras.</p>
+        <p className="text-gray-400 text-xs mt-1">
+          {metric === 'content'
+            ? 'El ranking se actualizará con las primeras piezas clasificadas.'
+            : 'El ranking se actualizará con las primeras compras.'}
+        </p>
       </div>
     );
   }
 
-  const hasActivity = ranking.some((e) => e.commission_in_period > 0);
+  const getMetricValue = (entry: RankingEntry) => (
+    metric === 'content' ? entry.eligible_content_count : entry.commission_in_period
+  );
+  const hasActivity = ranking.some((entry) => getMetricValue(entry) > 0);
 
   // No activity yet — show profiles without rank
   if (!hasActivity) {
     return (
       <div className="space-y-2">
         <p className="text-xs text-gray-400 text-center mb-4">
-          Aún no hay compras registradas en este período. ¡Tú puedes ser la primera! 🚀
+          {metric === 'content'
+            ? 'Aún no hay piezas clasificadas en este período. ¡Tú puedes ser la primera! 🚀'
+            : 'Aún no hay compras registradas en este período. ¡Tú puedes ser la primera! 🚀'}
         </p>
         {ranking.map((entry) => (
           <div
@@ -67,7 +85,9 @@ export default function RankingSection({ ranking }: { ranking: RankingEntry[] })
                 <p className="text-gray-400 text-xs truncate">@{entry.instagram_handle}</p>
               )}
             </div>
-            <p className="text-gray-300 text-xs shrink-0">0 compras</p>
+            <p className="text-gray-300 text-xs shrink-0">
+              {metric === 'content' ? contentLabel(0) : '0 compras'}
+            </p>
           </div>
         ))}
       </div>
@@ -78,14 +98,15 @@ export default function RankingSection({ ranking }: { ranking: RankingEntry[] })
   return (
     <div className="space-y-2">
       {ranking.map((entry) => {
-        const isTop3 = entry.rank <= 3 && entry.commission_in_period > 0;
+        const metricValue = getMetricValue(entry);
+        const isTop3 = entry.rank <= 3 && metricValue > 0;
         const medal = MEDALS[entry.rank - 1];
 
         return (
           <div
             key={entry.instagram_handle || entry.creator_name}
             className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors ${
-              entry.rank === 1 && entry.commission_in_period > 0
+              entry.rank === 1 && metricValue > 0
                 ? 'bg-gray-50 border border-gray-200'
                 : 'border border-gray-100'
             }`}
@@ -94,14 +115,14 @@ export default function RankingSection({ ranking }: { ranking: RankingEntry[] })
             <div className="w-7 text-center shrink-0">
               {isTop3 ? (
                 <span className="text-lg leading-none">{medal}</span>
-              ) : entry.commission_in_period > 0 ? (
+              ) : metricValue > 0 ? (
                 <span className="text-xs font-medium text-gray-400">#{entry.rank}</span>
               ) : (
                 <span className="text-xs text-gray-300">—</span>
               )}
             </div>
 
-            <Avatar url={entry.avatar_url} name={entry.creator_name} size={entry.rank === 1 && entry.commission_in_period > 0 ? 'md' : 'sm'} />
+            <Avatar url={entry.avatar_url} name={entry.creator_name} size={entry.rank === 1 && metricValue > 0 ? 'md' : 'sm'} />
 
             <div className="flex-1 min-w-0">
               <p className="text-gray-900 text-sm font-medium truncate">{entry.creator_name}</p>
@@ -111,15 +132,21 @@ export default function RankingSection({ ranking }: { ranking: RankingEntry[] })
             </div>
 
             <div className="text-right shrink-0">
-              {entry.commission_in_period > 0 ? (
+              {metricValue > 0 ? (
                 <>
                   <p className="text-gray-900 text-sm font-semibold">
-                    {formatCOP(entry.commission_in_period)}
+                    {metric === 'content'
+                      ? contentLabel(entry.eligible_content_count)
+                      : formatCOP(entry.commission_in_period)}
                   </p>
-                  <p className="text-gray-400 text-xs">{entry.orders_in_period} compras</p>
+                  {metric === 'commission' && (
+                    <p className="text-gray-400 text-xs">{entry.orders_in_period} compras</p>
+                  )}
                 </>
               ) : (
-                <p className="text-gray-300 text-xs">0 compras</p>
+                <p className="text-gray-300 text-xs">
+                  {metric === 'content' ? contentLabel(0) : '0 compras'}
+                </p>
               )}
             </div>
           </div>
