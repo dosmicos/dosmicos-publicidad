@@ -14,4 +14,4 @@
 - [x] Derive the creator’s server rank and eligible-content count by normalized handle.
 - [x] Update ranking card/title/copy to content terminology while preserving balances and commissions.
 - [x] Run TypeScript, scoped ESLint, build, and diff checks.
-- [ ] Commit, push, and open a PR.
+- [x] Commit, push, and open a PR.
