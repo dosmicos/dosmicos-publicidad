@@ -201,7 +201,7 @@ function InvalidPortalState() {
 
 export default function CreatorPortalPage() {
   const { token = '' } = useParams();
-  const { rankingByCommission } = usePublicRanking('dosmicos-org');
+  const { rankingByContent } = usePublicRanking('dosmicos-org');
   const [portal, setPortal] = useState<CreatorPortalPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -264,15 +264,19 @@ export default function CreatorPortalPage() {
     }
   };
 
-  const creatorRanking = useMemo(() => {
+  const creatorRankingEntry = useMemo(() => {
     if (!creator) return null;
     const normalizedHandle = creator.instagram_handle?.replace('@', '').toLowerCase();
-    const index = rankingByCommission.findIndex((entry) => {
+    return rankingByContent.find((entry) => {
       const entryHandle = entry.instagram_handle?.replace('@', '').toLowerCase();
       return entryHandle && normalizedHandle && entryHandle === normalizedHandle;
-    });
-    return index >= 0 ? index + 1 : null;
-  }, [creator, rankingByCommission]);
+    }) ?? null;
+  }, [creator, rankingByContent]);
+
+  const creatorRanking = creatorRankingEntry && creatorRankingEntry.eligible_content_count > 0
+    ? creatorRankingEntry.rank
+    : null;
+  const creatorContentCount = creatorRankingEntry?.eligible_content_count ?? 0;
 
   if (loading) {
     return (
@@ -317,7 +321,11 @@ export default function CreatorPortalPage() {
           <MetricCard label="Ventas" value={discount?.total_orders ?? 0} hint="Compras atribuidas a tu link" />
           <MetricCard label="Comisiones" value={formatCOP(discount?.total_commission)} hint="Ganancias acumuladas" />
           <MetricCard label="Saldo" value={formatCOP(discount?.pending_balance)} hint="Pendiente por pagar" />
-          <MetricCard label="Ranking" value={creatorRanking ? `#${creatorRanking}` : '—'} hint="Período actual" />
+          <MetricCard
+            label="Ranking contenido"
+            value={creatorRanking ? `#${creatorRanking}` : '—'}
+            hint={`${creatorContentCount} ${creatorContentCount === 1 ? 'pieza clasificada' : 'piezas clasificadas'}`}
+          />
         </section>
 
         <section className="rounded-2xl border border-gray-100 p-5 mb-5">
@@ -497,9 +505,9 @@ export default function CreatorPortalPage() {
         <section className="pt-3 border-t border-gray-100">
           <div className="mb-4">
             <p className="text-xs uppercase tracking-widest text-gray-400 font-medium mb-1">Ranking público</p>
-            <h2 className="text-gray-900 text-xl font-semibold">Comisiones del período</h2>
+            <h2 className="text-gray-900 text-xl font-semibold">Ranking de contenido</h2>
           </div>
-          <RankingSection ranking={rankingByCommission} />
+          <RankingSection ranking={rankingByContent} metric="content" />
         </section>
       </main>
 
