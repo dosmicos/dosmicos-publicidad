@@ -77,6 +77,10 @@ interface PortalToolkit {
     format: string;
     cta: string | null;
     guardrails: string[];
+    scene_plan?: string[];
+    talking_points?: string[];
+    required_shots?: string[];
+    script_example?: string;
   } | null;
 }
 
@@ -380,6 +384,37 @@ export default function CreatorPortalPage() {
                     </div>
                     <p><strong className="text-gray-900">Qué demostrar:</strong> {toolkit.brief.proof}</p>
                     <p><strong className="text-gray-900">Formato:</strong> {toolkit.brief.format}</p>
+                    {toolkit.brief.scene_plan && toolkit.brief.scene_plan.length > 0 && (
+                      <div className="rounded-xl border border-orange-100 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-orange-700">Guía de grabación</p>
+                        <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-gray-700">
+                          {toolkit.brief.scene_plan.map((scene, index) => <li key={`${scene}-${index}`}>{scene}</li>)}
+                        </ol>
+                      </div>
+                    )}
+                    {toolkit.brief.talking_points && toolkit.brief.talking_points.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-900">Puntos que debes comunicar</p>
+                        <ul className="mt-1.5 list-disc space-y-1 pl-5">
+                          {toolkit.brief.talking_points.map((point, index) => <li key={`${point}-${index}`}>{point}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {toolkit.brief.required_shots && toolkit.brief.required_shots.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-900">Tomas que no pueden faltar</p>
+                        <ul className="mt-1.5 list-disc space-y-1 pl-5">
+                          {toolkit.brief.required_shots.map((shot, index) => <li key={`${shot}-${index}`}>{shot}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {toolkit.brief.script_example && (
+                      <div className="rounded-xl bg-gray-50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">Ejemplo de libreto</p>
+                        <p className="mt-2 whitespace-pre-line font-medium text-gray-900">“{toolkit.brief.script_example}”</p>
+                        <p className="mt-2 text-xs text-gray-500">Úsalo como guía y dilo con tus propias palabras; no necesitas memorizarlo.</p>
+                      </div>
+                    )}
                     {toolkit.brief.cta && <p><strong className="text-gray-900">Cierre:</strong> {toolkit.brief.cta}</p>}
                     {toolkit.brief.guardrails?.length > 0 && (
                       <div>
