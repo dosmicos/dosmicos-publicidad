@@ -15,6 +15,13 @@ export interface RankingEntry {
   rank: number;
 }
 
+export interface PrivateBalanceEntry {
+  creator_name: string;
+  instagram_handle: string;
+  avatar_url: string | null;
+  pending_balance: number;
+}
+
 interface SupabaseRpcError { message: string }
 interface PublicSupabaseClient {
   rpc<T>(fn: string, args?: Record<string, unknown>): PromiseLike<{ data: T | null; error: SupabaseRpcError | null }>;
@@ -56,17 +63,49 @@ export function usePublicRanking(orgSlug = 'dosmicos-org') {
     (a, b) => b.content_points - a.content_points || a.rank - b.rank
   );
 
-  const balancesByAmount = [...data]
-    .filter((e) => e.pending_balance > 0)
-    .sort((a, b) => b.pending_balance - a.pending_balance);
-
   return {
     data,
     rankingByContent,
     rankingByCommission,
-    balancesByAmount,
     loading,
     error,
     refetch: fetch,
   };
+}
+
+export function usePrivateRankingBalances(enabled: boolean, orgSlug = 'dosmicos-org') {
+  const [data, setData] = useState<PrivateBalanceEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetch = useCallback(async () => {
+    if (!enabled) {
+      setData([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: rows, error: rpcError } = await publicSupabase.rpc<PrivateBalanceEntry[]>(
+        'get_ugc_private_balance_summary',
+        { p_org_slug: orgSlug }
+      );
+      if (rpcError) throw rpcError;
+      setData((rows || []).filter((entry) => entry.pending_balance > 0));
+    } catch (err: unknown) {
+      setData([]);
+      setError(err instanceof Error ? err.message : 'Error al cargar saldos');
+    } finally {
+      setLoading(false);
+    }
+  }, [enabled, orgSlug]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  return { data, loading, error, refetch: fetch };
 }

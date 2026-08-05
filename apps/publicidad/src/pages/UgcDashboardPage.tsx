@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { usePublicRanking, type RankingEntry } from '@/hooks/usePublicRanking';
+import { usePrivateRankingBalances, usePublicRanking, type RankingEntry } from '@/hooks/usePublicRanking';
 import RankingSection from '@/components/ugc/RankingSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
@@ -86,8 +86,9 @@ function StatTooltip({ text }: { text: string }) {
 }
 
 export default function UgcDashboardPage() {
-  const { rankingByContent, balancesByAmount, loading: rankingLoading } = usePublicRanking('dosmicos-org');
   const { user } = useAuth();
+  const { rankingByContent, loading: rankingLoading } = usePublicRanking('dosmicos-org');
+  const { data: balancesByAmount } = usePrivateRankingBalances(!!user, 'dosmicos-org');
 
   const [code, setCode] = useState('');
   const [checking, setChecking] = useState(false);
