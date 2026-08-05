@@ -8,6 +8,8 @@ export interface RankingEntry {
   orders_in_period: number;
   commission_in_period: number;
   eligible_content_count: number;
+  reviewed_content_count: number;
+  content_points: number;
   pending_balance: number;
   metric: 'commission' | 'content';
   rank: number;
@@ -51,7 +53,7 @@ export function usePublicRanking(orgSlug = 'dosmicos-org') {
   );
 
   const rankingByContent = [...data].sort(
-    (a, b) => b.eligible_content_count - a.eligible_content_count || a.rank - b.rank
+    (a, b) => b.content_points - a.content_points || a.rank - b.rank
   );
 
   const balancesByAmount = [...data]

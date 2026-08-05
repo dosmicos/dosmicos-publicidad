@@ -52,11 +52,11 @@ function getProgressToTopFive(creator: CreatorResult | null, ranking: RankingEnt
     && entry.creator_name === creator.creator_name
   ));
   const topFive = ranking
-    .filter((entry) => entry.eligible_content_count > 0)
-    .sort((a, b) => b.eligible_content_count - a.eligible_content_count)
+    .filter((entry) => entry.content_points > 0)
+    .sort((a, b) => b.content_points - a.content_points)
     .slice(0, 5);
-  const current = creatorEntry?.eligible_content_count ?? 0;
-  const threshold = topFive.length >= 5 ? topFive[topFive.length - 1].eligible_content_count : 0;
+  const current = creatorEntry?.content_points ?? 0;
+  const threshold = topFive.length >= 5 ? topFive[topFive.length - 1].content_points : 0;
   const missing = Math.max(threshold - current + 1, 0);
   return { missing, rank: creatorEntry?.rank ?? null };
 }
@@ -344,10 +344,10 @@ export default function UgcDashboardPage() {
                       ) : creatorProgress ? (
                         <span>
                           Te faltan <strong className="text-gray-900">{creatorProgress.missing}</strong>{' '}
-                          {creatorProgress.missing === 1 ? 'pieza clasificada' : 'piezas clasificadas'} para pelear top 5.
+                          {creatorProgress.missing === 1 ? 'punto' : 'puntos'} para pelear top 5.
                         </span>
                       ) : (
-                        <span>Cada pieza que clasifique suma a tu ranking. Tus comisiones y saldo se mantienen aparte.</span>
+                        <span>Cada foto que clasifique suma 1 punto y cada video 3. Tus comisiones y saldo se mantienen aparte.</span>
                       )}
                     </div>
                   </div>

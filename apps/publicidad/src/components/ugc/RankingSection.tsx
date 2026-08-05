@@ -41,8 +41,11 @@ interface RankingSectionProps {
   metric?: RankingMetric;
 }
 
+const pointsLabel = (points: number) =>
+  `${points} ${points === 1 ? 'punto' : 'puntos'}`;
+
 const contentLabel = (count: number) =>
-  `${count} ${count === 1 ? 'pieza clasificada' : 'piezas clasificadas'}`;
+  `${count} ${count === 1 ? 'pieza que clasifica' : 'piezas que clasifican'}`;
 
 export default function RankingSection({ ranking, metric = 'commission' }: RankingSectionProps) {
   if (ranking.length === 0) {
@@ -52,7 +55,7 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
         <p className="text-gray-900 font-medium text-sm">Sin datos aún</p>
         <p className="text-gray-400 text-xs mt-1">
           {metric === 'content'
-            ? 'El ranking se actualizará con las primeras piezas clasificadas.'
+            ? 'El ranking se actualizará cuando una foto o un video clasifique.'
             : 'El ranking se actualizará con las primeras compras.'}
         </p>
       </div>
@@ -60,7 +63,7 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
   }
 
   const getMetricValue = (entry: RankingEntry) => (
-    metric === 'content' ? entry.eligible_content_count : entry.commission_in_period
+    metric === 'content' ? entry.content_points : entry.commission_in_period
   );
   const hasActivity = ranking.some((entry) => getMetricValue(entry) > 0);
 
@@ -70,7 +73,7 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
       <div className="space-y-2">
         <p className="text-xs text-gray-400 text-center mb-4">
           {metric === 'content'
-            ? 'Aún no hay piezas clasificadas en este período. ¡Tú puedes ser la primera! 🚀'
+            ? 'Aún no hay puntos en este período. Foto que clasifica: 1; video que clasifica: 3.'
             : 'Aún no hay compras registradas en este período. ¡Tú puedes ser la primera! 🚀'}
         </p>
         {ranking.map((entry) => (
@@ -86,7 +89,7 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
               )}
             </div>
             <p className="text-gray-300 text-xs shrink-0">
-              {metric === 'content' ? contentLabel(0) : '0 compras'}
+              {metric === 'content' ? pointsLabel(0) : '0 compras'}
             </p>
           </div>
         ))}
@@ -136,16 +139,18 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
                 <>
                   <p className="text-gray-900 text-sm font-semibold">
                     {metric === 'content'
-                      ? contentLabel(entry.eligible_content_count)
+                      ? pointsLabel(entry.content_points)
                       : formatCOP(entry.commission_in_period)}
                   </p>
-                  {metric === 'commission' && (
+                  {metric === 'content' ? (
+                    <p className="text-gray-400 text-xs">{contentLabel(entry.eligible_content_count)}</p>
+                  ) : (
                     <p className="text-gray-400 text-xs">{entry.orders_in_period} compras</p>
                   )}
                 </>
               ) : (
                 <p className="text-gray-300 text-xs">
-                  {metric === 'content' ? contentLabel(0) : '0 compras'}
+                  {metric === 'content' ? pointsLabel(0) : '0 compras'}
                 </p>
               )}
             </div>

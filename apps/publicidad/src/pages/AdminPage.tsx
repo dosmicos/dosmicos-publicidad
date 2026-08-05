@@ -482,12 +482,12 @@ export default function AdminPage() {
                   {selectedMetric === 'content' ? (
                     <>
                       <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Piezas clasificadas</p>
-                        <p className="mt-1 text-sm font-semibold text-gray-950">{selectedPeriod.eligible_content_count}</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Puntos</p>
+                        <p className="mt-1 text-sm font-semibold text-gray-950">{selectedPeriod.content_points}</p>
                       </div>
                       <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Creadoras con piezas</p>
-                        <p className="mt-1 text-sm font-semibold text-gray-950">{selectedPeriod.eligible_creators_count}</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Piezas revisadas</p>
+                        <p className="mt-1 text-sm font-semibold text-gray-950">{selectedPeriod.reviewed_content_count}</p>
                       </div>
                     </>
                   ) : (
