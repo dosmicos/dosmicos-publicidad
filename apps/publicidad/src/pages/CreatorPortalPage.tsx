@@ -273,10 +273,11 @@ export default function CreatorPortalPage() {
     }) ?? null;
   }, [creator, rankingByContent]);
 
-  const creatorRanking = creatorRankingEntry && creatorRankingEntry.eligible_content_count > 0
+  const creatorRanking = creatorRankingEntry && creatorRankingEntry.content_points > 0
     ? creatorRankingEntry.rank
     : null;
   const creatorContentCount = creatorRankingEntry?.eligible_content_count ?? 0;
+  const creatorContentPoints = creatorRankingEntry?.content_points ?? 0;
 
   if (loading) {
     return (
@@ -324,7 +325,7 @@ export default function CreatorPortalPage() {
           <MetricCard
             label="Ranking contenido"
             value={creatorRanking ? `#${creatorRanking}` : '—'}
-            hint={`${creatorContentCount} ${creatorContentCount === 1 ? 'pieza clasificada' : 'piezas clasificadas'}`}
+            hint={`${creatorContentPoints} ${creatorContentPoints === 1 ? 'punto' : 'puntos'} · ${creatorContentCount} ${creatorContentCount === 1 ? 'pieza' : 'piezas'}`}
           />
         </section>
 

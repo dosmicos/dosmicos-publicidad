@@ -13,6 +13,8 @@ export interface RankingPeriod {
   orders_in_period: number;
   commission_in_period: number;
   eligible_content_count: number;
+  reviewed_content_count: number;
+  content_points: number;
   eligible_creators_count: number;
 }
 
@@ -99,7 +101,7 @@ export function useRankingPeriods(orgSlug = 'dosmicos') {
   );
 
   const rankingByContent = [...ranking].sort(
-    (a, b) => b.eligible_content_count - a.eligible_content_count || a.rank - b.rank
+    (a, b) => b.content_points - a.content_points || a.rank - b.rank
   );
 
   return {
