@@ -26,9 +26,11 @@
  *     cualquier payload pegado despues del fin de la imagen (Motion Photo:
  *     un MP4 oculto; o una segunda foto completa con su propio GPS).
  *
- * Formatos: JPEG y PNG se limpian aqui. HEIC no se puede reescribir de forma
- * segura en el navegador; se marca como `needsServerStrip` para que lo limpie
- * la pasada del servidor en vez de dejarlo pasar en silencio.
+ * Formatos: JPEG y PNG se limpian aqui. HEIC y los videos no se pueden
+ * reescribir de forma segura en el navegador; se marcan como
+ * `needsServerStrip` para que los limpie la pasada del servidor en vez de
+ * dejarlos pasar en silencio. Los videos NO son un caso benigno: de 4
+ * muestreados en el bucket, 2 traian GPS.
  */
 
 export type StripResult = {
@@ -227,7 +229,13 @@ export async function stripImageMetadata(file: File): Promise<StripResult> {
   };
 
   const isImage = file.type.startsWith("image/") || HEIC_RE.test(file.name);
-  if (!isImage) return base; // los videos los limpia el servidor
+  if (!isImage) {
+    // Los videos tambien filtran ubicacion: de 4 muestreados al azar en el
+    // bucket, 2 traian GPS (Medellin y Bogota) ademas de marca, modelo y
+    // fecha. Aqui no se pueden reescribir, pero devolver needsServerStrip
+    // en false los daria por limpios. Se marcan para la pasada del servidor.
+    return { ...base, needsServerStrip: true, reason: "no es imagen (video u otro): se limpia en el servidor" };
+  }
 
   if (file.type === "image/heic" || file.type === "image/heif" || HEIC_RE.test(file.name)) {
     return { ...base, needsServerStrip: true, reason: "HEIC: se limpia en el servidor" };

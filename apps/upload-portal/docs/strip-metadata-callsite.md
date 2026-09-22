@@ -91,9 +91,17 @@ regiones de rostro de Apple), IPTC, comentarios, los bloques propietarios
 
 ## Lo que queda pendiente del lado del servidor
 
-HEIC no se puede reescribir con seguridad en el navegador. El módulo lo devuelve
-con `needsServerStrip: true` en vez de dejarlo pasar en silencio. Hoy son 6
-archivos de 888, pero conviene:
+Dos cosas no se pueden reescribir con seguridad en el navegador. El módulo
+devuelve `needsServerStrip: true` para ambas, en vez de dejarlas pasar en
+silencio:
+
+- **HEIC** — hoy son 6 archivos de 888.
+- **Videos** — 747 archivos en el bucket, y **no** son un caso benigno: de 8
+  muestreados al azar, 2 traen GPS (Medellín y Bogotá) más marca, modelo y
+  fecha, y casi todos traen fecha de captura. Limpiar solo las fotos cierra
+  media fuga.
+
+Conviene entonces:
 
 1. Guardar `needsServerStrip` junto con la fila del UGC.
 2. Una pasada del servidor (exiftool) que limpie lo que el navegador no pudo.
