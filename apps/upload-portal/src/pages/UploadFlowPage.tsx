@@ -83,6 +83,25 @@ function readStoredConsent(token: string): StoredConsent | null {
   }
 }
 
+// No todos los fallos se arreglan reintentando, y decirle "revisa tu conexión"
+// a alguien cuyo problema es que el servidor no tiene registrada la versión del
+// texto la deja tocando un botón que nunca va a funcionar. Peor: nos oculta a
+// nosotros que hay un despliegue fuera de orden (el portal salió antes que la
+// migración). Estos dos casos se nombran aparte.
+function mensajeDeError(e: unknown): string {
+  const codigo = e instanceof Error ? e.message : "";
+
+  if (codigo === "unknown_terms_version" || codigo === "no_current_terms_version") {
+    return "Hay un problema de nuestro lado con la versión de los términos. No es tu conexión: escríbenos y lo arreglamos hoy mismo.";
+  }
+
+  if (codigo === "invalid_token") {
+    return "Este enlace ya no está activo. Pídenos uno nuevo y súbelo sin problema.";
+  }
+
+  return "No pudimos guardar tu autorización. Revisa tu conexión e intenta de nuevo.";
+}
+
 function writeStoredConsent(token: string, consent: StoredConsent): void {
   try {
     localStorage.setItem(
@@ -183,10 +202,8 @@ export default function UploadFlowPage() {
       });
 
       setStep("upload");
-    } catch {
-      setConsentError(
-        "No pudimos guardar tu autorización. Revisa tu conexión e intenta de nuevo."
-      );
+    } catch (e) {
+      setConsentError(mensajeDeError(e));
     } finally {
       setIsRecordingConsent(false);
     }
