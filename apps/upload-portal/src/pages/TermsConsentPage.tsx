@@ -2,19 +2,34 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TERMS_SECTIONS, TERMS_SUMMARY_POINTS } from "@/lib/terms-content";
 import {
+  AlertCircle,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Loader2,
   Shield,
   Heart,
 } from "lucide-react";
 
 interface Props {
   creatorName: string;
-  onAccept: () => void;
+  // Recibe el estado real de las tres casillas: la constancia que se guarda
+  // tiene que decir qué marcó la persona, no repetir lo que el código asume.
+  onAccept: (checks: {
+    license: boolean;
+    minor: boolean;
+    data: boolean;
+  }) => void;
+  isSubmitting?: boolean;
+  errorMessage?: string | null;
 }
 
-export default function TermsConsentPage({ creatorName, onAccept }: Props) {
+export default function TermsConsentPage({
+  creatorName,
+  onAccept,
+  isSubmitting = false,
+  errorMessage = null,
+}: Props) {
   const [expandedTerms, setExpandedTerms] = useState(false);
   const [hasScrolledTerms, setHasScrolledTerms] = useState(false);
   const [checkLicense, setCheckLicense] = useState(false);
@@ -273,22 +288,47 @@ export default function TermsConsentPage({ creatorName, onAccept }: Props) {
           </label>
         </div>
 
+        {/* Si no se pudo dejar constancia, no se sigue. Subir contenido de
+            niños sin poder demostrar quién lo autorizó es justo lo que este
+            paso existe para evitar. */}
+        {errorMessage && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3">
+            <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-500 mt-0.5" />
+            <p className="text-sm text-red-700">{errorMessage}</p>
+          </div>
+        )}
+
         {/* Botón de aceptar */}
         <Button
-          onClick={onAccept}
-          disabled={!allChecked}
+          onClick={() =>
+            onAccept({
+              license: checkLicense,
+              minor: checkMinor,
+              data: checkData,
+            })
+          }
+          disabled={!allChecked || isSubmitting}
           className={`
             w-full gap-2 h-12 text-base rounded-xl transition-all
             ${
-              allChecked
+              allChecked && !isSubmitting
                 ? "bg-black hover:bg-gray-800"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }
           `}
           size="lg"
         >
-          <Heart className="h-4 w-4" />
-          Acepto y quiero subir mi contenido
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Guardando tu autorización...
+            </>
+          ) : (
+            <>
+              <Heart className="h-4 w-4" />
+              {errorMessage ? "Reintentar" : "Acepto y quiero subir mi contenido"}
+            </>
+          )}
         </Button>
 
         {!allChecked && (

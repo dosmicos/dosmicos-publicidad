@@ -9,6 +9,16 @@
 // - Decisión Andina 351
 // ============================================================
 
+// Identificador de esta version del texto. Viaja con cada consentimiento que se
+// guarda en `public.ugc_upload_consents`, para que dentro de un año se pueda
+// reconstruir exactamente QUE acepto cada creadora y no solo que "acepto".
+//
+// Tiene que existir como fila en `public.ugc_terms_versions`: si aquí se cambia
+// sin crear antes la fila, el RPC responde `unknown_terms_version` y el portal
+// no deja subir. Es a propósito — preferimos que se note al desplegar y no
+// meses después, cuando alguien pregunte qué firmó una persona.
+export const TERMS_VERSION = "dosmicos-ugc-terms-2026-02";
+
 export const TERMS_SECTIONS = [
   {
     title: "1. ¿Qué estás autorizando?",
