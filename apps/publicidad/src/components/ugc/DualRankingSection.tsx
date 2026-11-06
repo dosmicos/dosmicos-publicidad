@@ -19,6 +19,9 @@ const RANKINGS: { metric: RankingMetric; tab: string; title: string; hint: strin
   },
 ];
 
+/** Filas mínimas de cada ranking cuando van uno debajo del otro (antes de "Ver las N participantes"). */
+const STACKED_COLLAPSED_LIMIT = 10;
+
 interface DualRankingSectionProps {
   rankingByCommission: RankingEntry[];
   rankingByContent: RankingEntry[];
@@ -28,10 +31,10 @@ interface DualRankingSectionProps {
   /** Texto pequeño sobre los títulos (p. ej. "Período actual"). */
   eyebrow?: string;
   /**
-   * true: en pantallas anchas los dos rankings van lado a lado (en el celular, pestañas).
-   * false: siempre pestañas (para contenedores angostos).
+   * 'side-by-side': en pantallas anchas los dos rankings van lado a lado (en el celular, pestañas).
+   * 'stacked': los dos siempre visibles, uno debajo del otro, sin pestañas (para contenedores angostos).
    */
-  sideBySide?: boolean;
+  layout?: 'side-by-side' | 'stacked';
 }
 
 function Spinner() {
@@ -50,9 +53,10 @@ export default function DualRankingSection({
   commissionError = null,
   contentError = null,
   eyebrow = 'Período actual',
-  sideBySide = true,
+  layout = 'side-by-side',
 }: DualRankingSectionProps) {
   const [active, setActive] = useState<RankingMetric>('commission');
+  const stacked = layout === 'stacked';
 
   const rows = { commission: rankingByCommission, content: rankingByContent };
   const errors = { commission: commissionError, content: contentError };
@@ -61,33 +65,35 @@ export default function DualRankingSection({
     <div>
       <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-3">{eyebrow}</p>
 
-      <div
-        role="tablist"
-        aria-label="Elegir ranking"
-        className={`grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 mb-6 ${sideBySide ? 'md:hidden' : ''}`}
-      >
-        {RANKINGS.map((ranking) => (
-          <button
-            key={ranking.metric}
-            type="button"
-            role="tab"
-            aria-selected={active === ranking.metric}
-            onClick={() => setActive(ranking.metric)}
-            className={`rounded-lg py-2 text-sm font-medium transition-colors ${
-              active === ranking.metric
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {ranking.tab}
-          </button>
-        ))}
-      </div>
+      {!stacked && (
+        <div
+          role="tablist"
+          aria-label="Elegir ranking"
+          className="grid grid-cols-2 gap-1 rounded-xl bg-gray-100 p-1 mb-6 md:hidden"
+        >
+          {RANKINGS.map((ranking) => (
+            <button
+              key={ranking.metric}
+              type="button"
+              role="tab"
+              aria-selected={active === ranking.metric}
+              onClick={() => setActive(ranking.metric)}
+              className={`rounded-lg py-2 text-sm font-medium transition-colors ${
+                active === ranking.metric
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {ranking.tab}
+            </button>
+          ))}
+        </div>
+      )}
 
-      <div className={sideBySide ? 'grid gap-8 md:grid-cols-2 md:gap-6' : ''}>
+      <div className={stacked ? 'space-y-10' : 'grid gap-8 md:grid-cols-2 md:gap-6'}>
         {RANKINGS.map((ranking) => {
           const isActive = active === ranking.metric;
-          const visibility = isActive ? '' : sideBySide ? 'hidden md:block' : 'hidden';
+          const visibility = stacked || isActive ? '' : 'hidden md:block';
 
           return (
             <section key={ranking.metric} className={`min-w-0 ${visibility}`}>
@@ -102,7 +108,12 @@ export default function DualRankingSection({
                   No pudimos cargar este ranking. Intenta de nuevo en un momento.
                 </p>
               ) : (
-                <RankingSection ranking={rows[ranking.metric]} metric={ranking.metric} />
+                <RankingSection
+                  ranking={rows[ranking.metric]}
+                  metric={ranking.metric}
+                  // Uno debajo del otro: listas recogidas para que el segundo ranking no quede al fondo.
+                  collapsedLimit={stacked ? STACKED_COLLAPSED_LIMIT : undefined}
+                />
               )}
             </section>
           );

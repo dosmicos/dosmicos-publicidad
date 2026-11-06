@@ -39,6 +39,11 @@ function Avatar({ url, name, size = 'sm' }: { url: string | null; name: string; 
 interface RankingSectionProps {
   ranking: RankingEntry[];
   metric?: RankingMetric;
+  /**
+   * Si se define, la lista empieza recogida: muestra a todas las que tienen actividad
+   * (comisión o puntos) y, como mínimo, este número de filas. Un botón muestra el resto.
+   */
+  collapsedLimit?: number;
 }
 
 const pointsLabel = (points: number) =>
@@ -47,7 +52,22 @@ const pointsLabel = (points: number) =>
 const contentLabel = (count: number) =>
   `${count} ${count === 1 ? 'pieza que clasifica' : 'piezas que clasifican'}`;
 
-export default function RankingSection({ ranking, metric = 'commission' }: RankingSectionProps) {
+function ShowAllButton({ expanded, total, onToggle }: { expanded: boolean; total: number; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={expanded}
+      className="w-full rounded-2xl border border-gray-200 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+    >
+      {expanded ? 'Ver menos' : `Ver las ${total} participantes`}
+    </button>
+  );
+}
+
+export default function RankingSection({ ranking, metric = 'commission', collapsedLimit }: RankingSectionProps) {
+  const [expanded, setExpanded] = useState(false);
+
   if (ranking.length === 0) {
     return (
       <div className="py-14 text-center">
@@ -65,7 +85,15 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
   const getMetricValue = (entry: RankingEntry) => (
     metric === 'content' ? entry.content_points : entry.commission_in_period
   );
-  const hasActivity = ranking.some((entry) => getMetricValue(entry) > 0);
+  const activeCount = ranking.filter((entry) => getMetricValue(entry) > 0).length;
+  const hasActivity = activeCount > 0;
+  // La lista viene ordenada (primero las que tienen actividad), así que basta con cortarla.
+  const collapsedCount = collapsedLimit ? Math.max(collapsedLimit, activeCount) : ranking.length;
+  const canCollapse = collapsedCount < ranking.length;
+  const visibleRanking = canCollapse && !expanded ? ranking.slice(0, collapsedCount) : ranking;
+  const showAllButton = canCollapse && (
+    <ShowAllButton expanded={expanded} total={ranking.length} onToggle={() => setExpanded((value) => !value)} />
+  );
 
   // No activity yet — show profiles without rank
   if (!hasActivity) {
@@ -76,7 +104,7 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
             ? 'Aún no hay puntos en este período. Foto que clasifica: 1; video que clasifica: 3.'
             : 'Aún no hay compras registradas en este período. ¡Tú puedes ser la primera! 🚀'}
         </p>
-        {ranking.map((entry, index) => (
+        {visibleRanking.map((entry, index) => (
           <div
             // Puede haber dos fichas con el mismo usuario de Instagram: el índice evita claves repetidas.
             key={`${entry.instagram_handle || entry.creator_name}-${index}`}
@@ -94,6 +122,7 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
             </p>
           </div>
         ))}
+        {showAllButton}
       </div>
     );
   }
@@ -101,7 +130,7 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
   // Has activity — show full ranking with medals
   return (
     <div className="space-y-2">
-      {ranking.map((entry, index) => {
+      {visibleRanking.map((entry, index) => {
         const metricValue = getMetricValue(entry);
         const isTop3 = entry.rank <= 3 && metricValue > 0;
         const medal = MEDALS[entry.rank - 1];
@@ -160,6 +189,7 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
           </div>
         );
       })}
+      {showAllButton}
     </div>
   );
 }
