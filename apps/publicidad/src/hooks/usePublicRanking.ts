@@ -110,7 +110,7 @@ export function usePublicRanking(orgSlug = 'dosmicos-org') {
     fetch();
   }, [fetch]);
 
-  // Ya viene ordenado como el ranking original (comisión y, en empate, saldo); se respeta ese orden.
+  // Ya viene ordenado desde la base (comisión; en empate, compras y nombre); se respeta ese orden.
   const rankingByCommission = commissionData;
 
   const rankingByContent = [...data].sort(
