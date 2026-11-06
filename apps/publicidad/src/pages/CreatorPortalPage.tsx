@@ -530,7 +530,7 @@ export default function CreatorPortalPage() {
             loading={rankingLoading}
             commissionError={commissionRankingError}
             contentError={contentRankingError}
-            sideBySide={false}
+            layout="stacked"
           />
         </section>
       </main>
