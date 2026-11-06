@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import RankingSection from '@/components/ugc/RankingSection';
-import { usePublicRanking } from '@/hooks/usePublicRanking';
+import DualRankingSection from '@/components/ugc/DualRankingSection';
+import { usePublicRanking, type RankingEntry } from '@/hooks/usePublicRanking';
 import { supabase } from '@/integrations/supabase/client';
 
 const formatCOP = (n?: number | null) =>
@@ -132,9 +132,9 @@ function CopyButton({ value, label = 'Copiar' }: { value: string; label?: string
   );
 }
 
-function MetricCard({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
+function MetricCard({ label, value, hint, className = '' }: { label: string; value: string | number; hint?: string; className?: string }) {
   return (
-    <div className="rounded-2xl border border-gray-100 p-4 bg-white">
+    <div className={`rounded-2xl border border-gray-100 p-4 bg-white ${className}`}>
       <p className="text-[11px] uppercase tracking-widest text-gray-400 mb-1">{label}</p>
       <p className="text-gray-900 text-lg font-semibold leading-tight">{value}</p>
       {hint && <p className="text-xs text-gray-400 mt-1 leading-snug">{hint}</p>}
@@ -201,7 +201,13 @@ function InvalidPortalState() {
 
 export default function CreatorPortalPage() {
   const { token = '' } = useParams();
-  const { rankingByContent } = usePublicRanking('dosmicos-org');
+  const {
+    rankingByContent,
+    rankingByCommission,
+    loading: rankingLoading,
+    error: contentRankingError,
+    commissionError: commissionRankingError,
+  } = usePublicRanking('dosmicos-org');
   const [portal, setPortal] = useState<CreatorPortalPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -264,20 +270,28 @@ export default function CreatorPortalPage() {
     }
   };
 
-  const creatorRankingEntry = useMemo(() => {
-    if (!creator) return null;
-    const normalizedHandle = creator.instagram_handle?.replace('@', '').toLowerCase();
-    return rankingByContent.find((entry) => {
-      const entryHandle = entry.instagram_handle?.replace('@', '').toLowerCase();
-      return entryHandle && normalizedHandle && entryHandle === normalizedHandle;
-    }) ?? null;
-  }, [creator, rankingByContent]);
+  const normalizedCreatorHandle = creator?.instagram_handle?.replace('@', '').toLowerCase() ?? '';
+  const findCreatorEntry = (ranking: RankingEntry[]) => {
+    if (!normalizedCreatorHandle) return null;
+    return ranking.find((entry) => (
+      entry.instagram_handle?.replace('@', '').toLowerCase() === normalizedCreatorHandle
+    )) ?? null;
+  };
+
+  const creatorRankingEntry = findCreatorEntry(rankingByContent);
+  const creatorCommissionEntry = findCreatorEntry(rankingByCommission);
 
   const creatorRanking = creatorRankingEntry && creatorRankingEntry.content_points > 0
     ? creatorRankingEntry.rank
     : null;
   const creatorContentCount = creatorRankingEntry?.eligible_content_count ?? 0;
   const creatorContentPoints = creatorRankingEntry?.content_points ?? 0;
+
+  const creatorCommissionRanking = creatorCommissionEntry && creatorCommissionEntry.commission_in_period > 0
+    ? creatorCommissionEntry.rank
+    : null;
+  const creatorPeriodOrders = creatorCommissionEntry?.orders_in_period ?? 0;
+  const creatorPeriodCommission = creatorCommissionEntry?.commission_in_period ?? 0;
 
   if (loading) {
     return (
@@ -321,7 +335,12 @@ export default function CreatorPortalPage() {
         <section className="grid grid-cols-2 gap-3 mb-6">
           <MetricCard label="Ventas" value={discount?.total_orders ?? 0} hint="Compras atribuidas a tu link" />
           <MetricCard label="Comisiones" value={formatCOP(discount?.total_commission)} hint="Ganancias acumuladas" />
-          <MetricCard label="Saldo" value={formatCOP(discount?.pending_balance)} hint="Pendiente por pagar" />
+          <MetricCard label="Saldo" value={formatCOP(discount?.pending_balance)} hint="Pendiente por pagar" className="col-span-2" />
+          <MetricCard
+            label="Ranking comisiones"
+            value={creatorCommissionRanking ? `#${creatorCommissionRanking}` : '—'}
+            hint={`${formatCOP(creatorPeriodCommission)} · ${creatorPeriodOrders} ${creatorPeriodOrders === 1 ? 'compra' : 'compras'} en el período`}
+          />
           <MetricCard
             label="Ranking contenido"
             value={creatorRanking ? `#${creatorRanking}` : '—'}
@@ -504,11 +523,15 @@ export default function CreatorPortalPage() {
         )}
 
         <section className="pt-3 border-t border-gray-100">
-          <div className="mb-4">
-            <p className="text-xs uppercase tracking-widest text-gray-400 font-medium mb-1">Ranking público</p>
-            <h2 className="text-gray-900 text-xl font-semibold">Ranking de contenido</h2>
-          </div>
-          <RankingSection ranking={rankingByContent} metric="content" />
+          <DualRankingSection
+            eyebrow="Rankings públicos · período actual"
+            rankingByCommission={rankingByCommission}
+            rankingByContent={rankingByContent}
+            loading={rankingLoading}
+            commissionError={commissionRankingError}
+            contentError={contentRankingError}
+            sideBySide={false}
+          />
         </section>
       </main>
 

@@ -29,23 +29,78 @@ interface PublicSupabaseClient {
 
 const publicSupabase = supabase as unknown as PublicSupabaseClient;
 
+/** Fila de get_ugc_public_commission_ranking: el ranking de comisiones original, sin saldos. */
+interface CommissionRankingRow {
+  creator_name: string;
+  instagram_handle: string;
+  avatar_url: string | null;
+  orders_in_period: number | string;
+  commission_in_period: number | string;
+  rank: number | string;
+}
+
+const toCommissionEntry = (row: CommissionRankingRow): RankingEntry => ({
+  creator_name: row.creator_name,
+  instagram_handle: row.instagram_handle,
+  avatar_url: row.avatar_url,
+  orders_in_period: Number(row.orders_in_period) || 0,
+  commission_in_period: Number(row.commission_in_period) || 0,
+  eligible_content_count: 0,
+  reviewed_content_count: 0,
+  content_points: 0,
+  pending_balance: 0,
+  metric: 'commission',
+  rank: Number(row.rank) || 0,
+});
+
+const rpcErrorMessage = (err: unknown, fallback: string) => (
+  err && typeof err === 'object' && 'message' in err && typeof err.message === 'string'
+    ? err.message
+    : fallback
+);
+
+/**
+ * Los dos rankings públicos del período actual:
+ * - Comisiones: el ranking original del Club (comisión y compras con el link).
+ * - Contenido: puntos por fotos (1) y videos (3) que clasifican.
+ * Se cargan por separado: si uno falla, el otro se sigue mostrando.
+ */
 export function usePublicRanking(orgSlug = 'dosmicos-org') {
   const [data, setData] = useState<RankingEntry[]>([]);
+  const [commissionData, setCommissionData] = useState<RankingEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [commissionError, setCommissionError] = useState<string | null>(null);
 
   const fetch = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setCommissionError(null);
     try {
-      const { data: rows, error: rpcError } = await publicSupabase.rpc<RankingEntry[]>(
-        'get_ugc_public_content_ranking',
-        { p_org_slug: orgSlug }
-      );
-      if (rpcError) throw rpcError;
-      setData(rows || []);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al cargar ranking');
+      const [contentResult, commissionResult] = await Promise.allSettled([
+        publicSupabase.rpc<RankingEntry[]>('get_ugc_public_content_ranking', { p_org_slug: orgSlug }),
+        publicSupabase.rpc<CommissionRankingRow[]>('get_ugc_public_commission_ranking', { p_org_slug: orgSlug }),
+      ]);
+
+      if (contentResult.status === 'fulfilled' && !contentResult.value.error) {
+        setData(contentResult.value.data || []);
+      } else {
+        setData([]);
+        setError(rpcErrorMessage(
+          contentResult.status === 'fulfilled' ? contentResult.value.error : contentResult.reason,
+          'Error al cargar el ranking de contenido',
+        ));
+      }
+
+      if (commissionResult.status === 'fulfilled' && !commissionResult.value.error) {
+        setCommissionData((commissionResult.value.data || []).map(toCommissionEntry));
+      } else {
+        setCommissionData([]);
+        setCommissionError(rpcErrorMessage(
+          commissionResult.status === 'fulfilled' ? commissionResult.value.error : commissionResult.reason,
+          'Error al cargar el ranking de comisiones',
+        ));
+      }
     } finally {
       setLoading(false);
     }
@@ -55,9 +110,8 @@ export function usePublicRanking(orgSlug = 'dosmicos-org') {
     fetch();
   }, [fetch]);
 
-  const rankingByCommission = [...data].sort(
-    (a, b) => b.commission_in_period - a.commission_in_period
-  );
+  // Ya viene ordenado como el ranking original (comisión y, en empate, saldo); se respeta ese orden.
+  const rankingByCommission = commissionData;
 
   const rankingByContent = [...data].sort(
     (a, b) => b.content_points - a.content_points || a.rank - b.rank
@@ -69,6 +123,7 @@ export function usePublicRanking(orgSlug = 'dosmicos-org') {
     rankingByCommission,
     loading,
     error,
+    commissionError,
     refetch: fetch,
   };
 }

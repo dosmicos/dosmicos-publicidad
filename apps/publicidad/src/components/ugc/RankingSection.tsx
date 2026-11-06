@@ -76,9 +76,10 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
             ? 'Aún no hay puntos en este período. Foto que clasifica: 1; video que clasifica: 3.'
             : 'Aún no hay compras registradas en este período. ¡Tú puedes ser la primera! 🚀'}
         </p>
-        {ranking.map((entry) => (
+        {ranking.map((entry, index) => (
           <div
-            key={entry.instagram_handle || entry.creator_name}
+            // Puede haber dos fichas con el mismo usuario de Instagram: el índice evita claves repetidas.
+            key={`${entry.instagram_handle || entry.creator_name}-${index}`}
             className="flex items-center gap-3 rounded-2xl px-4 py-3 border border-gray-100"
           >
             <Avatar url={entry.avatar_url} name={entry.creator_name} />
@@ -100,14 +101,14 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
   // Has activity — show full ranking with medals
   return (
     <div className="space-y-2">
-      {ranking.map((entry) => {
+      {ranking.map((entry, index) => {
         const metricValue = getMetricValue(entry);
         const isTop3 = entry.rank <= 3 && metricValue > 0;
         const medal = MEDALS[entry.rank - 1];
 
         return (
           <div
-            key={entry.instagram_handle || entry.creator_name}
+            key={`${entry.instagram_handle || entry.creator_name}-${index}`}
             className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors ${
               entry.rank === 1 && metricValue > 0
                 ? 'bg-gray-50 border border-gray-200'
@@ -145,7 +146,9 @@ export default function RankingSection({ ranking, metric = 'commission' }: Ranki
                   {metric === 'content' ? (
                     <p className="text-gray-400 text-xs">{contentLabel(entry.eligible_content_count)}</p>
                   ) : (
-                    <p className="text-gray-400 text-xs">{entry.orders_in_period} compras</p>
+                    <p className="text-gray-400 text-xs">
+                      {entry.orders_in_period} {entry.orders_in_period === 1 ? 'compra' : 'compras'}
+                    </p>
                   )}
                 </>
               ) : (

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { usePrivateRankingBalances, usePublicRanking, type RankingEntry } from '@/hooks/usePublicRanking';
-import RankingSection from '@/components/ugc/RankingSection';
+import DualRankingSection from '@/components/ugc/DualRankingSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -87,7 +87,13 @@ function StatTooltip({ text }: { text: string }) {
 
 export default function UgcDashboardPage() {
   const { user } = useAuth();
-  const { rankingByContent, loading: rankingLoading } = usePublicRanking('dosmicos-org');
+  const {
+    rankingByContent,
+    rankingByCommission,
+    loading: rankingLoading,
+    error: contentRankingError,
+    commissionError: commissionRankingError,
+  } = usePublicRanking('dosmicos-org');
   const { data: balancesByAmount } = usePrivateRankingBalances(!!user, 'dosmicos-org');
 
   const [code, setCode] = useState('');
@@ -162,7 +168,7 @@ export default function UgcDashboardPage() {
 
       {/* Public landing / legacy code gate */}
       {!isUnlocked && (
-        <div className="max-w-lg mx-auto px-5 pt-10 pb-10">
+        <div className="max-w-lg mx-auto px-5 pt-10 pb-2">
           <div className="text-center mb-8">
             <p className="text-3xl mb-4">🏆</p>
             <h1 className="text-gray-900 text-lg font-semibold mb-1">Ranking UGC · Dosmicos</h1>
@@ -224,23 +230,20 @@ export default function UgcDashboardPage() {
               </button>
             </form>
           </details>
-
-          <section className="pt-2 pb-10">
-            <div className="mb-6">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">
-                Período actual
-              </p>
-              <h2 className="text-gray-900 text-xl font-semibold">Ranking de contenido</h2>
-            </div>
-            {rankingLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="w-5 h-5 rounded-full border-2 border-gray-200 border-t-gray-900 animate-spin" />
-              </div>
-            ) : (
-              <RankingSection ranking={rankingByContent} metric="content" />
-            )}
-          </section>
         </div>
+      )}
+
+      {/* Rankings públicos: comisiones y contenido (lado a lado en pantallas anchas) */}
+      {!isUnlocked && (
+        <section className="max-w-lg md:max-w-4xl mx-auto px-5 pb-10">
+          <DualRankingSection
+            rankingByCommission={rankingByCommission}
+            rankingByContent={rankingByContent}
+            loading={rankingLoading}
+            commissionError={commissionRankingError}
+            contentError={contentRankingError}
+          />
+        </section>
       )}
 
       {/* Unlocked content */}
@@ -428,18 +431,19 @@ export default function UgcDashboardPage() {
               {(creator || (user && balancesByAmount.length > 0)) && (
                 <div className="border-t border-gray-100" />
               )}
-
-              {/* Ranking */}
-              <section className="pt-8 pb-16">
-                <div className="mb-6">
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-widest mb-1">
-                    Período actual
-                  </p>
-                  <h2 className="text-gray-900 text-xl font-semibold">Ranking de contenido</h2>
-                </div>
-                <RankingSection ranking={rankingByContent} metric="content" />
-              </section>
             </div>
+          )}
+
+          {/* Rankings: comisiones y contenido (lado a lado en pantallas anchas) */}
+          {!rankingLoading && (
+            <section className="max-w-lg md:max-w-4xl mx-auto px-5 pt-8 pb-16">
+              <DualRankingSection
+                rankingByCommission={rankingByCommission}
+                rankingByContent={rankingByContent}
+                commissionError={commissionRankingError}
+                contentError={contentRankingError}
+              />
+            </section>
           )}
         </>
       )}
